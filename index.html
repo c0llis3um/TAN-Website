@@ -153,13 +153,27 @@ color: aquamarine;
       <div class="bk col-lg-12 main" data-aos="fade-in">
 
 <img src="hand.svg" style="width: 150px;">
-        <h1 data-aos="fade-up">DeFi Tanda </h1>
+        <h1 data-aos="fade-up">DeFi <span id="word">Tanda</span> </h1>
 
-        <p>A Rotary Loan & Save Protocol.</p>
+        <p>TANDA a Rotary Loan & Save Protocol.</p>
         <small class="float-right">powered by <img src="https://cryptologos.cc/logos/solana-sol-logo.svg?v=010" width="30" />
           
           </small>
       </div>    
+
+      <script type="text/javascript">
+            var words = new Array('Osusu','Hui','Juntas','Pollas','Arisan','Stokvel','Pandeiros','Tanda');
+
+            var i = 0;
+            setInterval( function(){
+                $( '#word' ).empty().append( words[ i ] );
+                if( i < words.length ) {
+                    i++;
+                } else {
+                    i = 0;
+                }
+            }, 2000 );
+      </script>
     </div> 
 
     <div class="col-lg-6  mt-5" data-aos="fade-left">
@@ -352,6 +366,8 @@ color: aquamarine;
 
   <script>
     AOS.init();
+
+
   </script>
   </body>
 
