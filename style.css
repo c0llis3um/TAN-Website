@@ -1,0 +1,126 @@
+      a {
+    color: #00ffd5;}
+  .btn-primary {
+    color: #5c2f8e;;
+    background-color: #36c3ac;
+    width: 138px;}
+body{
+background-image: radial-gradient(circle at 50% -20.71%, #ff57d2 0, #ff4edb 12.5%, #000000 25%, #000000 37.5%, #160b20 50%, #000000 62.5%, #cc00ff 75%, #2e3950 87.5%, #3b538d 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+;
+	background-size: 400% 400%;
+	animation: gradient 15s ease infinite;
+color: white;
+min-height: 71vw;
+}
+h1,h2,h3,h4{
+  font-weight: 800;
+  color: #00ffd5 ;
+}
+.bk{
+background: #2f284091;
+margin-top: 26px;
+
+padding: 17%!important;
+
+    border-radius: 7px;
+
+}
+    #walleticon{
+    	width: 30px;
+    	float: right;
+    }
+
+.iahRRQ{
+	background-color: #00000029!important;
+}
+
+
+.blPCAu {
+    border: solid 1px white!important;
+    background-color: #23a6d524!important;
+    color: white!important;
+}
+
+@keyframes gradient {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+.css-selector {
+    background: linear-gradient(192deg, #ff00fa, #5c1c58, #040404);
+    background-size: 600% 600%;
+
+    -webkit-animation: AnimationName 51s ease infinite;
+    -moz-animation: AnimationName 51s ease infinite;
+    animation: AnimationName 51s ease infinite;
+}
+
+@-webkit-keyframes AnimationName {
+    0%{background-position:63% 0%}
+    50%{background-position:38% 100%}
+    100%{background-position:63% 0%}
+}
+@-moz-keyframes AnimationName {
+    0%{background-position:63% 0%}
+    50%{background-position:38% 100%}
+    100%{background-position:63% 0%}
+}
+@keyframes AnimationName {
+    0%{background-position:63% 0%}
+    50%{background-position:38% 100%}
+    100%{background-position:63% 0%}
+}
+.navbar{
+	display: block;
+    height: 46px;
+    margin-top: 15px;
+}
+h1{
+	font-size: 5rem;
+  color: #00ffd5;
+}
+.main{
+	padding: 10%;
+  background: url(background.jpg);
+  background-size: cover;
+}
+.logoi{
+  width: 32px;
+}
+.bk2{
+  font-size: 11px;
+    background: #3c3a46;
+    padding: 2%;
+    border-radius: 6px;
+}
+.bk2 label{
+color: aquamarine;
+}
+
+
+
+@media only screen and (max-width: 600px){
+h1 {
+    font-size: 3.6rem;
+    color: #00ffd5;
+    width: 122px;
+    height: 199px;
+}
+.navbar svg {
+  width: 20px!important;
+}
+.logoi{
+    width: 18px!important;
+}
+
+}
