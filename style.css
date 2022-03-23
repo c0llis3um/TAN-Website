@@ -119,9 +119,11 @@ h1 {
     width: 122px;
     height: 199px;
 }
-.navbar svg {
-  width: 20px!important;
+.navbar a {
+
+    font-size: 12px;
 }
+
 .logoi{
     width: 18px!important;
 }
