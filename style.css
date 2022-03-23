@@ -19,6 +19,9 @@ h1,h2,h3,h4{
   font-weight: 800;
   color: #00ffd5 ;
 }
+.navbar svg{
+    width: 10px;
+}
 .bk{
 background: #2f284091;
 margin-top: 26px;
