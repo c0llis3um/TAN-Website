@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Eco</title>
+ <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+   <link rel="icon" type="image/x-icon" href="https://gateway.pinata.cloud/ipfs/QmepAy9tEG2qECs6SNS3DTkcFuzo6LKBgxTm79tP4GLcq3">
+
+
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+  <script src="https://unpkg.com/@solana/web3.js"></script>
+  <style>
+      a {
+    color: #00ffd5;}
+  .btn-primary {
+    color: #5c2f8e;;
+    background-color: #36c3ac;
+    width: 138px;}
+body{
+background: #160720;
+color: white;
+min-height: 71vw;
+}
+h1,h2,h3,h4{
+  font-weight: 800;
+  color: #00ffd5 ;
+}
+.bk{
+background: #2f284091;
+margin-top: 26px;
+
+padding: 7%!important;
+
+    border-radius: 7px;
+
+}
+    #walleticon{
+    	width: 30px;
+    	float: right;
+    }
+
+.iahRRQ{
+	background-color: #00000029!important;
+}
+
+
+.blPCAu {
+    border: solid 1px white!important;
+    background-color: #23a6d524!important;
+    color: white!important;
+}
+
+@keyframes gradient {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+.css-selector {
+    background: linear-gradient(192deg, #ff00fa, #5c1c58, #040404);
+    background-size: 600% 600%;
+
+    -webkit-animation: AnimationName 51s ease infinite;
+    -moz-animation: AnimationName 51s ease infinite;
+    animation: AnimationName 51s ease infinite;
+}
+
+@-webkit-keyframes AnimationName {
+    0%{background-position:63% 0%}
+    50%{background-position:38% 100%}
+    100%{background-position:63% 0%}
+}
+@-moz-keyframes AnimationName {
+    0%{background-position:63% 0%}
+    50%{background-position:38% 100%}
+    100%{background-position:63% 0%}
+}
+@keyframes AnimationName {
+    0%{background-position:63% 0%}
+    50%{background-position:38% 100%}
+    100%{background-position:63% 0%}
+}
+.navbar{
+	display: block;
+    height: 46px;
+    margin-top: 15px;
+}
+h1{
+	font-size: 5rem;
+  color: #00ffd5;
+}
+.main{
+	padding: 10%;
+  background: url(background.jpg);
+  background-size: cover;
+}
+.logoi{
+  width: 32px;
+}
+.bk2{
+  font-size: 11px;
+    background: #3c3a4640;
+    padding: 2%;
+    border-radius: 6px;
+}
+.bk2 label{
+color: aquamarine;
+}
+
+.card {
+    background-color: #ffffff14;
+}
+@media only screen and (max-width: 600px){
+h1 {
+    font-size: 3.6rem;
+    }
+    a {
+    color: #00ffd5;
+    font-size: 12px;
+}
+  }  
+</style>
+
+</head>
+<body>
+
+      <div class="navbar col-lg-12 mt-1">
+    <a href="eco.html"> 
+	   <strong>ECO </strong>
+    </a>
+
+
+
+  </div>
+
+<div class="col-lg-12">
+  
+
+
+
+
+</div>
+
+
+
+<div class="col-lg-12 mt-5 pt-5 text-center">
+  <div class="navbar col-lg-12 mt-1">
+
+  </div>
+  <small class="mt-5 text-right"><br>&copy; 2024 Akademia </small>
+</div>
+
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="donate" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog " role="document">
+    <div class="modal-content bk ">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">DONATE</h5>
+        <button type="button" class="close" text-white data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        GNJ2JVB4WXmVx6rfzzmV8vqPdJ769nZyVrv6qG3ffJPu 
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+       
+      </div>
+    </div>
+  </div>
+</div>
+
+
+ <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+  <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+  <script>
+    AOS.init();
+
+
+    $(".start").click(function(){
+      $("#accordionExample").removeClass("d-none").addClass('');
+    });
+  </script>
+  </body>
+
+</body>
+</html>
