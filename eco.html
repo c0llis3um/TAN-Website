@@ -151,6 +151,41 @@ h1 {
     <div class="col-lg-12">
       <h1>Welcome to Eco</h1>
 
+          <button class="btn btn-primary start w-50" onclick="connectToPhantom()">Connect to Phantom Wallet</button>
+          <div id="walletInfo" style="display: none;">
+            <h2>Wallet Info</h2>
+            <p><strong>Wallet Address:</strong> <span id="walletAddress"></span></p>
+            <p><strong>Solana Balance:</strong> <span id="solanaBalance"></span> SOL</p>
+          </div>
+
+          <script src="https://unpkg.com/@solana/web3.js"></script>
+          <script>
+            async function connectToPhantom() {
+              try {
+                // Check if the Phantom wallet is installed
+                if (window.solana && window.solana.isPhantom) {
+                  // Request the user to connect their Phantom wallet
+                  await window.solana.connect();
+
+                  // Fetch the connected wallet's public key
+                  const publicKey = await window.solana.publicKey;
+                  document.getElementById("walletAddress").innerText = publicKey.toString();
+
+                  // Fetch the Solana balance
+                  const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'));
+                  const balance = await connection.getBalance(publicKey);
+                  document.getElementById("solanaBalance").innerText = (balance / solanaWeb3.LAMPORTS_PER_SOL).toFixed(6);
+
+                  // Show wallet info
+                  document.getElementById("walletInfo").style.display = "block";
+                } else {
+                  alert("Phantom wallet not found. Please install and activate Phantom to continue.");
+                }
+              } catch (error) {
+                console.error("Error:", error);
+              }
+            }
+          </script>
 
     </div>
     
