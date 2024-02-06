@@ -151,7 +151,7 @@ h1 {
       <h1>Welcome to Eco</h1>
 
           <button class="btn btn-primary start w-50" onclick="connectToPhantom()">Connect to Phantom Wallet</button>
-         <div id="walletInfo">
+<div id="walletInfo" style="display: none;">
   <h2>Wallet Info</h2>
   <p><strong>Wallet Address:</strong> <span id="walletAddress"></span></p>
   <p><strong>Solana Balance:</strong> <span id="solanaBalance"></span> SOL</p>
@@ -173,7 +173,8 @@ h1 {
         // Fetch the Solana balance
         const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'));
         const balance = await connection.getBalance(publicKey);
-        document.getElementById("solanaBalance").innerText = (balance / solanaWeb3.LAMPORTS_PER_SOL).toFixed(6);
+        const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
+        document.getElementById("solanaBalance").innerText = solBalance.toFixed(6);
 
         // Show wallet info by removing the 'display: none' style
         document.getElementById("walletInfo").style.display = "block";
