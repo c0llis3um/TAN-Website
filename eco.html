@@ -11,13 +11,13 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
-
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
       a {
     color: #00ffd5;}
   .btn-primary {
     color: #5c2f8e;;
-    background-color: #36c3ac;
+    background-color: #ab9ff2;
     width: 138px;}
 body{
 background: #160720;
@@ -137,7 +137,10 @@ h1 {
     <a href="eco.html"> 
 	   <strong>ECO </strong>
     </a>
-
+          <button class="btn btn-sm btn-primary start" style="width:130px;float: right;" onclick="connectToPhantom()">
+            <img src="https://3632261023-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2F-MVOiF6Zqit57q_hxJYp%2Fuploads%2FHEjleywo9QOnfYebBPCZ%2FPhantom_SVG_Icon.svg?alt=media&token=71b80a0a-def7-4f98-ae70-5e0843fdaaec"
+            width="25">
+          </button>
 
 
   </div>
@@ -150,11 +153,63 @@ h1 {
     <div class="col-lg-12">
       <h1>Welcome to Eco</h1>
 
-          <button class="btn btn-primary start w-50" onclick="connectToPhantom()">Connect to Phantom Wallet</button>
-<div id="walletInfo">
+
+<div id="walletInfo" class="bk2 col-6">
   <h2>Wallet Info</h2>
   <p><strong>Wallet Address:</strong> <span id="walletAddress"></span></p>
   <p><strong>Solana Balance:</strong> <span id="solanaBalance"></span> SOL</p>
+</div>
+
+<div class="bk2"col-6>
+  <!-- Price Chart -->
+  <canvas id="candlestickChart" width="800" height="400"></canvas>
+<script>
+  // Sample Solana price data (replace with actual data)
+  const solPriceData = [
+    { timestamp: 1631740800000, open: 140.23, high: 145.67, low: 138.20, close: 143.50 }, // Example data point 1 (timestamp in milliseconds)
+    { timestamp: 1631827200000, open: 143.50, high: 148.90, low: 142.00, close: 147.80 }, // Example data point 2
+    // Add more data points as needed
+  ];
+
+  // Prepare data for Chart.js
+  const chartData = solPriceData.map(data => ({
+    t: new Date(data.timestamp),
+    o: data.open,
+    h: data.high,
+    l: data.low,
+    c: data.close
+  }));
+
+  // Create the candlestick chart
+  const ctx = document.getElementById('candlestickChart').getContext('2d');
+  const candlestickChart = new Chart(ctx, {
+    type: 'candlestick',
+    data: {
+      datasets: [{
+        label: 'SOL Candlestick Chart',
+        data: chartData,
+        borderColor: 'black',
+        borderWidth: 1,
+        // You can customize additional options for the candlestick chart here
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        xAxes: [{
+          type: 'time',
+          time: {
+            unit: 'day' // You can customize the time scale as needed
+          },
+          ticks: {
+            source: 'data'
+          }
+        }],
+        // You can customize the y-axis scale as needed
+      }
+    }
+  });
+</script>
 </div>
 
 <script src="https://unpkg.com/@solana/web3.js"></script>
