@@ -150,9 +150,6 @@ h1 {
 <div class="container">
   <div class="row">
 
-    <div class="col-lg-12">
-      <h1>Welcome to Eco</h1>
-
 
 <div id="walletInfo" class="bk2 col-6">
   <h2>Wallet Info</h2>
@@ -160,68 +157,19 @@ h1 {
   <p><strong>Solana Balance:</strong> <span id="solanaBalance"></span> SOL</p>
 </div>
 
-<div class="bk2"col-6>
-  <!-- Price Chart -->
-  <canvas id="candlestickChart" width="800" height="400"></canvas>
-<script>
-  // Sample Solana price data (replace with actual data)
-  const solPriceData = [
-    { timestamp: 1631740800000, open: 140.23, high: 145.67, low: 138.20, close: 143.50 }, // Example data point 1 (timestamp in milliseconds)
-    { timestamp: 1631827200000, open: 143.50, high: 148.90, low: 142.00, close: 147.80 }, // Example data point 2
-    // Add more data points as needed
-  ];
+<div class="bk2 col-6">
 
-  // Prepare data for Chart.js
-  const chartData = solPriceData.map(data => ({
-    t: new Date(data.timestamp),
-    o: data.open,
-    h: data.high,
-    l: data.low,
-    c: data.close
-  }));
-
-  // Create the candlestick chart
-  const ctx = document.getElementById('candlestickChart').getContext('2d');
-  const candlestickChart = new Chart(ctx, {
-    type: 'candlestick',
-    data: {
-      datasets: [{
-        label: 'SOL Candlestick Chart',
-        data: chartData,
-        borderColor: 'black',
-        borderWidth: 1,
-        // You can customize additional options for the candlestick chart here
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        xAxes: [{
-          type: 'time',
-          time: {
-            unit: 'day' // You can customize the time scale as needed
-          },
-          ticks: {
-            source: 'data'
-          }
-        }],
-        // You can customize the y-axis scale as needed
-      }
-    }
-  });
-</script>
 </div>
 
 <script src="https://unpkg.com/@solana/web3.js"></script>
 <script>
-  async function connectToPhantom() {
+  async function connectToWallet() {
     try {
-      // Check if the Phantom wallet is installed
-      if (window.solana && window.solana.isPhantom) {
-        // Request the user to connect their Phantom wallet
-        await window.solana.connect();
+      // Connect to the Solana wallet
+      const connected = await window.solana.connect();
 
-        // Fetch the connected wallet's public key
+      if (connected) {
+        // Get the wallet address
         const publicKey = await window.solana.publicKey;
         document.getElementById("walletAddress").innerText = publicKey.toString();
 
@@ -231,17 +179,17 @@ h1 {
         const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
         document.getElementById("solanaBalance").innerText = solBalance.toFixed(6);
 
-        // Show wallet info by removing the 'display: none' style
+        // Show wallet info
         document.getElementById("walletInfo").style.display = "block";
       } else {
-        alert("Phantom wallet not found. Please install and activate Phantom to continue.");
+        alert("Wallet connection canceled or failed.");
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error connecting to wallet:", error);
+      alert("Error connecting to wallet. Please try again later.");
     }
   }
 </script>
-
     </div>
     
 
@@ -251,7 +199,6 @@ h1 {
 
 
 
-</div>
 
 
 
