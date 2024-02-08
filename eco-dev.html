@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect Phantom Wallet to Solana</title>
+</head>
+<body>
+
+<button onclick="connectToPhantom()">Connect to Phantom Wallet</button>
+<div id="walletInfo" style="display: none;">
+  <h2>Wallet Info</h2>
+  <p><strong>Wallet Address:</strong> <span id="walletAddress"></span></p>
+  <p><strong>Solana Balance:</strong> <span id="solanaBalance"></span> SOL</p>
+</div>
+
+<script src="https://solana-labs.github.io/wallet-adapter/dist/wallet-adapter.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js"></script>
+<script>
+  async function connectToPhantom() {
+    try {
+      // Initialize the Phantom Wallet adapter
+      const wallet = new WalletAdapter({
+        network: 'mainnet',
+        provider: window.solana,
+      });
+
+      // Connect to the Phantom Wallet
+      await wallet.connect();
+
+      // Get the connected wallet's public key
+      const publicKey = wallet.publicKey.toString();
+      document.getElementById("walletAddress").innerText = publicKey;
+
+      // Fetch the Solana balance
+      const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'));
+      const balance = await connection.getBalance(publicKey);
+      const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
+      document.getElementById("solanaBalance").innerText = solBalance.toFixed(6);
+
+      // Show wallet info
+      document.getElementById("walletInfo").style.display = "block";
+    } catch (error) {
+      console.error("Error connecting to Phantom wallet:", error);
+      alert("Error connecting to Phantom wallet. Please try again later.");
+    }
+  }
+</script>
+
+</body>
+</html>
