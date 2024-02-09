@@ -6,6 +6,8 @@
   <title>Eco</title>
   <link rel="icon" type="image/x-icon" href="https://gateway.pinata.cloud/ipfs/QmepAy9tEG2qECs6SNS3DTkcFuzo6LKBgxTm79tP4GLcq3">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     a {
       color: #00ffd5;
@@ -74,7 +76,62 @@
         <p><strong>Solana Balance:</strong> <span id="solanaBalance"></span> SOL</p>
       </div>
     </div>
-    <div class="bk2 col-6"></div>
+    <div class="bk2 col-6">
+      
+      <canvas id="candlestickChart" width="800" height="400"></canvas>
+
+  <script>
+    // Sample Solana price data (replace with actual data)
+    const solPriceData = [
+      { timestamp: 1631740800000, open: 140.23, high: 145.67, low: 138.20, close: 143.50 }, // Example data point 1 (timestamp in milliseconds)
+      { timestamp: 1631827200000, open: 143.50, high: 148.90, low: 142.00, close: 147.80 }, // Example data point 2
+      // Add more data points as needed
+    ];
+
+    // Prepare data for Chart.js
+    const chartData = solPriceData.map(data => ({
+      t: new Date(data.timestamp),
+      o: data.open,
+      h: data.high,
+      l: data.low,
+      c: data.close
+    }));
+
+    // Create the candlestick chart
+    const ctx = document.getElementById('candlestickChart').getContext('2d');
+    const candlestickChart = new Chart(ctx, {
+      type: 'candlestick',
+      data: {
+        datasets: [{
+          label: 'SOL Candlestick Chart',
+          data: chartData,
+          borderColor: 'blue',
+          borderWidth: 1,
+          // Custom color for the candlesticks
+          color: {
+            up: 'rgba(0, 0, 255, 0.5)', // Blue color for up (bullish) candles
+            down: 'rgba(0, 0, 255, 0.5)', // Blue color for down (bearish) candles
+          }
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          xAxes: [{
+            type: 'time',
+            time: {
+              unit: 'day' // You can customize the time scale as needed
+            },
+            ticks: {
+              source: 'data'
+            }
+          }],
+          // You can customize the y-axis scale as needed
+        }
+      }
+    });
+  </script>
+    </div>
   </div>
 </div>
 
