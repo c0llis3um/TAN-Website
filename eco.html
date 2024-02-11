@@ -65,7 +65,7 @@
     <strong>ECO</strong>
   </a>
   <button class="btn btn-sm btn-primary start" style="width:32px;float: right;" onclick="connectToPhantom()">
-  <svg style="width:16px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c17.7 0 32-14.3 32-32s-14.3-32-32-32H64zM416 272a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg>
+    <svg style="width:16px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c17.7 0 32-14.3 32-32s-14.3-32-32-32H64zM416 272a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg>
   </button>
 </div>
 
@@ -77,35 +77,56 @@
         <p><img src="solanaLogo.svg" style="width: 132px;">  </p>
       </div>
       <div class="bk2 mt-3">
-          <p>Solana Network Wallet Transactions</p>
+        <p><strong>Solana Balance:</strong> <span id="solanaBalance">Loading...</span> SOL</p>
       </div>
     </div>
     <div class="col-sm-12 col-lg-6">
       <div class="bk2 ">
         <!-- TradingView Candlestick Chart Container -->
-  <div id="tv_chart_container" style="width: 100%; height: 500px;"></div>
+        <div id="tv_chart_container" style="width: 100%; height: 500px;"></div>
 
-  <script type="text/javascript">
-    // Create a new TradingView chart
-    new TradingView.widget(
-      {
-        "autosize": true,
-        "symbol": "BINANCE:SOLUSDT", // Change to the appropriate trading pair
-        "interval": "1D", // Daily interval
-        "timezone": "Etc/UTC", // UTC timezone
-        "theme": "dark", // Dark theme
-        "style": "1", // Candlesticks chart style
-        "locale": "en", // English locale
-        "toolbar_bg": "#f1f3f6", // Toolbar background color
-        "enable_publishing": false, // Disable publishing tools
-        "hide_legend": false, // Show the legend
-        "save_image": false, // Disable saving images
-        "container_id": "tv_chart_container" // ID of the chart container
-      }
-    );
-  </script>
+        <script type="text/javascript">
+          // Ensure @solana/web3.js is loaded before accessing it
+          window.onload = function() {
+            // Create a new TradingView chart
+            new TradingView.widget(
+              {
+                "autosize": true,
+                "symbol": "BINANCE:SOLUSDT", // Change to the appropriate trading pair
+                "interval": "1D", // Daily interval
+                "timezone": "Etc/UTC", // UTC timezone
+                "theme": "dark", // Dark theme
+                "style": "1", // Candlesticks chart style
+                "locale": "en", // English locale
+                "toolbar_bg": "#f1f3f6", // Toolbar background color
+                "enable_publishing": false, // Disable publishing tools
+                "hide_legend": false, // Show the legend
+                "save_image": false, // Disable saving images
+                "container_id": "tv_chart_container" // ID of the chart container
+              }
+            );
+          };
+
+          async function connectToPhantom() {
+            try {
+              if (window.solana && window.solana.isPhantom) {
+                await window.solana.connect();
+                const publicKey = await window.solana.publicKey;
+                document.getElementById("walletAddress").innerText = publicKey.toString();
+                const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'));
+                const balance = await connection.getBalance(publicKey);
+                const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
+                document.getElementById("solanaBalance").innerText = solBalance.toFixed(6);
+              } else {
+                alert("Phantom wallet not found. Please install and activate Phantom to continue.");
+              }
+            } catch (error) {
+              console.error("Error:", error);
+            }
+          }
+        </script>
+      </div>
     </div>
-  </div>
   </div>
 </div>
 
@@ -113,27 +134,5 @@
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-
-
-<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js"></script>
-<script>
-  async function connectToPhantom() {
-    try {
-      if (window.solana && window.solana.isPhantom) {
-        await window.solana.connect();
-        const publicKey = await window.solana.publicKey;
-        document.getElementById("walletAddress").innerText = publicKey.toString();
-        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'));
-        const balance = await connection.getBalance(publicKey);
-        const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
-        document.getElementById("solanaBalance").innerText = solBalance.toFixed(6);
-      } else {
-        alert("Phantom wallet not found. Please install and activate Phantom to continue.");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  }
-</script>
 </body>
 </html>
