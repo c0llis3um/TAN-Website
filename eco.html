@@ -87,30 +87,24 @@
 
         <script type="text/javascript">
           // Ensure @solana/web3.js is loaded before accessing it
-          window.onload = async function() {
-            // Load @solana/web3.js library dynamically
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/@solana/web3.js';
-            script.onload = function() {
-              // Create a new TradingView chart
-              new TradingView.widget(
-                {
-                  "autosize": true,
-                  "symbol": "BINANCE:SOLUSDT", // Change to the appropriate trading pair
-                  "interval": "1D", // Daily interval
-                  "timezone": "Etc/UTC", // UTC timezone
-                  "theme": "dark", // Dark theme
-                  "style": "1", // Candlesticks chart style
-                  "locale": "en", // English locale
-                  "toolbar_bg": "#f1f3f6", // Toolbar background color
-                  "enable_publishing": false, // Disable publishing tools
-                  "hide_legend": false, // Show the legend
-                  "save_image": false, // Disable saving images
-                  "container_id": "tv_chart_container" // ID of the chart container
-                }
-              );
-            };
-            document.body.appendChild(script);
+          window.onload = function() {
+            // Create a new TradingView chart
+            new TradingView.widget(
+              {
+                "autosize": true,
+                "symbol": "BINANCE:SOLUSDT", // Change to the appropriate trading pair
+                "interval": "1D", // Daily interval
+                "timezone": "Etc/UTC", // UTC timezone
+                "theme": "dark", // Dark theme
+                "style": "1", // Candlesticks chart style
+                "locale": "en", // English locale
+                "toolbar_bg": "#f1f3f6", // Toolbar background color
+                "enable_publishing": false, // Disable publishing tools
+                "hide_legend": false, // Show the legend
+                "save_image": false, // Disable saving images
+                "container_id": "tv_chart_container" // ID of the chart container
+              }
+            );
           };
 
           async function connectToPhantom() {
@@ -140,6 +134,5 @@
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-
 </body>
 </html>
