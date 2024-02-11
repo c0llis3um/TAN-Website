@@ -115,26 +115,32 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 
 
-<script src="https://solana-labs.github.io/wallet-adapter/dist/wallet-adapter.umd.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js"></script>
 <script>
   async function connectToPhantom() {
     try {
       if (window.solana && window.solana.isPhantom) {
         await window.solana.connect();
+        console.log("Connected to Phantom wallet.");
         const publicKey = await window.solana.publicKey;
+        console.log("Public key:", publicKey.toString());
         document.getElementById("walletAddress").innerText = publicKey.toString();
         const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'));
         const balance = await connection.getBalance(publicKey);
+        console.log("Balance (in lamports):", balance);
         const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
+        console.log("Solana balance:", solBalance.toFixed(6), "SOL");
         document.getElementById("solanaBalance").innerText = solBalance.toFixed(6);
       } else {
         alert("Phantom wallet not found. Please install and activate Phantom to continue.");
       }
     } catch (error) {
       console.error("Error:", error);
+      alert("An error occurred. Please check the console for details.");
     }
   }
 </script>
+
 </body>
 </html>
