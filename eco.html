@@ -61,7 +61,7 @@
 <body>
 
 <div class="navbar col-lg-12 mt-1">
-  <a href='/eco'> 
+  <a href="eco.html"> 
     <strong>ECO</strong>
   </a>
   <button class="btn btn-sm btn-primary start" style="width:32px;float: right;" onclick="connectToPhantom()">
@@ -79,6 +79,14 @@
       <div class="bk2 mt-3">
         <p><strong>Solana Balance:</strong> <span id="solanaBalance">Loading...</span> SOL</p>
       </div>
+      <div class="bk2 mt-3">
+        <p><strong>Solana Transactions:</strong></p>
+        <table>
+          <thead>
+            
+          </thead>
+        </table>
+      </div>
     </div>
     <div class="col-sm-12 col-lg-6">
       <div class="bk2 ">
@@ -86,6 +94,27 @@
         <div id="tv_chart_container" style="width: 100%; height: 500px;"></div>
 
         <script type="text/javascript">
+          // Ensure @solana/web3.js is loaded before accessing it
+          window.onload = function() {
+            // Create a new TradingView chart
+            new TradingView.widget(
+              {
+                "autosize": true,
+                "symbol": "BINANCE:SOLUSDT", // Change to the appropriate trading pair
+                "interval": "1D", // Daily interval
+                "timezone": "Etc/UTC", // UTC timezone
+                "theme": "dark", // Dark theme
+                "style": "1", // Candlesticks chart style
+                "locale": "en", // English locale
+                "toolbar_bg": "#f1f3f6", // Toolbar background color
+                "enable_publishing": false, // Disable publishing tools
+                "hide_legend": false, // Show the legend
+                "save_image": false, // Disable saving images
+                "container_id": "tv_chart_container" // ID of the chart container
+              }
+            );
+          };
+
           async function connectToPhantom() {
             try {
               if (window.solana && window.solana.isPhantom) {
