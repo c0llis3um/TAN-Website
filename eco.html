@@ -6,62 +6,11 @@
   <title>Eco</title>
   <link rel="icon" type="image/x-icon" href="https://gateway.pinata.cloud/ipfs/QmepAy9tEG2qECs6SNS3DTkcFuzo6LKBgxTm79tP4GLcq3">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-
-  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-
-  <style>
-    a {
-      color: #00ffd5;
-    }
-    .btn-primary {
-      color: #5c2f8e;
-      background-color: #00ffd5;
-      width: 138px;
-    }
-    body {
-      background: #160720;
-      color: white;
-      min-height: 71vw;
-    }
-    h1, h2, h3, h4 {
-      font-weight: 800;
-      color: #00ffd5;
-    }
-    .bk {
-      background: #2f284091;
-      margin-top: 26px;
-      padding: 7% !important;
-      border-radius: 7px;
-    }
-    #walleticon {
-      width: 30px;
-      float: right;
-    }
-    .bk2 {
-      font-size: 11px;
-      background: #3c3a4640;
-      padding: 2%;
-      border-radius: 6px;
-      color: aquamarine;
-    }
-    .card {
-      background-color: #ffffff14;
-    }
-    @media only screen and (max-width: 600px) {
-      h1 {
-        font-size: 3.6rem;
-      }
-      a {
-        color: #00ffd5;
-        font-size: 12px;
-      }
-    }
-  </style>
 </head>
 <body>
 
 <div class="navbar col-lg-12 mt-1">
-  <a href="eco.html"> 
+  <a href='/eco'> 
     <strong>ECO</strong>
   </a>
   <button class="btn btn-sm btn-primary start" style="width:32px;float: right;" onclick="connectToPhantom()">
@@ -79,50 +28,6 @@
       <div class="bk2 mt-3">
         <p><strong>Solana Balance:</strong> <span id="solanaBalance">Loading...</span> SOL</p>
       </div>
-      <script type="text/javascript">
-  async function connectToPhantom() {
-    try {
-      if (window.solana && window.solana.isPhantom) {
-        await window.solana.connect();
-        const publicKey = await window.solana.publicKey;
-        document.getElementById("walletAddress").innerText = publicKey.toString();
-        
-        // Load the solanaWeb3.js library if not already loaded
-        if (typeof solanaWeb3 === 'undefined') {
-          const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/@solana/web3.js';
-          script.onload = function() {
-            // Once the library is loaded, proceed with fetching balance
-            fetchSolanaBalance(publicKey);
-          };
-          document.head.appendChild(script);
-        } else {
-          // If the library is already loaded, directly fetch balance
-          fetchSolanaBalance(publicKey);
-        }
-      } else {
-        alert("Phantom wallet not found. Please install and activate Phantom to continue.");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  }
-
-  async function fetchSolanaBalance(publicKey) {
-    const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'));
-    const balance = await connection.getBalance(publicKey);
-    const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
-    document.getElementById("solanaBalance").innerText = solBalance.toFixed(6);
-  }
-</script>
-      <div class="bk2 mt-3">
-        <p><strong>Solana Transactions:</strong></p>
-        <table>
-          <thead>
-            
-          </thead>
-        </table>
-      </div>
     </div>
     <div class="col-sm-12 col-lg-6">
       <div class="bk2 ">
@@ -130,30 +35,37 @@
         <div id="tv_chart_container" style="width: 100%; height: 500px;"></div>
 
         <script type="text/javascript">
-          // Ensure @solana/web3.js is loaded before accessing it
-          window.onload = function() {
-            // Create a new TradingView chart
-            new TradingView.widget(
-              {
-                "autosize": true,
-                "symbol": "BINANCE:SOLUSDT", // Change to the appropriate trading pair
-                "interval": "1D", // Daily interval
-                "timezone": "Etc/UTC", // UTC timezone
-                "theme": "dark", // Dark theme
-                "style": "1", // Candlesticks chart style
-                "locale": "en", // English locale
-                "toolbar_bg": "#f1f3f6", // Toolbar background color
-                "enable_publishing": false, // Disable publishing tools
-                "hide_legend": false, // Show the legend
-                "save_image": false, // Disable saving images
-                "container_id": "tv_chart_container" // ID of the chart container
+          async function connectToPhantom() {
+            try {
+              if (window.solana && window.solana.isPhantom) {
+                await window.solana.connect();
+                const publicKey = await window.solana.publicKey;
+                document.getElementById("walletAddress").innerText = publicKey.toString();
+              } else {
+                alert("Phantom wallet not found. Please install and activate Phantom to continue.");
               }
-            );
-          };
-
+            } catch (error) {
+              console.error("Error:", error);
+            }
+          }
+          
+          // Load solanaWeb3.js library with defer attribute
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/@solana/web3.js';
+          script.defer = true;
+          document.head.appendChild(script);
+          
+          // Function to fetch Solana balance after library is loaded
+          function fetchSolanaBalance(publicKey) {
+            const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'));
+            connection.getBalance(publicKey).then(balance => {
+              const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
+              document.getElementById("solanaBalance").innerText = solBalance.toFixed(6);
+            }).catch(error => {
+              console.error("Error fetching Solana balance:", error);
+            });
+          }
         </script>
-
-
       </div>
     </div>
   </div>
