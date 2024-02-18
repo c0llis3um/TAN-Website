@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
   <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     a {
       color: #00ffd5;
@@ -103,8 +103,42 @@
                             <div class="container">
           
            <div class="row">
-            <div class="col bk2">
-              <p>SOL/USDT</p>
+            <div class="col-6 bk2">
+              
+<canvas id="donutChart" width="400" height="400"></canvas>
+
+<script>
+  // Data for the donut chart (20% USDC and 80% SOL)
+  const data = {
+    labels: ['USDC', 'SOL'],
+    datasets: [{
+      data: [20, 80],
+      backgroundColor: [
+        '#00FFD5', // Solana color
+        '#4F77FF'  // USDC color
+      ],
+      borderColor: 'transparent' // Remove white borders
+    }]
+  };
+
+  // Options for the donut chart
+  const options = {
+    animation: {
+      animateRotate: true,
+      animateScale: true
+    }
+  };
+
+  // Get the canvas element
+  const ctx = document.getElementById('donutChart').getContext('2d');
+
+  // Create the donut chart
+  const myChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: data,
+    options: options
+  });
+</script>
             </div>
             <div class="col bk2">
               <p>Number Transactions</p>
