@@ -87,6 +87,26 @@
             
           </div>
         <p><strong>Wallet Address:</strong> <span id="walletAddress"></span></p>
+        <h1>Solana Price</h1>
+
+<div id="solPrice">Loading...</div>
+
+<script>
+  async function fetchSolanaPrice() {
+    try {
+      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+      const data = await response.json();
+      const solPrice = data.solana.usd;
+      document.getElementById("solPrice").innerText = `Current Solana Price: $${solPrice}`;
+    } catch (error) {
+      console.error("Error fetching Solana price:", error);
+      document.getElementById("solPrice").innerText = "Error fetching Solana price";
+    }
+  }
+
+  // Call the function to fetch Solana price when the page loads
+  fetchSolanaPrice();
+</script>
         <p><img src="solanaLogo.svg" style="width: 132px;">  </p>
       </div>
       <div class="bk2 mt-3">
