@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solana Wallet Balance</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #111;
+    color: #fff;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+  }
+  .container {
+    padding: 20px;
+  }
+  button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  button:hover {
+    background-color: #45a049;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Solana Wallet Balance</h1>
+  <button id="connectButton">Connect Wallet</button>
+  <div id="walletAddress"></div>
+  <div id="walletBalance"></div>
+</div>
+
+<script>
+  const connectButton = document.getElementById('connectButton');
+  const walletAddressDiv = document.getElementById('walletAddress');
+  const walletBalanceDiv = document.getElementById('walletBalance');
+
+  async function connectWallet() {
+    try {
+      const publicKey = await solana.connect();
+      const balance = await solana.getBalance(publicKey);
+      walletAddressDiv.innerText = `Wallet Address: ${publicKey}`;
+      walletBalanceDiv.innerText = `Solana Balance: ${balance} SOL`;
+    } catch (error) {
+      console.error('Error connecting to wallet:', error.message);
+      walletAddressDiv.innerText = 'Error connecting to wallet';
+    }
+  }
+
+  connectButton.addEventListener('click', connectWallet);
+</script>
+</body>
+</html>
