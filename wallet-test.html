@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Solana Wallet Balance</title>
+<title>Phantom Wallet Balance</title>
 <style>
   body {
     font-family: Arial, sans-serif;
@@ -31,7 +31,7 @@
 </head>
 <body>
 <div class="container">
-  <h1>Solana Wallet Balance</h1>
+  <h1>Phantom Wallet Balance</h1>
   <button id="connectButton">Connect Wallet</button>
   <div id="walletAddress"></div>
   <div id="walletBalance"></div>
@@ -44,8 +44,9 @@
 
   async function connectWallet() {
     try {
-      const publicKey = await solana.connect();
-      const balance = await solana.getBalance(publicKey);
+      const phantomWallet = await window.solana.connect();
+      const publicKey = phantomWallet.publicKey.toString();
+      const balance = await window.solana.getBalance(publicKey);
       walletAddressDiv.innerText = `Wallet Address: ${publicKey}`;
       walletBalanceDiv.innerText = `Solana Balance: ${balance} SOL`;
     } catch (error) {
