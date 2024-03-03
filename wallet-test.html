@@ -59,7 +59,7 @@
         walletAddressDiv.innerText = `Wallet Address: ${publicKey}`;
         
         // Use Solana Web3 to get balance
-        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('devnet'));
+        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'));
         const balance = await connection.getBalance(publicKey);
         walletBalanceDiv.innerText = `Solana Balance: ${balance / solanaWeb3.LAMPORTS_PER_SOL} SOL`;
       } else {
