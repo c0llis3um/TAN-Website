@@ -3,76 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Phantom Wallet Balance</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #111;
-    color: #fff;
-    text-align: center;
-    margin: 0;
-    padding: 0;
-  }
-  .container {
-    padding: 20px;
-  }
-  button {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-  }
-  button:hover {
-    background-color: #45a049;
-  }
-</style>
-<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js"></script>
+<title>Solana Wallet Information</title>
+<script src="https://cdn.solana.com/latest/web3.min.js"></script>
+<script>
+    async function displaySolanaInfo() {
+        // Connect to Solana network
+        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('devnet'));
+
+        // Wallet address
+        const publicKey = // Enter the public key of your Solana wallet here;
+        document.getElementById('solanaAddress').innerText = publicKey.toString();
+
+        // Get balance
+        const balance = await connection.getBalance(publicKey);
+        document.getElementById('solanaBalance').innerText = balance;
+    }
+</script>
 </head>
 <body>
-<div class="container">
-  <h1>Phantom Wallet Balance</h1>
-  <button id="connectButton">Connect Wallet</button>
-  <div id="walletAddress"></div>
-  <div id="walletBalance"></div>
-</div>
-
-
-<script>
-  const connectButton = document.getElementById('connectButton');
-  const walletAddressDiv = document.getElementById('walletAddress');
-  const walletBalanceDiv = document.getElementById('walletBalance');
-
-  async function connectWallet() {
-    try {
-      // Check if Phantom is installed
-      if (!window.solana || !window.solana.isPhantom) {
-        throw new Error('Phantom Wallet is not installed');
-      }
-
-      // Request connection to Phantom
-      const connected = await window.solana.connect();
-      
-      // If connected, get public key
-      if (connected) {
-        const publicKey = window.solana.publicKey.toString();
-        walletAddressDiv.innerText = `Wallet Address: ${publicKey}`;
-        
-        // Use Solana Web3 to get balance
-        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'));
-        const balance = await connection.getBalance(publicKey);
-        walletBalanceDiv.innerText = `Solana Balance: ${balance / solanaWeb3.LAMPORTS_PER_SOL} SOL`;
-      } else {
-        throw new Error('Failed to connect to Phantom Wallet');
-      }
-    } catch (error) {
-      console.error('Error connecting to wallet:', error.message);
-      walletAddressDiv.innerText = 'Error connecting to wallet';
-    }
-  }
-
-  connectButton.addEventListener('click', connectWallet);
-</script>
+    <h1>Solana Wallet Information</h1>
+    <p><strong>Solana Address:</strong> <span id="solanaAddress"></span></p>
+    <p><strong>Solana Balance:</strong> <span id="solanaBalance"></span> SOL</p>
+    <button onclick="displaySolanaInfo()">Display Solana Info</button>
 </body>
 </html>
