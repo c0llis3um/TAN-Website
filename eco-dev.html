@@ -9,6 +9,7 @@
 
   <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- web3.js -->
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js"></script>
 
   <style>
@@ -248,14 +249,15 @@
   } catch (error) {
     console.error("Error:", error);
   }
+  async function fetchSolanaBalance(publicKey) {
+    const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'));
+    const balance = await connection.getBalance(publicKey);
+    const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
+    document.getElementById("solanaBalance").innerText = solBalance.toFixed(6);
+  }
 }
 
-async function fetchSolanaBalance(publicKey) {
-  const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'));
-  const balance = await connection.getBalance(publicKey);
-  const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
-  document.getElementById("solanaBalance").innerText = solBalance.toFixed(6);
-}
+
         </script>
 
 
