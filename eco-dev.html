@@ -1,349 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Eco</title>
-  <link rel="icon" type="image/x-icon" href="https://gateway.pinata.cloud/ipfs/QmepAy9tEG2qECs6SNS3DTkcFuzo6LKBgxTm79tP4GLcq3">
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-
-  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- web3.js -->
-  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js"></script>
-
-  <style>
-    a {
-      color: #00ffd5;
-    }
-    nav{
-      padding: 5px;
-    }
-    .btn-primary {
-      color: #5c2f8e;
-      background-color: #00ffd5;
-      width: 138px;
-    }
-    body {
-      background: #160720;
-      color: white;
-      min-height: 71vw;
-    }
-    h1, h2, h3, h4 {
-      font-weight: 800;
-      color: #00ffd5;
-      font-size: 2rem;
-    }
-    .bk {
-      background: #2f284091;
-      margin-top: 26px;
-      padding: 7% !important;
-      border-radius: 7px;
-    }
-    #walleticon {
-      width: 30px;
-      float: right;
-    }
-    .bk2 {
-      font-size: 11px;
-      background: #3c3a4640;
-      padding: 2%;
-      border-radius: 6px;
-      color: aquamarine;
-    }
-    .card {
-      background-color: #ffffff14;
-    }
-    .inputEco{
-      width: 100%;
-      border: none;
-      padding: 14px;
-      border-radius: 10px;
-      background: #4242427d;
-      color:white;
-      background-size: 32px;
-      background-position: 296px 45%!important;
-
-  }
-  .btnp{
-    color: white;
-    width: 100%;
-    border-radius: 10px;
-    padding: 4%;
-    background: #623aad;
-    margin-top: 2%;
-    border: none;
-  }
-    @media only screen and (max-width: 600px) {
-      h1 {
-        font-size: 1.5rem;
-      }
-      a {
-        color: #00ffd5;
-        font-size: 12px;
-      }
-      table{
-        font-size: 8px;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solana Phantom Wallet Connection</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        #wallet-info { margin-top: 20px; }
+    </style>
 </head>
 <body>
-
-<nav>
-   <a href="eco.html"> 
-    <strong>ECO</strong>
-  </a>
-  <a class="d-none"><svg style="width: 30px;height:30px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path fill="#ffffff" d="M32 32c17.7 0 32 14.3 32 32V400c0 8.8 7.2 16 16 16H480c17.7 0 32 14.3 32 32s-14.3 32-32 32H80c-44.2 0-80-35.8-80-80V64C0 46.3 14.3 32 32 32zM160 224c17.7 0 32 14.3 32 32v64c0 17.7-14.3 32-32 32s-32-14.3-32-32V256c0-17.7 14.3-32 32-32zm128-64V320c0 17.7-14.3 32-32 32s-32-14.3-32-32V160c0-17.7 14.3-32 32-32s32 14.3 32 32zm64 32c17.7 0 32 14.3 32 32v96c0 17.7-14.3 32-32 32s-32-14.3-32-32V224c0-17.7 14.3-32 32-32zM480 96V320c0 17.7-14.3 32-32 32s-32-14.3-32-32V96c0-17.7 14.3-32 32-32s32 14.3 32 32z"/></svg></a>
-  <a><span id="walletAddress"></span></a>
-  <button class="btn btn-sm btn-primary start" style="width:32px;float: right;" onclick="connectToPhantom()">
-
-    <svg style="width:16px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V192c0-35.3-28.7-64-64-64H80c-8.8 0-16-7.2-16-16s7.2-16 16-16H448c17.7 0 32-14.3 32-32s-14.3-32-32-32H64zM416 272a32 32 0 1 1 0 64 32 32 0 1 1 0-64z"/></svg>
-  </button>
-</nav>
-
-<div class="container mt-5">
-  <div class="row">
-    <div></div>
-    <div id="walletInfo" class="col-sm-12 col-lg-6">
-
-<div class="text-center price">
-  <div class="row">
-    <div class="col-4">
-       <h1 id="solanaBalance">Loading...</h1> SRT Balance
+    <h1>Connect to Phantom Wallet</h1>
+    <button id="connect-btn">Connect Wallet</button>
+    <div id="wallet-info" style="display: none;">
+        <p><strong>Wallet Address:</strong> <span id="wallet-address"></span></p>
+        <p><strong>Balance:</strong> <span id="wallet-balance"></span> SOL</p>
     </div>
-    <div class="col-4">
-       <h1 id="solanaBalance">Loading...</h1> SOL Balance
-    </div>
-    <div class="col-4">
-       <h1 id="solPrice">Loading...</h1>
 
-            <script>
-              async function fetchSolanaPrice() {
-                try {
-                  const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
-                  const data = await response.json();
-                  const solPrice = data.solana.usd;
-                  document.getElementById("solPrice").innerText = `$${solPrice}`;
-                } catch (error) {
-                  console.error("Error fetching Solana price:", error);
-                  document.getElementById("solPrice").innerText = "Error fetching Solana price";
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.51.1/dist/web3.min.js"></script>
+    <script>
+        const connectButton = document.getElementById('connect-btn');
+        const walletInfoDiv = document.getElementById('wallet-info');
+        const walletAddressSpan = document.getElementById('wallet-address');
+        const walletBalanceSpan = document.getElementById('wallet-balance');
+
+        connectButton.addEventListener('click', async () => {
+            try {
+                const { solana } = window;
+
+                if (solana && solana.isPhantom) {
+                    const response = await solana.connect();
+                    const publicKey = response.publicKey.toString();
+                    walletAddressSpan.textContent = publicKey;
+                    walletInfoDiv.style.display = 'block';
+
+                    // Fetch balance
+                    const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('devnet'), 'confirmed');
+                    const balance = await connection.getBalance(new solanaWeb3.PublicKey(publicKey));
+                    walletBalanceSpan.textContent = (balance / solanaWeb3.LAMPORTS_PER_SOL).toFixed(2);
+                } else {
+                    alert('Phantom wallet not found! Make sure you have Phantom extension installed.');
                 }
-              }
-
-              // Call the function to fetch Solana price when the page loads
-              fetchSolanaPrice();
-            </script>
-                    <p><img src="solanaLogo.svg" style="width: 90px;">  </p>
-    </div>
-  </div>
-            
-
-       <div class="container">
-          
-           <div class="row">
-            <div class="col-lg-6  bk2">
-              <input type="text" name="soladdress" class="inputEco" placeholder="0" 
-                style="background-image: url(Solana_logo.png);
-                background-repeat: no-repeat;
-                background-size: 32px;
-                background-position: 209px 39%;">
-              <input type="text" name="soladdress" class="inputEco mt-2" placeholder="0 SRT"
-                style="background-image: url(logo-srt.jpg);
-                background-repeat: no-repeat;
-                background-size: 32px;
-                background-position: 209px 39%;">
-              <button class="btn btn-primary btnp">Swap SRT</button>
-            </div>
-            <div class="col-sm-12 col-lg-6 bk2">
-
-
-
-<canvas id="donutChart" width="400" height="400"></canvas>
-
-<script>
-  // Data for the donut chart (20% USDC and 80% SOL)
-  const data = {
-    labels: ['SRT', 'SOL'],
-    datasets: [{
-      data: [20, 80],
-      backgroundColor: [
-        '#00FFD5', // Solana color
-        '#623aad'  // USDC color
-      ],
-      borderColor: 'transparent' // Remove white borders
-    }]
-  };
-
-  // Options for the donut chart
-  const options = {
-    animation: {
-      animateRotate: true,
-      animateScale: true
-    }
-  };
-
-  // Get the canvas element
-  const ctx = document.getElementById('donutChart').getContext('2d');
-
-  // Create the donut chart
-  const myChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: data,
-    options: options
-  });
-</script>
-            </div>      
-
-        </div>
-   </div>
-      </div>
-
-
-
-            <script type="text/javascript">
-          // Ensure @solana/web3.js is loaded before accessing it
-          window.onload = function() {
-            // Create a new TradingView chart
-            new TradingView.widget(
-              {
-                "autosize": true,
-                "symbol": "BINANCE:SOLUSDT", // Change to the appropriate trading pair
-                "interval": "1D", // Daily interval
-                "timezone": "Etc/UTC", // UTC timezone
-                "theme": "dark", // Dark theme
-                "style": "1", // Candlesticks chart style
-                "locale": "en", // English locale
-                "toolbar_bg": "#f1f3f6", // Toolbar background color
-                "enable_publishing": false, // Disable publishing tools
-                "hide_legend": false, // Show the legend
-                "save_image": false, // Disable saving images
-                "container_id": "tv_chart_container" // ID of the chart container
-              }
-            );
-          };
-
- async function connectToPhantom() {
-  try {
-    if (window.solana && window.solana.isPhantom) {
-      await window.solana.connect();
-      const publicKey = await window.solana.publicKey;
-      document.getElementById("walletAddress").innerText = publicKey.toString();
-      
-      // Load Solana Web3 library if not already loaded
-      if (typeof solanaWeb3 === 'undefined') {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/@solana/web3.js';
-        script.onload = function() {
-          // Once library is loaded, fetch balance
-          fetchSolanaBalance(publicKey);
-        };
-        document.head.appendChild(script);
-      } else {
-        // If library is already loaded, directly fetch balance
-        fetchSolanaBalance(publicKey);
-      }
-    } else {
-      alert("Phantom wallet not found. Please install and activate Phantom to continue.");
-    }
-  } catch (error) {
-    console.error("Error:", error);
-  }
-  async function fetchSolanaBalance(publicKey) {
-    const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'));
-    const balance = await connection.getBalance(publicKey);
-    const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
-    document.getElementById("solanaBalance").innerText = solBalance.toFixed(6);
-  }
-}
-
-
-        </script>
-
-
-
-      <div class="bk2 mt-3">
-         
-        <p><strong>Solana Transactions:</strong>        <svg style="width: 13px;float: right;color:white;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path fill="#ffffff" d="M224 136V0H24C10.7 0 0 10.7 0 24v464c0 13.3 10.7 24 24 24h336c13.3 0 24-10.7 24-24V160H248c-13.2 0-24-10.8-24-24zm60.1 106.5L224 336l60.1 93.5c5.1 8-.6 18.5-10.1 18.5h-34.9c-4.4 0-8.5-2.4-10.6-6.3C208.9 405.5 192 373 192 373c-6.4 14.8-10 20-36.6 68.8-2.1 3.9-6.1 6.3-10.5 6.3H110c-9.5 0-15.2-10.5-10.1-18.5l60.3-93.5-60.3-93.5c-5.2-8 .6-18.5 10.1-18.5h34.8c4.4 0 8.5 2.4 10.6 6.3 26.1 48.8 20 33.6 36.6 68.5 0 0 6.1-11.7 36.6-68.5 2.1-3.9 6.2-6.3 10.6-6.3H274c9.5-.1 15.2 10.4 10.1 18.4zM384 121.9v6.1H256V0h6.1c6.4 0 12.5 2.5 17 7l97.9 98c4.5 4.5 7 10.6 7 16.9z"/></svg></p>
-
-<table class="table table-hover text-white">
-  <thead>
-    <tr>
-      <th scope="col">Date</th>
-      <th scope="col">Action</th>
-      <th scope="col">Token</th>
-      <th scope="col">Qty</th>
-      <th scope="col">Hash</th>
-      <th scope="col">Exchange</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th scope="row">1/2/2024</th>
-      <td>Sent </td>
-      <td>SOL</td>
-      <td>1</td>
-      <td>0912hnm12</td>
-      <td>Coinbase</td>
-    </tr>
-    <tr>
-      <th scope="row">1/2/2024</th>
-      <td>Received </td>
-      <td>SOL</td>
-      <td>1</td>
-      <td>0912hnm12</td>
-      <td>Coinbase</td>
-    </tr>
-    <tr>
-      <th scope="row">1/2/2024</th>
-      <td>Swap </td>
-      <td>BONK</td>
-      <td>1</td>
-      <td>0912hnm12</td>
-      <td>Coinbase</td>
-    </tr>
-  </tbody>
-</table>
-      </div>
-    </div>
-    <div class="col-sm-12 col-lg-6">
-      <div class="bk2 ">
-        <!-- TradingView Candlestick Chart Container -->
-        <div id="tv_chart_container" style="width: 100%; height: 500px;"></div>
-
-        <script type="text/javascript">
-          // Ensure @solana/web3.js is loaded before accessing it
-          window.onload = function() {
-            // Create a new TradingView chart
-            new TradingView.widget(
-              {
-                "autosize": true,
-                "symbol": "BINANCE:SOLUSDT", // Change to the appropriate trading pair
-                "interval": "1D", // Daily interval
-                "timezone": "Etc/UTC", // UTC timezone
-                "theme": "dark", // Dark theme
-                "style": "1", // Candlesticks chart style
-                "locale": "en", // English locale
-                "toolbar_bg": "#f1f3f6", // Toolbar background color
-                "enable_publishing": false, // Disable publishing tools
-                "hide_legend": false, // Show the legend
-                "save_image": false, // Disable saving images
-                "container_id": "tv_chart_container" // ID of the chart container
-              }
-            );
-          };
-
-        </script>
-
-
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Bootstrap scripts -->
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+            } catch (error) {
+                console.error(error);
+                alert('Failed to connect. Check console for details.');
+            }
+        });
+    </script>
 </body>
 </html>
