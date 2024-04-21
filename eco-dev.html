@@ -16,36 +16,45 @@
         <p><strong>Wallet Address:</strong> <span id="wallet-address"></span></p>
         <p><strong>Balance:</strong> <span id="wallet-balance"></span> SOL</p>
     </div>
+<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.51.1/dist/web3.min.js"></script>
+<script>
+    const connectButton = document.getElementById('connect-btn');
+    const walletInfoDiv = document.getElementById('wallet-info');
+    const walletAddressSpan = document.getElementById('wallet-address');
+    const walletBalanceSpan = document.getElementById('wallet-balance');
 
-    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.51.1/dist/web3.min.js"></script>
-    <script>
-        const connectButton = document.getElementById('connect-btn');
-        const walletInfoDiv = document.getElementById('wallet-info');
-        const walletAddressSpan = document.getElementById('wallet-address');
-        const walletBalanceSpan = document.getElementById('wallet-balance');
+    connectButton.addEventListener('click', async () => {
+        try {
+            const { solana } = window;
 
-        connectButton.addEventListener('click', async () => {
-            try {
-                const { solana } = window;
+            if (solana && solana.isPhantom) {
+                console.log("Phantom wallet detected.");
+                
+                const response = await solana.connect({ onlyIfTrusted: true });
+                console.log("Wallet connected:", response.publicKey.toString());
 
-                if (solana && solana.isPhantom) {
-                    const response = await solana.connect();
-                    const publicKey = response.publicKey.toString();
-                    walletAddressSpan.textContent = publicKey;
-                    walletInfoDiv.style.display = 'block';
+                const publicKey = response.publicKey;
+                walletAddressSpan.textContent = publicKey.toString();
+                walletInfoDiv.style.display = 'block';
 
-                    // Fetch balance
-                    const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('devnet'), 'confirmed');
-                    const balance = await connection.getBalance(new solanaWeb3.PublicKey(publicKey));
-                    walletBalanceSpan.textContent = (balance / solanaWeb3.LAMPORTS_PER_SOL).toFixed(2);
-                } else {
-                    alert('Phantom wallet not found! Make sure you have Phantom extension installed.');
-                }
-            } catch (error) {
-                console.error(error);
-                alert('Failed to connect. Check console for details.');
+                // Establish a connection to the Solana blockchain
+                const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('devnet'), 'confirmed');
+                console.log("Connected to Solana devnet.");
+
+                // Fetch the balance
+                const balance = await connection.getBalance(publicKey);
+                console.log("Balance fetched:", balance);
+                walletBalanceSpan.textContent = (balance / solanaWeb3.LAMPORTS_PER_SOL).toFixed(2);
+            } else {
+                alert('Phantom wallet not found! Make sure you have the Phantom extension installed.');
+                console.log("Phantom wallet extension is not installed.");
             }
-        });
-    </script>
+        } catch (error) {
+            console.error("Error:", error);
+            alert('Failed to connect. Check console for details.');
+        }
+    });
+</script>
+
 </body>
 </html>
