@@ -1,0 +1,415 @@
+ <!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <title>
+    XRP
+  </title>
+  <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
+  <!--     Fonts and icons     -->
+<link href="https://fonts.googleapis.com/css2?family=Exo:wght@300&display=swap" rel="stylesheet">
+
+
+<link rel="stylesheet" type="text/css" href="style-dark.css">
+
+<script src="https://unpkg.com/xrpl/build/xrpl-latest-min.js"></script>
+ <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+
+ <script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function() {
+    const dayThemeBtn = document.getElementById("day-theme");
+    const nightThemeBtn = document.getElementById("night-theme");
+
+    if (dayThemeBtn && nightThemeBtn) {
+        dayThemeBtn.addEventListener("click", function() {
+            document.body.classList.add("daytheme");
+        });
+
+        nightThemeBtn.addEventListener("click", function() {
+            document.body.classList.remove("daytheme");
+        });
+    }
+});
+</script>
+</head>
+
+<body>
+
+
+    <div>
+     <section class="eth-logo">
+        <img class="logo" src="logo.svg"/>
+        <div class="ripple-background" style="z-index: -1000;position: fixed;top:10%;left: 50%;">
+          <div class="circle xxlarge shade1"></div>
+          <div class="circle xlarge shade2"></div>
+          <div class="circle large shade3"></div>
+          <div class="circle mediun shade4"></div>
+          <div class="circle small shade5"></div>
+      </div>
+     </section> 
+
+        <div class="content-inputs">
+
+          <h1>XRP Wallet Transactions Viewer</h1>
+
+              <!-- Form to input XRP wallet address -->
+              <div class="form-group">
+                <label for="wallet-address">Enter XRP Wallet Address:</label>
+                <input type="text" id="wallet-address" autofocus>
+              </div>
+
+              <button id="view-transactions" class="btn submit">View Transactions</button>
+              <p class="error" id="error-message"></p>
+
+<div class="trans dnone" id="transactions">
+
+<div id="transaction-summary">
+  <div class="cl5 totalt"><small>Total Transactions</small>
+    <div id="total-transactions" class="">Total Transactions: 0</div>
+  </div>
+  <div class="cl5"><small>Total XRP Amount</small>
+    <div id="total-xrp" >Total XRP Amount: 0.00 XRP</div>
+  </div>
+  <div class="cl5"><small>Sent</small>
+   <div id="total-sent" >Total Sent: 0.00 XRP</div>
+  </div>
+  <div class="cl5"><small>Received</small>  
+    <div id="total-received" >Total Received: 0.00 XRP</div>
+  </div>
+  <div class="cl5"><small>Tokens</small>
+    <div id="total-tokens" >Tokens: 0.00</div>
+   </div> 
+</div>
+
+  <!-- Transactions Table -->
+  <h2>Transactions</h2>
+   <table id="transactions-table">
+    <thead>
+      <tr>
+        <th>Transaction Hash</th>
+        <th>Type</th>
+        <th>Amount</th>
+        <th>Fee</th>
+        <th>Date</th>
+        <th>Explorer Link</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td colspan="6">No transactions available. Enter a wallet address and click "View Transactions" to load.</td>
+      </tr>
+    </tbody>
+  </table>
+
+<!-- Trigger Button -->
+<button id="open-modal-btn" class="btn">Download Data</button>
+
+<!-- Modal Structure -->
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <span id="close-modal-btn" class="close">&times;</span>
+    <h2>$5 XRP</h2>
+    <p>Download your transactions for life!</p>
+
+    <button id="confirm-action" class="btn">Buy Now</button>
+
+      <!-- Download Excel Button -->
+  <button class="excel-button dnone" id="download-excel">
+    <img src="https://img.icons8.com/ios-filled/50/ffffff/ms-excel.png" alt="Excel Icon">
+    Download Excel
+  </button>
+  </div>
+</div>
+
+
+  <!-- Pagination Controls -->
+  <div class="pagination" id="pagination-controls"></div>
+</div>
+
+
+ <div class="theme-sel">
+          <section class="day">
+
+            <a href="#" id="day-theme">
+              <svg id="Capa_1" fill="#FFFFFF" enable-background="new 0 0 512 512"viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><g><g><path d="m256 360.099c-57.4 0-104.099-46.698-104.099-104.099s46.699-104.099 104.099-104.099 104.099 46.699 104.099 104.099-46.699 104.099-104.099 104.099z"/></g><g><path d="m256 116.071c-8.284 0-15-6.716-15-15v-86.071c0-8.284 6.716-15 15-15s15 6.716 15 15v86.071c0 8.284-6.716 15-15 15z"/></g><g><path d="m146.449 161.449c-3.839 0-7.678-1.464-10.606-4.393l-60.863-60.862c-5.858-5.858-5.858-15.355 0-21.213 5.857-5.858 15.355-5.858 21.213 0l60.862 60.861c5.858 5.858 5.858 15.355 0 21.213-2.928 2.929-6.767 4.394-10.606 4.394z"/></g><g><path d="m101.071 271h-86.071c-8.284 0-15-6.716-15-15s6.716-15 15-15h86.071c8.284 0 15 6.716 15 15s-6.716 15-15 15z"/></g><g><path d="m85.587 441.413c-3.839 0-7.678-1.464-10.606-4.394-5.858-5.858-5.858-15.355 0-21.213l60.862-60.861c5.858-5.857 15.356-5.857 21.213 0 5.858 5.858 5.858 15.355 0 21.213l-60.863 60.862c-2.928 2.928-6.767 4.393-10.606 4.393z"/></g><g><path d="m256 512c-8.284 0-15-6.716-15-15v-86.071c0-8.284 6.716-15 15-15s15 6.716 15 15v86.071c0 8.284-6.716 15-15 15z"/></g><g><path d="m426.413 441.413c-3.839 0-7.678-1.464-10.606-4.393l-60.862-60.861c-5.858-5.858-5.858-15.355 0-21.213 5.857-5.858 15.355-5.858 21.213 0l60.862 60.861c5.858 5.858 5.858 15.355 0 21.213-2.929 2.928-6.768 4.393-10.607 4.393z"/></g><g><path d="m497 271h-86.071c-8.284 0-15-6.716-15-15s6.716-15 15-15h86.071c8.284 0 15 6.716 15 15s-6.716 15-15 15z"/></g><g><path d="m365.551 161.449c-3.839 0-7.678-1.464-10.606-4.394-5.858-5.858-5.858-15.355 0-21.213l60.862-60.861c5.857-5.856 15.355-5.858 21.213 0s5.858 15.355 0 21.213l-60.862 60.861c-2.929 2.929-6.769 4.394-10.607 4.394z"/></g></g></svg>
+            </a>
+          </section>
+          <section class="night">
+            <a href="#" id="night-theme">
+              <svg  fill="#FFFFFF" viewBox="-12 0 448 448.04455"  xmlns="http://www.w3.org/2000/svg"><path d="m224.023438 448.03125c85.714843.902344 164.011718-48.488281 200.117187-126.230469-22.722656 9.914063-47.332031 14.769531-72.117187 14.230469-97.15625-.109375-175.890626-78.84375-176-176 .972656-65.71875 37.234374-125.832031 94.910156-157.351562-15.554688-1.980469-31.230469-2.867188-46.910156-2.648438-123.714844 0-224.0000005 100.289062-224.0000005 224 0 123.714844 100.2851565 224 224.0000005 224zm0 0"/></svg>
+
+
+            </a>
+          </section>
+        </div>  
+
+
+
+
+  <script>
+    const client = new xrpl.Client("wss://s.altnet.rippletest.net:51233"); // Testnet client
+    let allTransactions = [];
+    const transactionsPerPage = 5;
+    let currentPage = 1;
+
+    async function connectClient() {
+      if (!client.isConnected()) {
+        await client.connect();
+      }
+    }
+
+async function fetchTransactions() {
+  const walletAddress = document.getElementById("wallet-address").value.trim();
+  const errorMessage = document.getElementById("error-message");
+
+  // Clear error message
+  errorMessage.textContent = "";
+
+  if (!walletAddress) {
+    errorMessage.textContent = "Please enter a valid XRP wallet address.";
+    return;
+  }
+
+  try {
+    await connectClient();
+
+    // Fetch transactions
+    const response = await client.request({
+      command: "account_tx",
+      account: walletAddress,
+      ledger_index_min: -1,
+      ledger_index_max: -1,
+      limit: 20, // Fetch the latest 20 transactions for pagination
+    });
+
+    allTransactions = response.result.transactions.map((tx) => {
+      const amount = tx.tx.Amount;
+      let tokenDetails = null;
+
+      // Check if the transaction involves issued tokens
+      if (typeof amount === "object" && amount.currency && amount.issuer) {
+        tokenDetails = {
+          currency: amount.currency,
+          issuer: amount.issuer,
+          value: parseFloat(amount.value),
+        };
+      }
+
+      return {
+        hash: tx.tx.hash,
+        type: tx.tx.TransactionType,
+        amount: typeof amount === "string" ? xrpl.dropsToXrp(amount) : "-", // XRP transactions
+        fee: xrpl.dropsToXrp(tx.tx.Fee),
+        date: new Date(tx.tx.date * 1000).toLocaleString(),
+        link: `https://testnet.xrpl.org/transactions/${tx.tx.hash}`,
+        tokenDetails: tokenDetails, // Include token details if available
+        isSent: tx.tx.Destination !== walletAddress, // Determine if this is a sent transaction
+      };
+    });
+
+    // Update total transactions
+    const totalTransactions = allTransactions.length;
+
+    // Calculate totals for sent and received XRP
+    const totalSent = allTransactions
+      .filter((tx) => tx.isSent && tx.amount !== "-")
+      .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
+
+    const totalReceived = allTransactions
+      .filter((tx) => !tx.isSent && tx.amount !== "-")
+      .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
+
+    // Count tokens
+    const totalTokens = allTransactions
+      .filter((tx) => tx.tokenDetails)
+      .reduce((sum, tx) => sum + tx.tokenDetails.value, 0);
+
+    // Update the DOM with totals
+    document.getElementById("total-transactions").textContent = `${totalTransactions}`;
+    document.getElementById("total-sent").textContent = `${totalSent.toFixed(2)} XRP`;
+    document.getElementById("total-received").textContent = `${totalReceived.toFixed(2)} XRP`;
+    document.getElementById("total-xrp").textContent = `${(totalSent + totalReceived).toFixed(2)} XRP`;
+    document.getElementById("total-tokens").textContent = `${totalTokens.toFixed(2)}`;
+
+    currentPage = 1; // Reset to the first page
+    displayTransactions();
+    setupPagination();
+  } catch (error) {
+    errorMessage.textContent = `Error fetching transactions: ${error.message}`;
+  }
+}
+
+
+
+    function displayTransactions() {
+      const start = (currentPage - 1) * transactionsPerPage;
+      const end = start + transactionsPerPage;
+      const transactionsToDisplay = allTransactions.slice(start, end);
+
+      const tbody = document.getElementById("transactions-table").querySelector("tbody");
+      tbody.innerHTML = "";
+
+      if (transactionsToDisplay.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6">No transactions found for this wallet address.</td></tr>`;
+        return;
+      }
+
+      transactionsToDisplay.forEach((tx) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${tx.hash}</td>
+          <td>${tx.type}</td>
+          <td>${tx.amount}</td>
+          <td>${tx.fee}</td>
+          <td>${tx.date}</td>
+          <td><a href="${tx.link}" target="_blank">View on Explorer</a></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function setupPagination() {
+      const paginationControls = document.getElementById("pagination-controls");
+      paginationControls.innerHTML = "";
+
+      const totalPages = Math.ceil(allTransactions.length / transactionsPerPage);
+
+      for (let i = 1; i <= totalPages; i++) {
+        const button = document.createElement("button");
+        button.textContent = i;
+        button.classList.toggle("active", i === currentPage);
+        button.addEventListener("click", () => {
+          currentPage = i;
+          displayTransactions();
+          setupPagination();
+        });
+        paginationControls.appendChild(button);
+      }
+    }
+
+
+
+    function downloadExcel() {
+      const sheetData = allTransactions.map((tx) => ({
+        Hash: tx.hash,
+        Type: tx.type,
+        Amount: tx.amount,
+        Fee: tx.fee,
+        Date: tx.date,
+        "Explorer Link": tx.link,
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(sheetData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+      XLSX.writeFile(workbook, "xrp_transactions.xlsx");
+    }
+
+    document.getElementById("view-transactions").addEventListener("click", fetchTransactions);
+    document.getElementById("download-excel").addEventListener("click", downloadExcel);
+
+
+const destinationWallet = "rfefeFsabPP4bJA8bPQs78414w92dSXqwF"; // Replace with the destination wallet address
+  const amountToSend = xrpl.xrpToDrops(5); // 5 XRP in drops (smallest XRP unit)
+
+  // Function to send 5 XRP
+  async function sendXrp() {
+    const walletSecret = prompt("Enter your wallet's secret key to proceed:");
+    if (!walletSecret) {
+      alert("Transaction canceled: Secret key is required.");
+      return;
+    }
+
+    const walletAddress = document.getElementById("wallet-address").value.trim();
+    if (!walletAddress) {
+      alert("Please enter your wallet address in the input field before proceeding.");
+      return;
+    }
+
+    try {
+      // Connect to the XRP Ledger client
+      await connectClient();
+
+      // Create the wallet from the secret key
+      const wallet = xrpl.Wallet.fromSeed(walletSecret);
+
+      if (wallet.classicAddress !== walletAddress) {
+        alert("The provided secret key does not match the wallet address.");
+        return;
+      }
+
+      // Prepare payment transaction
+      const payment = {
+        TransactionType: "Payment",
+        Account: walletAddress,
+        Amount: amountToSend,
+        Destination: destinationWallet,
+      };
+
+      // Autofill transaction details
+      const prepared = await client.autofill(payment);
+
+      // Sign the transaction
+      const signed = wallet.sign(prepared);
+
+      // Submit the transaction
+      const result = await client.submitAndWait(signed.tx_blob);
+
+      // Check transaction status
+      if (result.result.meta.TransactionResult === "tesSUCCESS") {
+        alert("Transaction successful! 5 XRP sent.");
+        // Make the "Download Excel" button visible after the transaction
+        document.getElementById("download-excel").classList.remove("dnone");
+      } else {
+        alert(`Transaction failed: ${result.result.meta.TransactionResult}`);
+      }
+    } catch (error) {
+      alert(`Error sending XRP: ${error.message}`);
+    }
+  }
+
+  // Add event listener to "Confirm Action" button
+  document.getElementById("confirm-action").addEventListener("click", sendXrp);
+
+  // Modal-related code (unchanged)
+  const modal = document.getElementById("modal");
+  const openModalBtn = document.getElementById("open-modal-btn");
+  const closeModalBtn = document.getElementById("close-modal-btn");
+
+  function openModal() {
+    modal.style.display = "block";
+  }
+
+  function closeModal() {
+    modal.style.display = "none";
+  }
+
+  openModalBtn.addEventListener("click", openModal);
+  closeModalBtn.addEventListener("click", closeModal);
+
+  window.addEventListener("click", function (event) {
+    if (event.target === modal) {
+      closeModal();
+    }
+  });
+
+// Get the button and the element to show/hide
+const viewTransactionsBtn = document.getElementById("view-transactions");
+const transactionsElement = document.getElementById("transactions");
+
+// Add event listener to the button
+viewTransactionsBtn.addEventListener("click", function() {
+  // Remove the "dnone" class to make the element visible
+  transactionsElement.classList.remove("dnone");
+});
+
+
+  </script>
+
+
+
+
+</html>

@@ -1,9 +1,9 @@
       a {
     color: #fff;}
   .btn-primary {
-    color: #5c2f8e;;
-    background-color: #36c3ac;
-    width: 138px;}
+    color: white;
+    background-color: #006aff;
+    width: 100%;}
 body{
    background: #0b171b;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -112,12 +112,11 @@ color: aquamarine;
 
 @media only screen and (max-width: 600px){
     body{
-        background-size: 982px!important;
+        background-size: 1216px!important
     }
 h1 {
     font-size: 3.6rem;
     width: 122px;
-    height: 199px;
 }
 .navbar a {
 

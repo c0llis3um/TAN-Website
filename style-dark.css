@@ -1,0 +1,366 @@
+  body{
+    color: white;
+background: #0b171b;
+font-family: 'Exo', sans-serif;
+  }
+  tr{
+    background: #ffffff0a;
+  }
+  small{
+    color: grey;
+    font-size: 9px;
+  }
+.bk1{
+  background: #157ecfe8!important;
+}
+#wallet-details{
+  text-align: left;
+  padding: 8%;
+}
+.dnone{
+  display: none!important;
+}
+
+/* Modal styling */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none; /* Hidden by default */
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: black;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+  h1{
+    font-family: 'Exo', sans-serif;
+    font-weight: bold;
+  }
+  table{
+    font-size: 10px;
+    border: none;
+    width: 100%;
+  }
+.logo{
+  filter: invert(1);
+}
+  .theme-sel
+  {
+
+    right: 10px;
+    top: 10px;
+    display: block;
+    width: 57px;
+    height: 26px;
+    background: #3a3a3a;
+    border-radius: 15px;
+    padding: 10px;
+}
+.svg-r{
+  width: 30px;
+  filter: invert(1);
+}
+    /*animated bk*/
+
+
+.circle {
+    position: absolute;
+    border-radius: 53px;
+    filter: blur(23px);
+    background: #00c5ff;
+    animation: ripple 7s infinite;
+    /* box-shadow: 0px 0px 1px 0px #508fb9; */
+}
+
+.small {
+    width: 106px;
+    height: 126px;
+    left: -54px;
+    bottom: -100px;
+}
+
+.medium{
+
+}
+
+.large{
+
+}
+
+.xlarge{
+
+}
+
+.xxlarge{
+
+}
+
+.shade1{
+  opacity: 0.2;
+}
+.shade2{
+  opacity: 0.5;
+}
+
+.shade3{
+  opacity: 0.7;
+}
+
+.shade4{
+  opacity: 0.8;
+}
+
+.shade5{
+  opacity: 0.9;
+}
+
+@keyframes ripple{
+  0%{
+    transform: scale(0.8);
+  }
+  
+  50%{
+    transform: scale(1.2);
+  }
+  
+  100%{
+    transform: scale(0.8);
+  }
+}
+/*custom*/
+.coinx svg{
+  width: 28px;padding-top: 10px;
+}
+.col-coins, .col-parties{
+display: inline-block;
+width: 49%;
+vertical-align: top;
+}
+.swap-logo{
+  max-width: 67px!important;
+}
+.eth-logo{
+
+      max-width: 133px;
+    margin: auto;
+    display: block;
+    padding: 10px;
+}
+label{
+  padding-top: 10px;
+  display: block;
+
+}
+.daytheme .content-inputs {
+  background: #f3f3f3;
+}
+.daytheme input[type="text" ] {
+  background: #f5f5f5;
+  color: black;
+      width: 51%;
+}
+.content-inputs{
+border-radius: 31px;
+  margin: auto;
+    display: block;
+    text-align: center;
+    background: #0e202ea1;
+    max-width: 80%;
+    padding: 6px;
+  }
+  #transaction-summary{
+    display: flex;
+  }
+  .cl5{
+    display: inline-block;
+    width: 49.9%;
+    margin: 7px;
+    border-radius: 31px;
+    text-align: center;
+    background: #0e202ea1;
+    padding: 36px;
+  }
+.xrpnav button{
+margin-top: 8%;
+    padding: 1% !important;
+    width: 20% !important;
+    font-size: 10px!important;
+    display: inline-block;
+    background: none;
+    border: none;
+    color: white;
+}
+.xrpnav svg{
+  filter: invert(1);
+  width: 40px;
+  display: block;
+    margin: auto;
+}
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 0px solid #ddd;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: ;
+    }
+
+    .pagination {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .pagination button {
+      margin: 0 5px;
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      background-color: #f4f4f4;
+      cursor: pointer;
+    }
+    .pagination button.active {
+      background-color: #007BFF;
+      color: white;
+    }
+
+    /* Responsive Table Styling */
+    .table-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    table {
+      min-width: 100%;
+    }
+    @media (max-width: 900px) {
+      table {
+        font-size: 12px;
+      }
+      th, td {
+        padding: 8px;
+        white-space-collapse: initial;
+        word-break: break-word;
+      }
+      tr{
+        display: grid;
+      }
+    }
+
+    /* Excel Button */
+    .excel-button {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 15px;
+      margin-top: 20px;
+      background-color: #28a745;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+    .excel-button:hover {
+      background-color: #218838;
+    }
+    .excel-button img {
+      margin-right: 8px;
+      width: 20px;
+      height: 20px;
+    }
+    input[type="text" ] {
+margin-top: 10px;
+ color: white;
+    padding: 18px 52px;
+    border-radius: 5px;
+        background: #172931;
+    border: 0px solid #eaeaea;
+    box-shadow: 1px 0px 8px 0px #157ca0;
+    width: 51%;
+}
+    input[type="number" ] {
+margin-top: 10px;
+ color: white;
+    padding: 18px 52px;
+    border-radius: 5px;
+        background: #172931;
+    border: 0px solid #eaeaea;
+    box-shadow: 1px 0px 8px 0px #157ca0;
+    width: 51%;
+}
+a{
+  color: #00daff;
+    text-decoration: none;
+}
+.success{
+  color:#00ff67!important;
+}
+.btn{
+    background: #00c1ff;
+    padding: 18px 75px;
+    color: #0c171c;
+    width: 342px;
+    display: block;
+    margin: auto;
+    text-decoration: none;
+    border: none;
+    border-radius: 5px;
+    margin-top: 14px;
+    cursor: pointer;
+}
+
+.day svg{
+  width: 1.5rem;
+  padding: 2%;
+  float:right;
+}
+.night svg{
+width: 1.4rem;
+padding: 3px;
+}
+#location{
+  float: right;
+}
+body.daytheme {
+  background: white!important;
+  color: black!important;
+}
+@media only screen and (max-width: 600px) {
+  thead{
+    display: none;
+  }
+  #transaction-summary {
+    display: block;
+}
+.cl5 {
+    display: inline-block;
+    width:  31.9%;
+    margin: 7px;
+    border-radius: 31px;
+    text-align: center;
+    background: #0e202ea1;
+    padding: 14px;
+}
+  input[type="text" ] {
+      width: 65%;
+  }
+  .content-inputs {
+    border-radius: 31px;
+    margin: auto;
+    display: block;
+    text-align: center;
+    background: #0e202ea1;
+    max-width: 100%;}
+}
