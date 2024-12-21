@@ -1,5 +1,6 @@
-      a {
-    color: #fff;}
+a {
+    color: #fff;
+}
   .btn-primary {
     color: white;
     background-color: #006aff;
@@ -9,8 +10,6 @@ body{
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
-;
-
 color: grey;
 min-height: 71vw;
 }
@@ -96,6 +95,7 @@ h1{
 
 }
 .logoi{
+    filter: brightness(10);
   width: 32px;
 }
 .bk2{
