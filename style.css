@@ -5,7 +5,8 @@ a {
   .btn-primary {
     color: white;
     background-color: #006aff;
-    width: 100%;}
+    width: 100%;
+max-width: 380px;}
 body{
    background: #0b171b;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
