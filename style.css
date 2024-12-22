@@ -160,6 +160,25 @@ label{
   display: block;
 
 }
+.daytheme .modal-content {
+    background-color: #e5e5e5;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+.daytheme .cl5 {
+    display: inline-block;
+    width: 49.9%;
+    margin: 7px;
+    border-radius: 31px;
+    text-align: center;
+    background: #e7e7e7;
+    color: black;
+    padding: 36px;
+}
+.daytheme .logo {
+    filter: invert(0)!important;
+}
 .daytheme .content-inputs {
   background: #f3f3f3;
 }
