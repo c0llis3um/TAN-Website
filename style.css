@@ -5,6 +5,11 @@
     color: grey;
     font-size: 9px;
   }
+    #transaction-summary {
+    display: block;
+        color: white;
+        font-weight: 600;
+}
 .bk1{
   background: #157ecfe8!important;
 }
