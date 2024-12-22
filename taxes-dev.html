@@ -99,22 +99,30 @@
 <div class="trans dnone" id="transactions">
 
 <div id="transaction-summary">
+  <div class="cl5 xrpb"><small>XRP Balance</small>
+    <div id="xrp-balance">XRP Balance: 0.00 XRP</div>
+  </div>
+  <div class="cl5 rlusd"><small>RLUSD Balance</small>
+    <div id="rlusd-balance">RLUSD Balance: 0.00 RLUSD</div>
+  </div>
   <div class="cl5 totalt"><small>Total Transactions</small>
-    <div id="total-transactions" class="">Total Transactions: 0</div>
+    <div id="total-transactions">Total Transactions: 0</div>
   </div>
   <div class="cl5"><small>Total XRP Amount</small>
-    <div id="total-xrp" >Total XRP Amount: 0.00 XRP</div>
+    <div id="total-xrp">Total XRP Amount: 0.00 XRP</div>
   </div>
   <div class="cl5"><small>Sent</small>
-   <div id="total-sent" >Total Sent: 0.00 XRP</div>
+    <div id="total-sent">Total Sent: 0.00 XRP</div>
   </div>
   <div class="cl5"><small>Received</small>  
-    <div id="total-received" >Total Received: 0.00 XRP</div>
+    <div id="total-received">Total Received: 0.00 XRP</div>
   </div>
   <div class="cl5"><small>Tokens</small>
-    <div id="total-tokens" >Tokens: 0.00</div>
-   </div> 
+    <div id="total-tokens">Tokens: 0.00</div>
+  </div>
+
 </div>
+
 
   <!-- Transactions Table -->
   <h2>Transactions</h2>
@@ -322,6 +330,41 @@ async function fetchTransactions() {
       }
     }
 
+async function fetchBalances(walletAddress) {
+  try {
+    await connectClient();
+
+    // Fetch XRP balance
+    const accountInfo = await client.request({
+      command: "account_info",
+      account: walletAddress,
+    });
+    const xrpBalance = xrpl.dropsToXrp(accountInfo.result.account_data.Balance);
+
+    // Fetch RLUSD balance (replace with appropriate token details)
+    const lines = await client.request({
+      command: "account_lines",
+      account: walletAddress,
+    });
+    const rlusdLine = lines.result.lines.find(
+      (line) => line.currency === "RLUSD"
+    );
+    const rlusdBalance = rlusdLine ? rlusdLine.balance : 0;
+
+    // Update the UI
+    document.getElementById("xrp-balance").textContent = `${xrpBalance} XRP`;
+    document.getElementById("rlusd-balance").textContent = ` ${rlusdBalance} RLUSD`;
+  } catch (error) {
+    console.error("Error fetching balances:", error);
+  }
+}
+
+document.getElementById("view-transactions").addEventListener("click", () => {
+  const walletAddress = document.getElementById("wallet-address").value.trim();
+  if (walletAddress) {
+    fetchBalances(walletAddress);
+  }
+});
 
 
     function downloadExcel() {
