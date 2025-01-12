@@ -27,7 +27,7 @@
 
 </head>
 
-<script src="https://unpkg.com/xrpl/build/xrpl-latest-min.js"></script>
+<script src="https://unpkg.com/xrpl@4.1.0/build/xrpl-latest.js"></script>
  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
 
  <script type="text/javascript">
@@ -102,7 +102,7 @@
   <div class="cl5 xrpb"><small>XRP Balance</small>
     <div id="xrp-balance">XRP Balance: 0.00 XRP</div>
   </div>
-  <div class="cl5 rlusd"><small>RLUSD Balance</small>
+  <div class="cl5"><small>RLUSD Balance</small>
     <div id="rlusd-balance">RLUSD Balance: 0.00 RLUSD</div>
   </div>
   <div class="cl5 totalt"><small>Total Transactions</small>
@@ -226,11 +226,12 @@ async function fetchTransactions() {
     });
 
     allTransactions = response.result.transactions.map((tx) => {
-      const amount = tx.tx.Amount;
+      const transaction = tx.tx;
+      const amount = transaction.Amount;
       let tokenDetails = null;
 
       // Check if the transaction involves issued tokens
-      if (typeof amount === "object" && amount.currency && amount.issuer) {
+      if (amount && typeof amount === "object" && amount.currency && amount.issuer) {
         tokenDetails = {
           currency: amount.currency,
           issuer: amount.issuer,
@@ -239,44 +240,21 @@ async function fetchTransactions() {
       }
 
       return {
-        hash: tx.tx.hash,
-        type: tx.tx.TransactionType,
-        amount: typeof amount === "string" ? xrpl.dropsToXrp(amount) : "-", // XRP transactions
-        fee: xrpl.dropsToXrp(tx.tx.Fee),
-        date: new Date(tx.tx.date * 1000).toLocaleString(),
-        link: `https://testnet.xrpl.org/transactions/${tx.tx.hash}`,
-        tokenDetails: tokenDetails, // Include token details if available
-        isSent: tx.tx.Destination !== walletAddress, // Determine if this is a sent transaction
+        hash: transaction.hash,
+        type: transaction.TransactionType,
+        amount: amount
+          ? typeof amount === "string"
+            ? parseFloat(amount) / 1000000 // Convert drops to XRP
+            : tokenDetails
+          : null, // Handle transactions with no amount
+        fee: parseFloat(transaction.Fee) / 1000000, // Convert drops to XRP
+        date: new Date(tx.metaData.TransactionResult).toLocaleString(),
+        explorerLink: `https://xrpscan.com/tx/${transaction.hash}`,
       };
     });
 
-    // Update total transactions
-    const totalTransactions = allTransactions.length;
-
-    // Calculate totals for sent and received XRP
-    const totalSent = allTransactions
-      .filter((tx) => tx.isSent && tx.amount !== "-")
-      .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
-
-    const totalReceived = allTransactions
-      .filter((tx) => !tx.isSent && tx.amount !== "-")
-      .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
-
-    // Count tokens
-    const totalTokens = allTransactions
-      .filter((tx) => tx.tokenDetails)
-      .reduce((sum, tx) => sum + tx.tokenDetails.value, 0);
-
-    // Update the DOM with totals
-    document.getElementById("total-transactions").textContent = `${totalTransactions}`;
-    document.getElementById("total-sent").textContent = `${totalSent.toFixed(2)} XRP`;
-    document.getElementById("total-received").textContent = `${totalReceived.toFixed(2)} XRP`;
-    document.getElementById("total-xrp").textContent = `${(totalSent + totalReceived).toFixed(2)} XRP`;
-    document.getElementById("total-tokens").textContent = `${totalTokens.toFixed(2)}`;
-
-    currentPage = 1; // Reset to the first page
-    displayTransactions();
-    setupPagination();
+    // Display the first page of transactions
+    displayTransactions(1);
   } catch (error) {
     errorMessage.textContent = `Error fetching transactions: ${error.message}`;
   }
@@ -352,8 +330,8 @@ async function fetchBalances(walletAddress) {
     const rlusdBalance = rlusdLine ? rlusdLine.balance : 0;
 
     // Update the UI
-    document.getElementById("xrp-balance").textContent = `${xrpBalance} XRP`;
-    document.getElementById("rlusd-balance").textContent = ` ${rlusdBalance} RLUSD`;
+    document.getElementById("xrp-balance").textContent = `XRP Balance: ${xrpBalance} XRP`;
+    document.getElementById("rlusd-balance").textContent = `RLUSD Balance: ${rlusdBalance} RLUSD`;
   } catch (error) {
     console.error("Error fetching balances:", error);
   }

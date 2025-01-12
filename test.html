@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XRP Testnet Transactions</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xrpl/2.12.0/xrpl.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      padding: 20px;
+    }
+    .error {
+      color: red;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <h1>XRP Testnet Transactions</h1>
+  <p>Enter a testnet XRP wallet address to view the first 5 transactions.</p>
+  <label for="wallet-address">Wallet Address:</label>
+  <input type="text" id="wallet-address" placeholder="Enter XRP wallet address" />
+  <button onclick="fetchTransactions()">Fetch Transactions</button>
+
+  <p id="error-message" class="error"></p>
+
+  <table id="transactions-table" style="display: none;">
+    <thead>
+      <tr>
+        <th>Hash</th>
+        <th>Type</th>
+        <th>Amount (XRP)</th>
+        <th>Fee (XRP)</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const client = new xrpl.Client("wss://s.altnet.rippletest.net:51233");
+
+    async function fetchTransactions() {
+      const walletAddress = document.getElementById("wallet-address").value.trim();
+      const errorMessage = document.getElementById("error-message");
+      const transactionsTable = document.getElementById("transactions-table");
+      const tableBody = transactionsTable.querySelector("tbody");
+
+      // Clear previous results and errors
+      errorMessage.textContent = "";
+      transactionsTable.style.display = "none";
+      tableBody.innerHTML = "";
+
+      if (!walletAddress) {
+        errorMessage.textContent = "Please enter a valid XRP wallet address.";
+        return;
+      }
+
+      try {
+        await client.connect();
+
+        const response = await client.request({
+          command: "account_tx",
+          account: walletAddress,
+          ledger_index_min: -1,
+          ledger_index_max: -1,
+          limit: 5, // Fetch the first 5 transactions
+        });
+
+        const transactions = response.result.transactions;
+
+        if (transactions.length === 0) {
+          errorMessage.textContent = "No transactions found for this wallet address.";
+          return;
+        }
+
+        transactions.forEach((tx) => {
+          const transaction = tx.tx;
+          const amount = transaction.Amount
+            ? typeof transaction.Amount === "string"
+              ? parseFloat(transaction.Amount) / 1000000 // Convert drops to XRP
+              : null
+            : null;
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td><a href="https://testnet.xrpscan.com/tx/${transaction.hash}" target="_blank">${transaction.hash}</a></td>
+            <td>${transaction.TransactionType}</td>
+            <td>${amount !== null ? amount.toFixed(6) : "N/A"}</td>
+            <td>${(parseFloat(transaction.Fee) / 1000000).toFixed(6)}</td>
+            <td>${new Date(tx.meta.TransactionResult).toLocaleString()}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+
+        transactionsTable.style.display = "table";
+      } catch (error) {
+        errorMessage.textContent = `Error fetching transactions: ${error.message}`;
+      } finally {
+        await client.disconnect();
+      }
+    }
+  </script>
+</body>
+</html>
