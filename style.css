@@ -214,7 +214,8 @@ border-radius: 31px;
     padding: 24px;
   }
   div#total-balance {
-    font-size: 38px;
+    font-size: rem;
+    font-weight: bold;
 }
 .xrpnav button{
 margin-top: 8%;
