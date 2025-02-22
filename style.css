@@ -221,8 +221,12 @@ border-radius: 31px;
     padding: 24px;
   }
   div#total-balance {
-    font-size: rem;
+    font-size: 3rem;
     font-weight: bold;
+}
+
+thead{
+  display: none;
 }
 .xrpnav button{
 margin-top: 8%;
@@ -530,22 +534,22 @@ table{
 }
 p#balance-usd {
     color: white;
-    font-size: 2rem;
+    font-size: 3rem;
     font-weight: bold;
 }
 p#total-transactions {
     color: white;
-    font-size: 2rem;
+    font-size: 3rem;
     font-weight: bold;
 }
 p#total-received {
     color: white;
-    font-size: 2rem;
+    font-size: 3rem;
     font-weight: bold;
 }
 p#total-sent {
     color: white;
-    font-size: 2rem;
+    font-size: 3rem;
     font-weight: bold;
 }
 @media only screen and (max-width: 600px){
