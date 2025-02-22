@@ -201,13 +201,16 @@ border-radius: 31px;
   }
   .cl5{
     display: inline-block;
-    width: 49.9%;
+    width: 91.9%;
     margin: 7px;
-    border-radius: 31px;
+    border-radius: 10px;
     text-align: center;
     background: #0e202ea1;
-    padding: 36px;
+    padding: 24px;
   }
+  div#total-balance {
+    font-size: 38px;
+}
 .xrpnav button{
 margin-top: 8%;
     padding: 1% !important;
@@ -356,10 +359,9 @@ body.daytheme {
   background: white!important;
   color: black!important;
 }
+
 @media only screen and (max-width: 600px) {
-  thead{
-    display: none;
-  }
+
   #transaction-summary {
     display: block;
         color: white;
@@ -367,7 +369,7 @@ body.daytheme {
 }
 .cl5 {
         /* display: inline-block; */
-        width: 86.9%;
+        width: 86.9%!important;
         /* margin: 7px; */
         border-radius: 12px;
         text-align: center;
@@ -501,7 +503,10 @@ h1{
 color: aquamarine;
 }
 
-
+table{
+  width: 100%;
+  display: inline-flex;
+}
 
 @media only screen and (max-width: 600px){
     body{
