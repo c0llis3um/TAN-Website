@@ -516,6 +516,7 @@ table{
 @media only screen and (max-width: 600px){
     body{
         background-size: 1216px!important
+        zoom: 150%!important;
     }
 h1 {
     font-size: 3.6rem;
