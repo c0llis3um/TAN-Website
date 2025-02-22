@@ -512,7 +512,13 @@ table{
   width: 100%;
   display: inline-flex;
 }
-
+.kpi-box {
+    background: #0e202ea1;
+    display: inline-block;
+    width: 49%;
+    border-radius: 5px;
+    text-align: center;
+}
 @media only screen and (max-width: 600px){
     body{
         background-size: 1216px!important
