@@ -206,7 +206,7 @@ border-radius: 31px;
   }
   .cl5{
     display: inline-block;
-    width: 91.9%;
+    width: 92.9%;
     margin: 7px;
     border-radius: 10px;
     text-align: center;
@@ -513,11 +513,32 @@ table{
   display: inline-flex;
 }
 .kpi-box {
+    border: 1px solid #0b171b;
     background: #0e202ea1;
     display: inline-block;
     width: 49%;
     border-radius: 5px;
     text-align: center;
+}
+p#balance-usd {
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+}
+p#total-transactions {
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+}
+p#total-received {
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+}
+p#total-sent {
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
 }
 @media only screen and (max-width: 600px){
     body{
