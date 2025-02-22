@@ -23,23 +23,21 @@
   <button id="logoutbutton" onclick="xumm.logout()">Logout</button>
 
   <!-- Transactions Table -->
+  <div id="transaction-container">
     <h3>Recent Transactions</h3>
-<div class="table-container">
-  <table class="transaction-table">
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Amount</th>
-        <th>Hash</th>
-        <th>Type</th>
-      </tr>
-    </thead>
-    <tbody id="transaction-list">
-      <!-- Transactions will be inserted here -->
-    </tbody>
-  </table>
-</div>
-
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Amount (XRP)</th>
+          <th>Hash</th>
+          <th>Type</th>
+        </tr>
+      </thead>
+      <tbody id="transaction-table-body">
+        <tr><td colspan="4">No transactions found</td></tr>
+      </tbody>
+    </table>
     <button id="prevPage" onclick="changePage(-1)">Previous</button>
     <button id="nextPage" onclick="changePage(1)">Next</button>
   </div>
