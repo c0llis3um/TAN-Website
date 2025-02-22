@@ -20,6 +20,27 @@
       <div id="total-balance">0</div>
     </div>
   </div>
+
+  <div id="kpi-container">
+    <div class="kpi-box">
+        <h3>Balance in USD</h3>
+        <p id="balance-usd">$0</p>
+    </div>
+    <div class="kpi-box">
+        <h3>Total Transactions</h3>
+        <p id="total-transactions">0</p>
+    </div>
+    <div class="kpi-box">
+        <h3>Total Received</h3>
+        <p id="total-received">0 XRP</p>
+    </div>
+    <div class="kpi-box">
+        <h3>Total Sent</h3>
+        <p id="total-sent">0 XRP</p>
+    </div>
+</div>
+
+
 <div class="wallet">
   <button id="signinbutton" onclick="xumm.authorize()">Login</button>
   <button id="logoutbutton" onclick="xumm.logout()">Logout</button>
@@ -44,7 +65,7 @@
     <button id="nextPage" onclick="changePage(1)">Next</button>
   </div>
 
-  <script>
+<script>
     var xumm = new Xumm('223d472d-89f5-4e1a-89a4-b71a0769fac2');
     var transactions = [];
     var currentPage = 0;
@@ -53,104 +74,146 @@
     xumm.on("ready", () => console.log("Ready (e.g. hide loading state of page)"));
 
     xumm.on("success", async () => {
-      xumm.user.account.then(async (account) => {
-        document.getElementById('accountaddress').innerText = account;
-        
-        // Fetch balance
-        fetchBalance(account);
+        xumm.user.account.then(async (account) => {
+            document.getElementById('accountaddress').innerText = account;
+            
+            // Fetch balance
+            fetchBalance(account);
 
-        // Fetch transactions
-        fetchTransactions(account);
-      });
+            // Fetch transactions & update KPIs
+            fetchTransactions(account);
+        });
     });
 
     xumm.on("logout", async () => {
-      document.getElementById('accountaddress').innerText = '...';
-      document.getElementById('total-balance').innerText = '0';
-      document.getElementById('transaction-table-body').innerHTML = '<tr><td colspan="4">No transactions found</td></tr>';
+        document.getElementById('accountaddress').innerText = '...';
+        document.getElementById('total-balance').innerText = '0';
+        document.getElementById('balance-usd').innerText = '$0';
+        document.getElementById('total-transactions').innerText = '0';
+        document.getElementById('total-received').innerText = '0 XRP';
+        document.getElementById('total-sent').innerText = '0 XRP';
+        document.getElementById('transaction-table-body').innerHTML = '<tr><td colspan="4">No transactions found</td></tr>';
     });
 
     async function fetchBalance(account) {
-      try {
-        const client = new xrpl.Client("wss://xrplcluster.com"); // Connect to XRP Ledger
-        await client.connect();
+        try {
+            const client = new xrpl.Client("wss://xrplcluster.com"); // Connect to XRP Ledger
+            await client.connect();
 
-        const response = await client.request({
-          command: "account_info",
-          account: account,
-          ledger_index: "validated"
-        });
+            const response = await client.request({
+                command: "account_info",
+                account: account,
+                ledger_index: "validated"
+            });
 
-        let balanceXRP = response.result.account_data.Balance / 1000000; // Convert drops to XRP
-        document.getElementById('total-balance').innerText = balanceXRP;
+            let balanceXRP = response.result.account_data.Balance / 1000000; // Convert drops to XRP
+            document.getElementById('total-balance').innerText = balanceXRP;
 
-        await client.disconnect();
-      } catch (error) {
-        console.error("Error fetching balance:", error);
-        document.getElementById('total-balance').innerText = "Error";
-      }
+            // Fetch XRP to USD conversion rate and update USD balance
+            updateBalanceInUSD(balanceXRP);
+
+            await client.disconnect();
+        } catch (error) {
+            console.error("Error fetching balance:", error);
+            document.getElementById('total-balance').innerText = "Error";
+        }
+    }
+
+    async function updateBalanceInUSD(balanceXRP) {
+        try {
+            const response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd");
+            const data = await response.json();
+            const xrpToUsdRate = data.ripple.usd;
+            document.getElementById('balance-usd').innerText = `$${(balanceXRP * xrpToUsdRate).toFixed(2)}`;
+        } catch (error) {
+            console.error("Error fetching XRP price:", error);
+            document.getElementById('balance-usd').innerText = "Error";
+        }
     }
 
     async function fetchTransactions(account) {
-      try {
-        const client = new xrpl.Client("wss://xrplcluster.com"); // Connect to XRPL
-        await client.connect();
+        try {
+            const client = new xrpl.Client("wss://xrplcluster.com"); // Connect to XRPL
+            await client.connect();
 
-        const response = await client.request({
-          command: "account_tx",
-          account: account,
-          ledger_index_min: -1,
-          ledger_index_max: -1,
-          limit: 20, // Fetch last 20 transactions
-          forward: false
+            const response = await client.request({
+                command: "account_tx",
+                account: account,
+                ledger_index_min: -1,
+                ledger_index_max: -1,
+                limit: 20, // Fetch last 20 transactions
+                forward: false
+            });
+
+            transactions = response.result.transactions.map(tx => ({
+                date: new Date((tx.tx.date + 946684800) * 1000).toLocaleString(),
+                amount: tx.tx.Amount ? (tx.tx.Amount / 1000000).toFixed(6) : "N/A", // Convert drops to XRP
+                hash: tx.tx.hash,
+                type: tx.tx.TransactionType,
+                sender: tx.tx.Account,
+                recipient: tx.tx.Destination
+            }));
+
+            updateTable();
+            updateKPIs(account); // Update KPI values
+
+            await client.disconnect();
+        } catch (error) {
+            console.error("Error fetching transactions:", error);
+            document.getElementById('transaction-table-body').innerHTML = '<tr><td colspan="4">Error fetching transactions</td></tr>';
+        }
+    }
+
+    function updateKPIs(account) {
+        let totalReceived = 0;
+        let totalSent = 0;
+        let totalTransactions = transactions.length;
+
+        transactions.forEach(tx => {
+            if (tx.recipient === account) {
+                totalReceived += parseFloat(tx.amount);
+            } else if (tx.sender === account) {
+                totalSent += parseFloat(tx.amount);
+            }
         });
 
-        transactions = response.result.transactions.map(tx => ({
-          date: new Date((tx.tx.date + 946684800) * 1000).toLocaleString(),
-          amount: tx.tx.Amount ? (tx.tx.Amount / 1000000).toFixed(6) : "N/A", // Convert drops to XRP
-          hash: tx.tx.hash,
-          type: tx.tx.TransactionType
-        }));
-
-        updateTable();
-        await client.disconnect();
-      } catch (error) {
-        console.error("Error fetching transactions:", error);
-        document.getElementById('transaction-table-body').innerHTML = '<tr><td colspan="4">Error fetching transactions</td></tr>';
-      }
+        document.getElementById('total-transactions').innerText = totalTransactions;
+        document.getElementById('total-received').innerText = `${totalReceived.toFixed(6)} XRP`;
+        document.getElementById('total-sent').innerText = `${totalSent.toFixed(6)} XRP`;
     }
 
     function updateTable() {
-      const tableBody = document.getElementById("transaction-table-body");
-      tableBody.innerHTML = "";
+        const tableBody = document.getElementById("transaction-table-body");
+        tableBody.innerHTML = "";
 
-      let start = currentPage * pageSize;
-      let end = start + pageSize;
-      let paginatedTransactions = transactions.slice(start, end);
+        let start = currentPage * pageSize;
+        let end = start + pageSize;
+        let paginatedTransactions = transactions.slice(start, end);
 
-      if (paginatedTransactions.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="4">No transactions found</td></tr>';
-        return;
-      }
+        if (paginatedTransactions.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="4">No transactions found</td></tr>';
+            return;
+        }
 
-      paginatedTransactions.forEach(tx => {
-        let row = `<tr>
-          <td>${tx.date}</td>
-          <td>${tx.amount}</td>
-          <td>${tx.hash}</td>
-          <td>${tx.type}</td>
-        </tr>`;
-        tableBody.innerHTML += row;
-      });
+        paginatedTransactions.forEach(tx => {
+            let row = `<tr>
+                <td>${tx.date}</td>
+                <td>${tx.amount}</td>
+                <td>${tx.hash}</td>
+                <td>${tx.type}</td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
 
-      document.getElementById("prevPage").disabled = currentPage === 0;
-      document.getElementById("nextPage").disabled = end >= transactions.length;
+        document.getElementById("prevPage").disabled = currentPage === 0;
+        document.getElementById("nextPage").disabled = end >= transactions.length;
     }
 
     function changePage(direction) {
-      currentPage += direction;
-      updateTable();
+        currentPage += direction;
+        updateTable();
     }
-  </script>
+</script>
+
 </body>
 </html>
