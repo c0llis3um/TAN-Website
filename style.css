@@ -75,7 +75,14 @@
   filter: invert(1);
 }
     /*animated bk*/
-
+button {
+    background: #0d1c27;
+    border: none;
+    border-radius: 5px;
+    color: #616161;
+    padding: 7px;
+    font-size: 0.8rem;
+}
 
 .circle {
     position: absolute;
