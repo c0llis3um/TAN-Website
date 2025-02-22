@@ -366,14 +366,18 @@ body.daytheme {
         font-weight: 600;
 }
 .cl5 {
-    display: inline-block;
-    width:  99.9%;
-    margin: 7px;
-    border-radius: 31px;
-    text-align: center;
-    background: #0e202ea1;
-    padding: 14px;
+        /* display: inline-block; */
+        width: 86.9%;
+        /* margin: 7px; */
+        border-radius: 12px;
+        text-align: center;
+        background: #0e202ea1;
+        padding: 14px;
+    }
+div#total-balance {
+    font-size: 32px;
 }
+
   input[type="text" ] {
       width: 65%;
   }
