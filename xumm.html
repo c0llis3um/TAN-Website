@@ -104,7 +104,7 @@
         });
 
         transactions = response.result.transactions.map(tx => ({
-          date: new Date(tx.tx.date * 1000).toLocaleString(),
+          date: new Date((tx.tx.date + 946684800) * 1000).toLocaleString(),
           amount: tx.tx.Amount ? (tx.tx.Amount / 1000000).toFixed(6) : "N/A", // Convert drops to XRP
           hash: tx.tx.hash,
           type: tx.tx.TransactionType
