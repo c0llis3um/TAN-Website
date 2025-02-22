@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://fonts.googleapis.com/css2?family=Exo:wght@300&display=swap" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="style.css">
 
@@ -23,9 +22,32 @@
   <button id="signinbutton" onclick="xumm.authorize()">Login</button>
   <button id="logoutbutton" onclick="xumm.logout()">Logout</button>
 
+  <!-- Transactions Table -->
+  <div id="transaction-container">
+    <h3>Recent Transactions</h3>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Amount (XRP)</th>
+          <th>Hash</th>
+          <th>Type</th>
+        </tr>
+      </thead>
+      <tbody id="transaction-table-body">
+        <tr><td colspan="4">No transactions found</td></tr>
+      </tbody>
+    </table>
+    <button id="prevPage" onclick="changePage(-1)">Previous</button>
+    <button id="nextPage" onclick="changePage(1)">Next</button>
+  </div>
+
   <script>
     var xumm = new Xumm('223d472d-89f5-4e1a-89a4-b71a0769fac2');
-    
+    var transactions = [];
+    var currentPage = 0;
+    var pageSize = 5;
+
     xumm.on("ready", () => console.log("Ready (e.g. hide loading state of page)"));
 
     xumm.on("success", async () => {
@@ -34,12 +56,16 @@
         
         // Fetch balance
         fetchBalance(account);
+
+        // Fetch transactions
+        fetchTransactions(account);
       });
     });
 
     xumm.on("logout", async () => {
       document.getElementById('accountaddress').innerText = '...';
       document.getElementById('total-balance').innerText = '0';
+      document.getElementById('transaction-table-body').innerHTML = '<tr><td colspan="4">No transactions found</td></tr>';
     });
 
     async function fetchBalance(account) {
@@ -61,6 +87,67 @@
         console.error("Error fetching balance:", error);
         document.getElementById('total-balance').innerText = "Error";
       }
+    }
+
+    async function fetchTransactions(account) {
+      try {
+        const client = new xrpl.Client("wss://xrplcluster.com"); // Connect to XRPL
+        await client.connect();
+
+        const response = await client.request({
+          command: "account_tx",
+          account: account,
+          ledger_index_min: -1,
+          ledger_index_max: -1,
+          limit: 20, // Fetch last 20 transactions
+          forward: false
+        });
+
+        transactions = response.result.transactions.map(tx => ({
+          date: new Date(tx.tx.date * 1000).toLocaleString(),
+          amount: tx.tx.Amount ? (tx.tx.Amount / 1000000).toFixed(6) : "N/A", // Convert drops to XRP
+          hash: tx.tx.hash,
+          type: tx.tx.TransactionType
+        }));
+
+        updateTable();
+        await client.disconnect();
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+        document.getElementById('transaction-table-body').innerHTML = '<tr><td colspan="4">Error fetching transactions</td></tr>';
+      }
+    }
+
+    function updateTable() {
+      const tableBody = document.getElementById("transaction-table-body");
+      tableBody.innerHTML = "";
+
+      let start = currentPage * pageSize;
+      let end = start + pageSize;
+      let paginatedTransactions = transactions.slice(start, end);
+
+      if (paginatedTransactions.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="4">No transactions found</td></tr>';
+        return;
+      }
+
+      paginatedTransactions.forEach(tx => {
+        let row = `<tr>
+          <td>${tx.date}</td>
+          <td>${tx.amount}</td>
+          <td>${tx.hash}</td>
+          <td>${tx.type}</td>
+        </tr>`;
+        tableBody.innerHTML += row;
+      });
+
+      document.getElementById("prevPage").disabled = currentPage === 0;
+      document.getElementById("nextPage").disabled = end >= transactions.length;
+    }
+
+    function changePage(direction) {
+      currentPage += direction;
+      updateTable();
     }
   </script>
 </body>
