@@ -261,7 +261,9 @@ th, td {
     th {
       background-color: ;
     }
-
+.hash-t{
+  word-break: break-word;
+}
     .pagination {
       margin-top: 20px;
       text-align: center;
