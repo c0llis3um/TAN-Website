@@ -526,6 +526,7 @@ color: aquamarine;
 
 table{
   width: 100%;
+  font-size: 19px;
 }
 tbody#transaction-table-body {
     width: 100%;
