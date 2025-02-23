@@ -47,7 +47,8 @@
 
 <div class="wallet">
   <button id="signinbutton" onclick="xumm.authorize()">Login</button>
-  <button id="logoutbutton" onclick="xumm.logout()">Logout</button>
+  <button id="logoutbutton" onclick="xumm.logout()" style="display: none;">Logout</button>
+
 </div>
   <!-- Transactions Table -->
   <div id="transaction-container">
@@ -84,27 +85,36 @@
 
     xumm.on("ready", () => console.log("Ready (e.g. hide loading state of page)"));
 
-    xumm.on("success", async () => {
-        xumm.user.account.then(async (account) => {
-            document.getElementById('accountaddress').innerText = account;
-            
-            // Fetch balance
-            fetchBalance(account);
+xumm.on("success", async () => {
+    xumm.user.account.then(async (account) => {
+        document.getElementById('accountaddress').innerText = account;
+        
+        // Hide login button and show logout button
+        document.getElementById('signinbutton').style.display = "none";
+        document.getElementById('logoutbutton').style.display = "block";
 
-            // Fetch transactions & update KPIs
-            fetchTransactions(account);
-        });
-    });
+        // Fetch balance
+        fetchBalance(account);
 
-    xumm.on("logout", async () => {
-        document.getElementById('accountaddress').innerText = '...';
-        document.getElementById('total-balance').innerText = '0';
-        document.getElementById('balance-usd').innerText = '$0';
-        document.getElementById('total-transactions').innerText = '0';
-        document.getElementById('total-received').innerText = '0 XRP';
-        document.getElementById('total-sent').innerText = '0 XRP';
-        document.getElementById('transaction-table-body').innerHTML = '<tr><td colspan="4">No transactions found</td></tr>';
+        // Fetch transactions & update KPIs
+        fetchTransactions(account);
     });
+});
+
+xumm.on("logout", async () => {
+    document.getElementById('accountaddress').innerText = '...';
+    document.getElementById('total-balance').innerText = '0';
+    document.getElementById('balance-usd').innerText = '$0';
+    document.getElementById('total-transactions').innerText = '0';
+    document.getElementById('total-received').innerText = '0 XRP';
+    document.getElementById('total-sent').innerText = '0 XRP';
+    document.getElementById('transaction-table-body').innerHTML = '<tr><td colspan="4">No transactions found</td></tr>';
+
+    // Show login button and hide logout button
+    document.getElementById('signinbutton').style.display = "block";
+    document.getElementById('logoutbutton').style.display = "none";
+});
+
 
     async function fetchBalance(account) {
         try {
