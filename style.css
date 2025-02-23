@@ -378,6 +378,8 @@ body.daytheme {
 }
 
 @media only screen and (max-width: 600px) {
+  button {
+    font-size: 1.8rem!important;}
 
   #transaction-summary {
     display: block;
@@ -552,7 +554,15 @@ p#total-sent {
     font-size: 3rem;
     font-weight: bold;
 }
+button#downloadCSV {
+    width: 100%;
+    padding: 26px;
+    background: #00ff007d;
+    color: white;
+}
 @media only screen and (max-width: 600px){
+  button {
+    font-size: 1.8rem!important;}
     body{
         background-size: 1216px!important
         zoom: 150%!important;
