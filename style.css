@@ -252,10 +252,12 @@ margin-top: 8%;
     table, th, td {
       border: 0px solid #ddd;
     }
-    th, td {
-      padding: 10px;
-      text-align: left;
-    }
+th, td {
+    padding: 10px;
+    text-align: left;
+    width: 22%;
+    display: inline-block;
+}
     th {
       background-color: ;
     }
@@ -524,7 +526,9 @@ color: aquamarine;
 
 table{
   width: 100%;
-  display: inline-flex;
+}
+tbody#transaction-table-body {
+    width: 100%;
 }
 .kpi-box {
     border: 1px solid #0b171b;
