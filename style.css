@@ -296,7 +296,7 @@ th, td {
         word-break: break-word;
       }
       tr{
-        display: grid;
+      
       }
     }
 
@@ -533,7 +533,7 @@ color: aquamarine;
 
 table{
   width: 100%;
-  font-size: 13px;
+  font-size: 12px;
 }
 tbody#transaction-table-body {
     width: 100%;
