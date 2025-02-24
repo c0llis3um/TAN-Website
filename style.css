@@ -390,9 +390,9 @@ body.daytheme {
 }
 .cl5 {
         /* display: inline-block; */
-        width: 86.9%!important;
+        width: 91.9%!important;
         /* margin: 7px; */
-        border-radius: 12px;
+        border-radius: 5px;
         text-align: center;
         background: #0e202ea1;
         padding: 14px;
@@ -541,22 +541,22 @@ tbody#transaction-table-body {
 }
 p#balance-usd {
     color: white;
-    font-size: 3rem;
+    font-size: 32px;
     font-weight: bold;
 }
 p#total-transactions {
     color: white;
-    font-size: 3rem;
+    font-size: 32px;
     font-weight: bold;
 }
 p#total-received {
     color: white;
-    font-size: 3rem;
+    font-size: 32px;
     font-weight: bold;
 }
 p#total-sent {
     color: white;
-    font-size: 3rem;
+    font-size: 32px;
     font-weight: bold;
 }
 button#downloadCSV {
@@ -573,7 +573,7 @@ button#downloadCSV {
     width: 20px!important;
 }
   button {
-    font-size: 1.8rem!important;}
+    font-size: 0.9rem!important;}
     body{
         background-size: 1216px!important;
         background-position: 0px 0px !important;
