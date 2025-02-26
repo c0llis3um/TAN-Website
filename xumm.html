@@ -19,6 +19,7 @@
     <small>Your Wallet:</small>
   <p id="accountaddress">...</p>
  </nav>
+   <button id="signinbutton" onclick="xumm.authorize()">Connect Wallet</button>
   <div id="transaction-summary">
     <div class="cl5 totalt"><p>XRP Balance</p>
       <div id="total-balance">0</div>
@@ -46,7 +47,7 @@
 
 
 <div class="wallet">
-  <button id="signinbutton" onclick="xumm.authorize()">Login</button>
+
   <button id="logoutbutton" onclick="xumm.logout()" style="display: none;">Logout</button>
 
 </div>

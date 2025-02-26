@@ -58,6 +58,12 @@
 .logo{
   filter: invert(1);
 }
+button#signinbutton {
+    width: 100%;
+    padding: 21px;
+    background: #006aff;
+    color: #0b171b;
+}
   .theme-sel
   {
 
@@ -217,7 +223,7 @@ border-radius: 31px;
     margin: 1px;
     border-radius: 5px;
     text-align: center;
-    background: #0e202ea1;
+    
     padding: 24px;
   }
   div#total-balance {
@@ -397,12 +403,12 @@ body.daytheme {
 }
 .cl5 {
         /* display: inline-block; */
-        width: 91.9%!important;
+        width: 99.9%!important;
         /* margin: 7px; */
         border-radius: 5px;
         text-align: center;
-        background: #0e202ea1;
-        padding: 14px;
+        
+
     }
 div#total-balance {
     font-size: 32px;
