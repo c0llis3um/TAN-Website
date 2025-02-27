@@ -222,6 +222,18 @@ label{
   color: black;
       width: 51%;
 }
+#xrpChart {
+    display: block;
+    box-sizing: border-box;
+    height: auto;
+    width: 100%;
+}
+        canvas { max-width: 90%; margin: 20px auto; background: #0b171b; border-radius: 10px; }
+        .time-buttons button {
+            background-color: #1e3a8a; color: white; border: none; padding: 8px 12px; margin: 5px;
+            cursor: pointer; border-radius: 5px; font-weight: bold;
+        }
+        .time-buttons button:hover { background-color: #2563eb; }
 .content-inputs{
 border-radius: 31px;
   margin: auto;
@@ -231,9 +243,7 @@ border-radius: 31px;
     max-width: 80%;
     padding: 6px;
   }
-  #transaction-summary{
-    display: flex;
-  }
+
   .cl5{
     display: inline-block;
     width: 94.6%;

@@ -25,6 +25,9 @@
     }
 });
 </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
 </head>
 
 <body>
@@ -42,6 +45,19 @@
   <div id="transaction-summary">
     <div class="cl5 totalt"><p>XRP Balance</p>
       <div id="total-balance">0</div>
+    </div>
+    <div class="time-buttons">
+        <button onclick="loadChart('1h')">1H</button>
+        <button onclick="loadChart('24h')">24H</button>
+        <button onclick="loadChart('7d')">Week</button>
+        <button onclick="loadChart('30d')">Month</button>
+        <button onclick="loadChart('365d')">Year</button>
+        <button onclick="loadChart('max')">Max</button>
+    </div>
+
+    <canvas id="xrpChart"></canvas>
+
+
     </div>
   </div>
 
@@ -386,6 +402,55 @@ xumm.on("logout", async () => {
         currentPage += direction;
         updateTable();
     }
+
+ let chart; // Store chart instance
+
+        async function loadChart(days) {
+            try {
+                const url = `https://api.coingecko.com/api/v3/coins/ripple/market_chart?vs_currency=usd&days=${days}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                const prices = data.prices.map(point => ({ x: new Date(point[0]), y: point[1] }));
+
+                const ctx = document.getElementById("xrpChart").getContext("2d");
+
+                // Destroy old chart if it exists
+                if (chart) chart.destroy();
+
+                chart = new Chart(ctx, {
+                    type: "line",
+                    data: {
+                        datasets: [{
+                            label: "XRP Price (USD)",
+                            data: prices,
+                            borderColor: "#2563eb",
+                            backgroundColor: "#000000",
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { 
+                                type: "time", 
+                                time: { unit: "day" }, 
+                                ticks: { color: "white" }
+                            },
+                            y: { ticks: { color: "white" } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            } catch (error) {
+                console.error("Error loading XRP data:", error);
+            }
+        }
+
+        // Load default chart (1-hour timeframe)
+        loadChart("1");
 </script>
 
 
