@@ -46,6 +46,7 @@
     <div class="cl5 totalt"><p>XRP Balance</p>
       <div id="total-balance">0</div>
     </div>
+    <canvas id="xrpChart"></canvas>
     <div class="time-buttons">
         <button onclick="loadChart('1h')">1H</button>
         <button onclick="loadChart('24h')">24H</button>
@@ -55,7 +56,7 @@
         <button onclick="loadChart('max')">Max</button>
     </div>
 
-    <canvas id="xrpChart"></canvas>
+ 
 
 
     </div>
@@ -106,8 +107,10 @@
     </table>
     <button id="prevPage" onclick="changePage(-1)">Previous</button>
     <button id="nextPage" onclick="changePage(1)">Next</button>
+    <!--
 <button id="downloadCSV" onclick="requestCSVDownload()">Download CSV ($20 in XRP)</button>
 <p id="payment-status"></p>
+-->
 <footer>
      <div class="theme-sel">
           <section class="day">
@@ -425,7 +428,7 @@ xumm.on("logout", async () => {
                             label: "XRP Price (USD)",
                             data: prices,
                             borderColor: "#2563eb",
-                            backgroundColor: "#000000",
+                            backgroundColor: "#0d1c27",
                             borderWidth: 2,
                             pointRadius: 0,
                             fill: true

@@ -88,7 +88,12 @@ button {
     color: #616161;
     padding: 7px;
     font-size: 0.8rem;
+    margin-top:5px;
+    margin-bottom: 5px;
 }
+.totalt p{
+    color: #808066;
+  }
 
 .circle {
     position: absolute;
@@ -228,9 +233,9 @@ label{
     height: auto;
     width: 100%;
 }
-        canvas { max-width: 90%; margin: 20px auto; background: #0b171b; border-radius: 10px; }
+        canvas { max-width: 90%; margin: 5px; background: #0b171b; border-radius: 10px; }
         .time-buttons button {
-            background-color: #1e3a8a; color: white; border: none; padding: 8px 12px; margin: 5px;
+            background-color: #0d1c27; color: white; border: none; padding: 8px 12px; margin: 5px;
             cursor: pointer; border-radius: 5px; font-weight: bold;
         }
         .time-buttons button:hover { background-color: #2563eb; }
@@ -551,7 +556,7 @@ h1{
 }
 .logoi{
     filter: brightness(10);
-  width: 10px;
+  width: 15px;
 }
 .bk2{
   font-size: 11px;
