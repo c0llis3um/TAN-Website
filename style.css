@@ -186,16 +186,33 @@ label{
 }
 .daytheme .cl5 {
     display: inline-block;
-    width: 49.9%;
+    width: 92%;
     margin: 7px;
-    border-radius: 31px;
+    border-radius: 10px;
     text-align: center;
     background: #e7e7e7;
     color: black;
     padding: 36px;
 }
-.daytheme .logo {
-    filter: invert(0)!important;
+.daytheme .kpi-box {
+    border: 1px solid #ffffff;
+    background: #e7e7e7;
+    display: inline-block;
+    width: 49%;
+    border-radius: 5px;
+    text-align: center;
+    color: black;
+}
+.daytheme p{
+  color: black!important;
+}
+.daytheme tr{
+    background: #e7e7e7;
+}
+
+.daytheme  .logoi {
+    filter: brightness(1);
+    width: 10px;
 }
 .daytheme .content-inputs {
   background: #f3f3f3;
