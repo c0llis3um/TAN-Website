@@ -392,9 +392,7 @@ body.daytheme {
         color: white;
         padding: 13px;
     }
-  }
-  button {
-    font-size: 1.8rem!important;}
+  
 
   #transaction-summary {
     display: block;
@@ -534,7 +532,7 @@ h1{
     border-radius: 6px;
 }
 .bk2 label{
-color: aquamarine;
+color: #006aff;
 }
 
 table{
