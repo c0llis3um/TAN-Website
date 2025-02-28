@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>An XRP Wallet Analyzer</title>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Exo:wght@300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="style.css">
+
+  <script src="https://xumm.app/assets/cdn/xumm.min.js"></script>
+  <script src="https://unpkg.com/xrpl"></script> <!-- Import xrpl.js -->
+
+   <script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function() {
+    const dayThemeBtn = document.getElementById("day-theme");
+    const nightThemeBtn = document.getElementById("night-theme");
+
+    if (dayThemeBtn && nightThemeBtn) {
+        dayThemeBtn.addEventListener("click", function() {
+            document.body.classList.add("daytheme");
+        });
+
+        nightThemeBtn.addEventListener("click", function() {
+            document.body.classList.remove("daytheme");
+        });
+    }
+});
+</script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+</head>
+
+<body>
+
+  <nav>    <a href="index.html"> 
+      <img src="https://gateway.pinata.cloud/ipfs/QmepAy9tEG2qECs6SNS3DTkcFuzo6LKBgxTm79tP4GLcq3" class="logoi mr-5">  
+    </a>
+    <strong>ANDA</strong><br>
+    <p>Your Wallet:</p>
+  <p id="accountaddress">...</p>
+ </nav>
+<div class="half">
+   <button id="signinbutton" onclick="xumm.authorize()">
+    <svg aria-hidden="true" id ="walleticon" focusable="false" data-prefix="fas" data-icon="wallet" class="svg-inline--fa fa-wallet fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M461.2 128H80c-8.84 0-16-7.16-16-16s7.16-16 16-16h384c8.84 0 16-7.16 16-16 0-26.51-21.49-48-48-48H64C28.65 32 0 60.65 0 96v320c0 35.35 28.65 64 64 64h397.2c28.02 0 50.8-21.53 50.8-48V176c0-26.47-22.78-48-50.8-48zM416 336c-17.67 0-32-14.33-32-32s14.33-32 32-32 32 14.33 32 32-14.33 32-32 32z"></path></svg> Connect Wallet</button>
+  <div id="transaction-summary">
+    <div class="cl5 totalt"><p>XRP Balance</p>
+      <div id="total-balance">0</div>
+    </div>
+    
+
+    </div>
+  </div>
+
+
+
+
+<div class="wallet">
+
+  <button id="logoutbutton" onclick="xumm.logout()" style="display: none;">Logout</button>
+
+</div>
+
+</div>
+  
+<footer>
+     <div class="theme-sel">
+          <section class="day">
+
+            <a href="#" id="day-theme">
+              <svg id="Capa_1" fill="#FFFFFF" enable-background="new 0 0 512 512"viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><g><g><path d="m256 360.099c-57.4 0-104.099-46.698-104.099-104.099s46.699-104.099 104.099-104.099 104.099 46.699 104.099 104.099-46.699 104.099-104.099 104.099z"/></g><g><path d="m256 116.071c-8.284 0-15-6.716-15-15v-86.071c0-8.284 6.716-15 15-15s15 6.716 15 15v86.071c0 8.284-6.716 15-15 15z"/></g><g><path d="m146.449 161.449c-3.839 0-7.678-1.464-10.606-4.393l-60.863-60.862c-5.858-5.858-5.858-15.355 0-21.213 5.857-5.858 15.355-5.858 21.213 0l60.862 60.861c5.858 5.858 5.858 15.355 0 21.213-2.928 2.929-6.767 4.394-10.606 4.394z"/></g><g><path d="m101.071 271h-86.071c-8.284 0-15-6.716-15-15s6.716-15 15-15h86.071c8.284 0 15 6.716 15 15s-6.716 15-15 15z"/></g><g><path d="m85.587 441.413c-3.839 0-7.678-1.464-10.606-4.394-5.858-5.858-5.858-15.355 0-21.213l60.862-60.861c5.858-5.857 15.356-5.857 21.213 0 5.858 5.858 5.858 15.355 0 21.213l-60.863 60.862c-2.928 2.928-6.767 4.393-10.606 4.393z"/></g><g><path d="m256 512c-8.284 0-15-6.716-15-15v-86.071c0-8.284 6.716-15 15-15s15 6.716 15 15v86.071c0 8.284-6.716 15-15 15z"/></g><g><path d="m426.413 441.413c-3.839 0-7.678-1.464-10.606-4.393l-60.862-60.861c-5.858-5.858-5.858-15.355 0-21.213 5.857-5.858 15.355-5.858 21.213 0l60.862 60.861c5.858 5.858 5.858 15.355 0 21.213-2.929 2.928-6.768 4.393-10.607 4.393z"/></g><g><path d="m497 271h-86.071c-8.284 0-15-6.716-15-15s6.716-15 15-15h86.071c8.284 0 15 6.716 15 15s-6.716 15-15 15z"/></g><g><path d="m365.551 161.449c-3.839 0-7.678-1.464-10.606-4.394-5.858-5.858-5.858-15.355 0-21.213l60.862-60.861c5.857-5.856 15.355-5.858 21.213 0s5.858 15.355 0 21.213l-60.862 60.861c-2.929 2.929-6.769 4.394-10.607 4.394z"/></g></g></svg>
+            </a>
+          </section>
+          <section class="night">
+            <a href="#" id="night-theme">
+              <svg  fill="#FFFFFF" viewBox="-12 0 448 448.04455"  xmlns="http://www.w3.org/2000/svg"><path d="m224.023438 448.03125c85.714843.902344 164.011718-48.488281 200.117187-126.230469-22.722656 9.914063-47.332031 14.769531-72.117187 14.230469-97.15625-.109375-175.890626-78.84375-176-176 .972656-65.71875 37.234374-125.832031 94.910156-157.351562-15.554688-1.980469-31.230469-2.867188-46.910156-2.648438-123.714844 0-224.0000005 100.289062-224.0000005 224 0 123.714844 100.2851565 224 224.0000005 224zm0 0"/></svg>
+
+
+            </a>
+          </section>
+</div>  
+
+</footer>
+<script>
+async function requestCSVDownload() {
+    const walletAddress = document.getElementById('accountaddress').innerText;
+    if (walletAddress === '...') {
+        alert("Please log in first.");
+        return;
+    }
+
+    const xrpToUsdRate = await getXrpToUsdRate();
+    const amountInXRP = (20 / xrpToUsdRate).toFixed(6); // Convert $20 to XRP
+    const destinationWallet = "rnFW4HzA89QKNGBk8bow7HRuBB9yuU7SDX";
+
+    // Step 1: Create a payment request inside Xaman Wallet
+    const payload = {
+        "TransactionType": "Payment",
+        "Account": walletAddress,
+        "Destination": destinationWallet,
+        "Amount": (amountInXRP * 1000000).toFixed(0), // Convert XRP to drops
+        "Memos": [{
+            "Memo": {
+                "MemoType": "CSVDownload",
+                "MemoData": "Download transaction CSV"
+            }
+        }]
+    };
+
+    try {
+        const response = await fetch("https://xaman.app/api/signrequest", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ payload })
+        });
+
+        const result = await response.json();
+        if (result?.uuid) {
+            const signUrl = `https://xaman.app/sign/${result.uuid}`;
+            document.getElementById("payment-status").innerHTML = `
+                <strong>Approve the transaction in Xaman Wallet:</strong><br>
+                <a href="${signUrl}" target="_blank">Sign Now</a>
+            `;
+
+            // Step 2: Wait for transaction confirmation
+            const paymentVerified = await waitForTransaction(walletAddress, destinationWallet, amountInXRP);
+            if (paymentVerified) {
+                generateCSV();
+            } else {
+                alert("Payment not received. Try again.");
+            }
+        } else {
+            alert("Failed to create payment request.");
+        }
+    } catch (error) {
+        console.error("Error requesting Xaman transaction:", error);
+        alert("Error initiating transaction. Try again.");
+    }
+}
+
+// Function to verify the payment
+async function waitForTransaction(fromWallet, toWallet, requiredAmount) {
+    for (let i = 0; i < 10; i++) { // Retry 10 times (every 5 seconds)
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+
+        let transactions = await getXrpTransactions(fromWallet);
+        let payment = transactions.find(tx =>
+            tx.tx.Account === fromWallet &&
+            tx.tx.Destination === toWallet &&
+            parseFloat(tx.tx.Amount) / 1000000 >= requiredAmount
+        );
+
+        if (payment) {
+            document.getElementById("payment-status").innerHTML = "✅ Payment received. Downloading CSV...";
+            return true;
+        }
+    }
+    return false;
+}
+
+// Function to generate and download CSV file
+function generateCSV() {
+    let csvContent = "data:text/csv;charset=utf-8,Date,Amount (XRP),Hash,Type\n";
+    transactions.forEach(tx => {
+        csvContent += `${tx.date},${tx.amount},${tx.hash},${tx.type}\n`;
+    });
+
+    let encodedUri = encodeURI(csvContent);
+    let link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "transactions.csv");
+    document.body.appendChild(link);
+    link.click();
+}
+
+// Function to get live XRP/USD rate
+async function getXrpToUsdRate() {
+    try {
+        let response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd");
+        let data = await response.json();
+        return data.ripple.usd;
+    } catch (error) {
+        console.error("Error fetching XRP price:", error);
+        return 0.5; // Default fallback rate
+    }
+}
+
+// Function to fetch transactions
+async function getXrpTransactions(wallet) {
+    const url = `https://xrplcluster.com/v2/accounts/${wallet}/transactions?limit=50&result=tesSUCCESS&descending=true`;
+    let response = await fetch(url);
+    let data = await response.json();
+    return data.transactions;
+}
+</script>
+
+
+  </div>
+<footer>
+  <br><br>
+  <img class="logo" src="logo.svg" width="100" /> 
+</footer>
+<script>
+    var xumm = new Xumm('223d472d-89f5-4e1a-89a4-b71a0769fac2');
+    var transactions = [];
+    var currentPage = 0;
+    var pageSize = 5;
+
+    xumm.on("ready", () => console.log("Ready (e.g. hide loading state of page)"));
+
+xumm.on("success", async () => {
+    xumm.user.account.then(async (account) => {
+        document.getElementById('accountaddress').innerText = account;
+        
+        // Hide login button and show logout button
+        document.getElementById('signinbutton').style.display = "none";
+        document.getElementById('logoutbutton').style.display = "block";
+
+        // Fetch balance
+        fetchBalance(account);
+
+        // Fetch transactions & update KPIs
+        fetchTransactions(account);
+    });
+});
+
+xumm.on("logout", async () => {
+    document.getElementById('accountaddress').innerText = '...';
+    document.getElementById('total-balance').innerText = '0';
+    document.getElementById('balance-usd').innerText = '$0';
+    document.getElementById('total-transactions').innerText = '0';
+    document.getElementById('total-received').innerText = '0 XRP';
+    document.getElementById('total-sent').innerText = '0 XRP';
+    document.getElementById('transaction-table-body').innerHTML = '<tr><td colspan="4">No transactions found</td></tr>';
+
+    // Show login button and hide logout button
+    document.getElementById('signinbutton').style.display = "block";
+    document.getElementById('logoutbutton').style.display = "none";
+});
+
+
+    async function fetchBalance(account) {
+        try {
+            const client = new xrpl.Client("wss://xrplcluster.com"); // Connect to XRP Ledger
+            await client.connect();
+
+            const response = await client.request({
+                command: "account_info",
+                account: account,
+                ledger_index: "validated"
+            });
+
+            let balanceXRP = response.result.account_data.Balance / 1000000; // Convert drops to XRP
+            document.getElementById('total-balance').innerText = balanceXRP;
+
+            // Fetch XRP to USD conversion rate and update USD balance
+            updateBalanceInUSD(balanceXRP);
+
+            await client.disconnect();
+        } catch (error) {
+            console.error("Error fetching balance:", error);
+            document.getElementById('total-balance').innerText = "Error";
+        }
+    }
+
+    async function updateBalanceInUSD(balanceXRP) {
+        try {
+            const response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd");
+            const data = await response.json();
+            const xrpToUsdRate = data.ripple.usd;
+            document.getElementById('balance-usd').innerText = `$${(balanceXRP * xrpToUsdRate).toFixed(2)}`;
+        } catch (error) {
+            console.error("Error fetching XRP price:", error);
+            document.getElementById('balance-usd').innerText = "Error";
+        }
+    }
+
+    async function fetchTransactions(account) {
+        try {
+            const client = new xrpl.Client("wss://xrplcluster.com"); // Connect to XRPL
+            await client.connect();
+
+            const response = await client.request({
+                command: "account_tx",
+                account: account,
+                ledger_index_min: -1,
+                ledger_index_max: -1,
+                limit: 20, // Fetch last 20 transactions
+                forward: false
+            });
+
+            transactions = response.result.transactions.map(tx => ({
+                date: new Date((tx.tx.date + 946684800) * 1000).toLocaleString(),
+                amount: tx.tx.Amount ? (tx.tx.Amount / 1000000).toFixed(6) : "N/A", // Convert drops to XRP
+                hash: tx.tx.hash,
+                type: tx.tx.TransactionType,
+                sender: tx.tx.Account,
+                recipient: tx.tx.Destination
+            }));
+
+            updateTable();
+            updateKPIs(account); // Update KPI values
+
+            await client.disconnect();
+        } catch (error) {
+            console.error("Error fetching transactions:", error);
+            document.getElementById('transaction-table-body').innerHTML = '<tr><td colspan="4">Error fetching transactions</td></tr>';
+        }
+    }
+
+    function updateKPIs(account) {
+        let totalReceived = 0;
+        let totalSent = 0;
+        let totalTransactions = transactions.length;
+
+        transactions.forEach(tx => {
+            if (tx.recipient === account) {
+                totalReceived += parseFloat(tx.amount);
+            } else if (tx.sender === account) {
+                totalSent += parseFloat(tx.amount);
+            }
+        });
+
+        document.getElementById('total-transactions').innerText = totalTransactions;
+        document.getElementById('total-received').innerText = `${totalReceived.toFixed(6)} XRP`;
+        document.getElementById('total-sent').innerText = `${totalSent.toFixed(6)} XRP`;
+    }
+
+    function updateTable() {
+        const tableBody = document.getElementById("transaction-table-body");
+        tableBody.innerHTML = "";
+
+        let start = currentPage * pageSize;
+        let end = start + pageSize;
+        let paginatedTransactions = transactions.slice(start, end);
+
+        if (paginatedTransactions.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="4">No transactions found</td></tr>';
+            return;
+        }
+
+        paginatedTransactions.forEach(tx => {
+            let row = `<tr>
+                <td>${tx.date}</td>
+                <td>${tx.amount}</td>
+                <td class="hash-t">${tx.hash}</td>
+                <td>${tx.type}</td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+
+        document.getElementById("prevPage").disabled = currentPage === 0;
+        document.getElementById("nextPage").disabled = end >= transactions.length;
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        updateTable();
+    }
+
+ let chart; // Store chart instance
+
+        async function loadChart(days) {
+            try {
+                const url = `https://api.coingecko.com/api/v3/coins/ripple/market_chart?vs_currency=usd&days=${days}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                const prices = data.prices.map(point => ({ x: new Date(point[0]), y: point[1] }));
+
+                const ctx = document.getElementById("xrpChart").getContext("2d");
+
+                // Destroy old chart if it exists
+                if (chart) chart.destroy();
+
+                chart = new Chart(ctx, {
+                    type: "line",
+                    data: {
+                        datasets: [{
+                            label: "XRP Price (USD)",
+                            data: prices,
+                            borderColor: "#2563eb",
+                            backgroundColor: "#0d1c27",
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { 
+                                type: "time", 
+                                time: { unit: "day" }, 
+                                ticks: { color: "white" }
+                            },
+                            y: { ticks: { color: "white" } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            } catch (error) {
+                console.error("Error loading XRP data:", error);
+            }
+        }
+
+        // Load default chart (1-hour timeframe)
+        loadChart("1");
+</script>
+
+
+
+</body>
+</html>
