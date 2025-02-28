@@ -60,13 +60,16 @@
 }
 button#signinbutton {
     width: 100%;
+    max-width: 200px;
     padding: 21px;
     background: #006aff;
     color: #0b171b;
+    position: absolute;
+    top: 1px;
+    right: 10px;
 }
   .theme-sel
   {
-
     right: 10px;
     top: 10px;
     display: block;
@@ -489,7 +492,7 @@ padding: 6%!important;
 
 }
     #walleticon{
-    	width: 30px;
+    	width: 20px;
     	float: right;
     }
 
