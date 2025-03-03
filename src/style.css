@@ -1,3 +1,7 @@
+body{
+        background-size: contain;
+        background-position: 0px 0px !important;
+}
  tr{
     background: #0d1c27;
   }
@@ -9,6 +13,10 @@
     display: block;
         color: white;
         font-weight: 600;
+}
+.half{
+    display: inline-block;
+    width: 49%;
 }
 .bk1{
   background: #157ecfe8!important;
@@ -47,7 +55,7 @@
 }
 
   h1{
-    font-family: 'Exo', sans-serif;
+  
     font-weight: bold;
   }
   table{
@@ -420,7 +428,7 @@ body.daytheme {
   color: black!important;
 }
 
-@media only screen and (max-width: 600px) {
+@media screen and (max-width: 600px) {
   #signinbutton{
         width: 100%;
         background: #00ff007d;
@@ -469,7 +477,7 @@ a {
 max-width: 380px;}
 body{
    background: #0b171b;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
 color: grey;
@@ -478,6 +486,7 @@ min-height: 71vw;
 h1,h2,h3,h4{
   font-weight: 800;
   color: #006aff ;
+  font-size: 3rem;
 }
 .navbar svg{
     width: 10px;
@@ -491,6 +500,7 @@ padding: 6%!important;
     border-radius: 7px;
 
 }
+
     #walleticon{
     	width: 20px;
     	float: right;
@@ -544,9 +554,13 @@ padding: 6%!important;
     100%{background-position:63% 0%}
 }
 .navbar{
-	display: block;
+    display: block;
     background: #00183aba;
-    margin-top: 15px;
+    margin-top: 5px;
+    position: fixed;
+    z-index: 1;
+    border-radius: 10px;
+    margin: 7px;
 }
 h1{
 	font-size: 5rem;
@@ -611,19 +625,18 @@ button#downloadCSV {
     
     color: white;
 }
-@media only screen and (max-width: 600px){
-  div#tanda {
-    margin-top: 44%;
-}
+
+
   .logoi {
     width: 20px!important;
 }
+  .half {
+     width: 99%;
+
+  }
   button {
     font-size: 0.9rem!important;}
-    body{
-        background-size: 1216px!important;
-        background-position: 0px 0px !important;
-    }
+
 h1 {
     font-size: 3.6rem;
 }
