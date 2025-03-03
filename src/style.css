@@ -554,7 +554,6 @@ padding: 6%!important;
     100%{background-position:63% 0%}
 }
 .navbar{
-    display: block;
     background: #00183aba;
     margin-top: 5px;
     position: fixed;
