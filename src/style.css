@@ -1,6 +1,13 @@
 body{
         background-size: contain;
         background-position: 0px 0px !important;
+           background: #0b171b;
+  font-family: 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+color: grey;
+min-height: 71vw;
+margin-top: -20px;
 }
  tr{
     background: #0d1c27;
@@ -475,14 +482,7 @@ a {
     background-color: #006aff;
     width: 100%;
 max-width: 380px;}
-body{
-   background: #0b171b;
-  font-family: 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-color: grey;
-min-height: 71vw;
-}
+
 h1,h2,h3,h4{
   font-weight: 800;
   color: #006aff ;
@@ -576,7 +576,7 @@ h1{
 }
 .bk2{
   font-size: 11px;
-    background: #3c3a46;
+    background: #0e0e0ee3;
     padding: 2%;
     border-radius: 6px;
 }
