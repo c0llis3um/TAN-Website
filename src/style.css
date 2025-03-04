@@ -22,9 +22,7 @@ min-height: 71vw;
     z-index: 1;
     border-radius: 10px;
 }
-.navbar a{
-  padding-right: 5px;
-}
+
     #transaction-summary {
     display: block;
         color: white;
