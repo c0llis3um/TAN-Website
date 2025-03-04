@@ -15,6 +15,13 @@ min-height: 71vw;
     color: grey;
     font-size: 9px;
   }
+.navbar{
+    background: #00183aba;
+    margin-top: 5px;
+    position: fixed;
+    z-index: 1;
+    border-radius: 10px;
+}
     #transaction-summary {
     display: block;
         color: white;
@@ -552,14 +559,7 @@ padding: 6%!important;
     50%{background-position:38% 100%}
     100%{background-position:63% 0%}
 }
-.navbar{
-    background: #00183aba;
-    margin-top: 5px;
-    position: fixed;
-    z-index: 1;
-    border-radius: 10px;
-    margin: 7px;
-}
+
 h1{
 	font-size: 5rem;
   color: #006aff;
