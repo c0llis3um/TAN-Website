@@ -493,7 +493,8 @@ a {
     color: white;
     background-color: #006aff;
     width: 100%;
-max-width: 380px;}
+max-width: 380px;
+border-radius: 23px;}
 
 h1,h2,h3,h4{
   font-weight: 800;
