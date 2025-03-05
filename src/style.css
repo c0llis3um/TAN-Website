@@ -639,6 +639,7 @@ h1 {
 .navbar a {
 
     font-size: 12px;
+    padding-left: 2px;
 }
 img .tanda-app{
   max-width: 300px;
