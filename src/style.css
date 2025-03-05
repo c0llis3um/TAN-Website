@@ -641,7 +641,9 @@ h1 {
     font-size: 12px;
     padding-left: 2px;
 }
-
+.ft a{
+    padding-left: 2px;
+}
 .logoi{
     width: 18px!important;
     margin-right: -1px !important;
