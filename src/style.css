@@ -641,11 +641,12 @@ h1 {
     font-size: 12px;
     padding-left: 2px;
 }
-img .tanda-app{
-  max-width: 300px;
-}
+
 .logoi{
     width: 18px!important;
+    margin-right: -1px !important;
 }
-
+img.tanda-app.p-5.aos-init.aos-animate {
+    width: 324px;
+}
 }
