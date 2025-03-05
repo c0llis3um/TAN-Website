@@ -8,13 +8,13 @@ body{
 color: grey;
 min-height: 71vw;
 }
- tr{
-    background: #0d1c27;
-  }
-  small{
-    color: grey;
-    font-size: 9px;
-  }
+tr{
+  background: #0d1c27;
+}
+small{
+  color: grey;
+  font-size: 9px;
+}
 .navbar{
     background: #00183aba;
     margin-top: 5px;
@@ -22,8 +22,7 @@ min-height: 71vw;
     z-index: 1;
     border-radius: 10px;
 }
-
-    #transaction-summary {
+#transaction-summary {
     display: block;
         color: white;
         font-weight: 600;
@@ -31,6 +30,12 @@ min-height: 71vw;
 .half{
     display: inline-block;
     width: 49%;
+}
+.bk{
+    padding-top: 5%;
+    padding-bottom: 5%;
+    background: #001027d6;
+
 }
 .bk1{
   background: #157ecfe8!important;
@@ -498,20 +503,12 @@ h1,h2,h3,h4{
 .navbar svg{
     width: 10px;
 }
-.bk{
-background: #001027d6;
-margin-top: 26px;
 
-padding: 6%!important;
 
-    border-radius: 7px;
-
+#walleticon{
+	width: 20px;
+	float: right;
 }
-
-    #walleticon{
-    	width: 20px;
-    	float: right;
-    }
 
 .iahRRQ{
 	background-color: #00000029!important;
@@ -571,7 +568,7 @@ h1{
 }
 .logoi{
     filter: brightness(10);
-  width: 15px;
+    width: 15px;
 }
 .bk2{
   font-size: 11px;
@@ -643,7 +640,9 @@ h1 {
 
     font-size: 12px;
 }
-
+img .tanda-app{
+  max-width: 300px;
+}
 .logoi{
     width: 18px!important;
 }
