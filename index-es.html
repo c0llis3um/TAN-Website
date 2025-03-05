@@ -21,13 +21,13 @@
 
 <body>
 
- <div class="navbar col-lg-12 mt-0">
+ <nav class="navbar col-lg-12 mt-0">
     <a href="index.html"> 
       <img src="https://gateway.pinata.cloud/ipfs/QmepAy9tEG2qECs6SNS3DTkcFuzo6LKBgxTm79tP4GLcq3" class="logoi mr-5">  
     </a>
-   <a href="xumm.html" > Wallet Analyzer</a> | 
-     <a href="https://whoosh.gitbook.io/defi-tanda" target="_blank"> Docs </a> | 
-     <a href="akademia.html" > Learn DeFi</a>
+   <a href="xumm.html" > Analizador de Cartera</a> | 
+     <a href="https://whoosh.gitbook.io/defi-tanda" target="_blank"> Informacion </a> | 
+     <a href="akademia.html" > Aprende DeFi</a>
 
 <a href="https://t.me/tandasolana" class="float-right ml-5" target="_blank">
 
@@ -35,98 +35,110 @@
 </a>
     <a href="index-es.html" class="float-right">Es</a>
   <!--  <a href="index-tw.html">中国人</a>-->
-</div>
+</nav>
 
-<section id="sec1" class="pb-5" style="background: url(media/banner.webp);background-repeat: no-repeat;
+<section style="background: url(media/banner.webp);
+    background-repeat: no-repeat;
     background-size: cover;">
- <div class="col-lg-12 text-center">
-      <div class="bk col-lg-12 main" data-aos="fade-in">
-          <img src="https://gateway.pinata.cloud/ipfs/QmepAy9tEG2qECs6SNS3DTkcFuzo6LKBgxTm79tP4GLcq3" width="100"> 
-          <br><br>
-          <h1 data-aos="fade-right">DeFi <span id="word">Tanda</span> </h1>
-            <p>TANDA a Finance Ecosystem. </p>
-          <a class="btn btn-primary" href="#tanda">Discover Tanda</a>
+ <div class="col bk text-center"> 
+     <br><br>
+   <img src="https://gateway.pinata.cloud/ipfs/QmepAy9tEG2qECs6SNS3DTkcFuzo6LKBgxTm79tP4GLcq3" width="100" style=" filter: brightness(10);"> 
+           
+            <div>
+              <h1>DeFi <br><span id="word">Tanda</span> </h1>
+                <p>TANDA un ecosistema crypto. </p>
+              <a class="btn btn-primary" href="#tanda">Descubre Tanda</a> 
 
-      </div>    
+            </div>  
 
-      <script type="text/javascript">
-            var words = new Array('Osusu','Hui','Juntas','Pollas','Arisan','Stokvel','Pandeiros','Tanda');
 
-            var i = 0;
-            setInterval( function(){
-                $( '#word' ).empty().append( words[ i ] );
-                if( i < words.length ) {
-                    i++;
-                } else {
-                    i = 0;
-                }
-            }, 2000 );
-      </script>
-  </div>  
+          <script type="text/javascript">
+                var words = new Array('Osusu','Hui','Juntas','Pollas','Arisan','Stokvel','Pandeiros','Tanda');
+
+                var i = 0;
+                setInterval( function(){
+                    $( '#word' ).empty().append( words[ i ] );
+                    if( i < words.length ) {
+                        i++;
+                    } else {
+                        i = 0;
+                    }
+                }, 2000 );
+          </script>
+
+   </div>       
 </section>
 
-<div class="container p-0">
-  <div class="row">
-   
+<section id="sec2">
+  <div class="container-fluid">
+    <div class="row">
+      
+      <div class="col-lg-6 mt-5 pt-5" data-aos="fade-right">
+            <div class="p-5" id="tanda">
 
+            <h2 class="mt-5">Que ess TANDA?</h2>
+            <hr style="border:4px solid #006aff;">
+            <p>A Tanda is the Latin American term for an informal rotating savings and credit association (ROSCAS).<br><br> They are operated globally, but have over 200 different names that vary from country to country.</p>
 
-  <div class="col-lg-6 mt-5 pt-5" data-aos="fade-right">
-        <div class=" col-lg-12  p-5" id="tanda">
+           <p>Bringing a Tanda to the world of crypto and decentralized finance (DeFi) can unlock transparency, security, and global access while preserving its collaborative essence.</p>
+            </div>
 
-        <h2 class="mt-5">What is a TANDA?</h2>
-        <hr style="border:4px solid #006aff;">
-        <p>A Tanda is the Latin American term for an informal rotating savings and credit association (ROSCAS).<br><br> They are operated globally, but have over 200 different names that vary from country to country.</p>
-
-       <p>Bringing a Tanda to the world of crypto and decentralized finance (DeFi) can unlock transparency, security, and global access while preserving its collaborative essence.</p>
-        </div>
-
-  </div>
-
-    <div class="col-lg-6  mt-5 pt-5" data-aos="fade-left">
-      <div class=" col-lg-12 p-5">
-          <img src="media/tanda-2.png" class="p-5" >
-   
-      <br><br><br>
       </div>
 
-     </div>
-<div class="col-lg-6">
-  <img src="media/metrics.png"  class="w-50 mt-5" />
-</div>
+        <div class="col-lg-6  mt-5 pt-5" data-aos="fade-left">
+          <div class=" col-lg-12 p-5">
+              <img src="media/tanda-2.png" class="tanda-app p-5"  data-aos="fade-down">
+       
+          <br><br><br>
+          </div>
 
-<div class="col-lg-6  left" data-aos="zoom-in" style="
-         background: url(media/b1.png);
-    background-size: contain;
-    " >
-
-
-  <h2>Tanda DAPP</h2>
-  <hr style="border:4px solid #006aff;">
-  <p>Our dapp will allow you to:</p>
-    <li>Create Tandas </li>
-    <li>Automated Tanda payouts using XRPL Escrow and smart conditions.</li>
-    <li>Analyze Wallet Transactions</li>
-    <li>Exchange Tokens</li>
-    <li>Secure Connection to XUMM Wallet</li>
+         </div>
+    </div>   
+  </div>
+</section>
 
 
+<section id="sec3">
+  <div class="container-fluid">  
+  <div class="row">
+
+      <div class="col-lg-6">
+        <img src="media/metrics.png"  class="metric-img mt-5 float-right" data-aos="fade-up"/>
+      </div>
+
+      <div class="col-lg-6  p-5 left" data-aos="zoom-in" style="
+               background: url(media/b1.png);
+          background-size: contain;
+          " >
 
 
-</div>
-</div> 
+        <h2>Tanda DAPP</h2>
+        <hr style="border:4px solid #006aff;">
+        <p>Our dapp will allow you to:</p>
+          <li>Create Tandas </li>
+          <li>Automated Tanda payouts using XRPL or RLUSD Escrow and smart conditions.</li>
+          <li>Analyze Wallet Transactions</li>
+          <li>Exchange Tokens</li>
+          <li>Secure Connection to XUMM Wallet</li>
 
 
 
- <div class="col-lg-12" style="
-         background: url(media/b1.png);
-    background-size: inherit;
-    background-position-x: 524px;" data-aos="fade-left">
-      <div class=" col-lg-12  p-5">
+
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section id="how">
+    <div class="container-fluid">
+ <div class="row"> 
+ <div class=" col-lg-12  p-5 mt-5">
       
       <h2>How does it work</h2>
       <hr style="border:4px solid #006aff;">
-<h3>Tanda Pods</h3>
-      <div class="container pb-5">
+      <h3>Tanda Pods</h3>
+      <div class="pb-5">
           <div class="row bk2">
 
             <div class="col">
@@ -155,9 +167,9 @@
             </div>  
           </div>
       </div>
-     <body>
 
-<div class="container">
+
+
  
     <p>
         This system functions like a traditional <span class="highlight">Tanda</span> (rotating savings and credit association), but with a <span class="highlight">crypto twist</span>. 
@@ -180,11 +192,15 @@
     <p>
         This system blends the community-based trust of a <span class="highlight">Tanda</span> with <span class="highlight">blockchain security and automation</span>, ensuring fair payouts and accountability. 🚀
     </p>
+  </div>
+</div> 
 </div>
+</section>
 
-    </div> 
-              <div class="col-lg-12">
-      <div class="bk col-lg-12 p-5 " style="background: url(media/b1.png);
+
+<section id="timeline" class="col-lg-12">
+  <div class="col-lg-12">
+      <div class="bk col-lg-12 pt-3 " style="background: url(media/b1.png);
     background-size: contain;
     " data-aos="fade-down">
       
@@ -200,64 +216,40 @@
             <h3>2026 Fall - Winter</h3> 
             Final Launch
       </div>
-            <div>
-              <a class="text-center" href="https://www.nytimes.com/wirecutter/money/tanda-tax-refund-savings-trick/amp/"><h3>Can You Trick Yourself Into Saving More Money?</h3></a>
-            </div>
-     </div>
-
-
 </div>
 
+</section>
 
 
-<div class="col-lg-12 mt-5 pt-5 text-center">
-  <div class="navbar col-lg-12 mt-1">
+
+<footer class="col-lg-12 mt-5 pt-5 text-left">
+  <div class="ft mt-1">
     <img src="https://gateway.pinata.cloud/ipfs/QmepAy9tEG2qECs6SNS3DTkcFuzo6LKBgxTm79tP4GLcq3" class="logoi mr-5">  
 
-    <a href="#" target="_blank">XRP Explorer Dev Token</a>  
+    <a href="#" target="_blank">Home</a>  |
 
-        <a href="https://docs.defitanda.xyz/" target="_blank"> Docs </a> |
+        <a href="https://whoosh.gitbook.io/defi-tanda" target="_blank"> Docs </a> |
 <a href="https://t.me/tandasolana" target="_blank">
 
-<svg style="width: 30px;" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="telegram-plane" class="svg-inline--fa fa-telegram-plane fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M446.7 98.6l-67.6 318.8c-5.1 22.5-18.4 28.1-37.3 17.5l-103-75.9-49.7 47.8c-5.5 5.5-10.1 10.1-20.7 10.1l7.4-104.9 190.9-172.5c8.3-7.4-1.8-11.5-12.9-4.1L117.8 284 16.2 252.2c-22.1-6.9-22.5-22.1 4.6-32.7L418.2 66.4c18.4-6.9 34.5 4.1 28.5 32.2z"></path></svg>
+<svg style="width: 16px;" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="telegram-plane" class="svg-inline--fa fa-telegram-plane fa-w-14" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M446.7 98.6l-67.6 318.8c-5.1 22.5-18.4 28.1-37.3 17.5l-103-75.9-49.7 47.8c-5.5 5.5-10.1 10.1-20.7 10.1l7.4-104.9 190.9-172.5c8.3-7.4-1.8-11.5-12.9-4.1L117.8 284 16.2 252.2c-22.1-6.9-22.5-22.1 4.6-32.7L418.2 66.4c18.4-6.9 34.5 4.1 28.5 32.2z"></path></svg>
 </a>
-<a href="https://github.com/wh00sh/Tanda-DAPP" target="_blank">
-    <svg style="width: 30px;" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="github-alt" class="svg-inline--fa fa-github-alt fa-w-15" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><path fill="currentColor" d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"></path></svg>
+<a href="https://github.com/c0llis3um/TAN-Website" target="_blank">
+    <svg style="width: 16px;" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="github-alt" class="svg-inline--fa fa-github-alt fa-w-15" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><path fill="currentColor" d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"></path></svg>
 </a>
 
 
 <a href="xumm.html" target="_blank">
-    <svg aria-hidden="true" id ="walleticon" focusable="false" data-prefix="fas" data-icon="wallet" class="svg-inline--fa fa-wallet fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M461.2 128H80c-8.84 0-16-7.16-16-16s7.16-16 16-16h384c8.84 0 16-7.16 16-16 0-26.51-21.49-48-48-48H64C28.65 32 0 60.65 0 96v320c0 35.35 28.65 64 64 64h397.2c28.02 0 50.8-21.53 50.8-48V176c0-26.47-22.78-48-50.8-48zM416 336c-17.67 0-32-14.33-32-32s14.33-32 32-32 32 14.33 32 32-14.33 32-32 32z"></path></svg>
+    <svg style="width: 16px;" aria-hidden="true" id ="walleticon" focusable="false" data-prefix="fas" data-icon="wallet" class="svg-inline--fa fa-wallet fa-w-16" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M461.2 128H80c-8.84 0-16-7.16-16-16s7.16-16 16-16h384c8.84 0 16-7.16 16-16 0-26.51-21.49-48-48-48H64C28.65 32 0 60.65 0 96v320c0 35.35 28.65 64 64 64h397.2c28.02 0 50.8-21.53 50.8-48V176c0-26.47-22.78-48-50.8-48zM416 336c-17.67 0-32-14.33-32-32s14.33-32 32-32 32 14.33 32 32-14.33 32-32 32z"></path></svg>
   </a>
 
 
   </div>
-  <small class="mt-5 text-right"><br>&copy; 2025 TANDA Coming Soon...</small>
-</div>
+  <small class="mt-5 text-right"><br>&copy; 2025 TANDA  </small>
+</footer>
 
 
 
 
-<!-- Modal -->
-<div class="modal fade" id="donate" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog " role="document">
-    <div class="modal-content bk ">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">DONATE</h5>
-        <button type="button" class="close" text-white data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        GNJ2JVB4WXmVx6rfzzmV8vqPdJ769nZyVrv6qG3ffJPu 
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-       
-      </div>
-    </div>
-  </div>
-</div>
 
 
  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
@@ -268,11 +260,9 @@
 
   <script>
     AOS.init();
-
-
   </script>
-  </body>
 
 </body>
+
 </html>
 
