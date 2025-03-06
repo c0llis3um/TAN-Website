@@ -218,15 +218,23 @@ xumm.on("logout", async () => {
 
     async function updateBalanceInUSD(balanceXRP) {
         try {
+            const balanceElement = document.getElementById('balance-usd');
+            if (!balanceElement) {
+                console.error("Error: Element 'balance-usd' not found.");
+                return;
+            }
+
             const response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd");
             const data = await response.json();
             const xrpToUsdRate = data.ripple.usd;
-            document.getElementById('balance-usd').innerText = `$${(balanceXRP * xrpToUsdRate).toFixed(2)}`;
+
+            balanceElement.innerText = `$${(balanceXRP * xrpToUsdRate).toFixed(2)}`;
         } catch (error) {
             console.error("Error fetching XRP price:", error);
             document.getElementById('balance-usd').innerText = "Error";
         }
     }
+
 
     async function fetchTransactions(account) {
         try {
