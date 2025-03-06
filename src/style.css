@@ -601,6 +601,11 @@ p#balance-usd {
     font-size: 32px;
     font-weight: bold;
 }
+p#rlusd-balance{
+    color: white;
+    font-size: 32px;
+    font-weight: bold;
+}
 p#total-transactions {
     color: white;
     font-size: 32px;
