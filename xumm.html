@@ -80,11 +80,7 @@
         <p>Total Received</p>
         <p id="total-received">0 XRP</p>
     </div>
-    <!--
-    <div class="kpi-box">
-        <p>Total Sent</p>
-        <p id="total-sent">0 XRP</p>
-    </div>-->
+
 </div>
 
 
@@ -168,7 +164,6 @@ xumm.on("logout", async () => {
 
     document.getElementById('total-transactions').innerText = '0';
     document.getElementById('total-received').innerText = '0 XRP';
-    document.getElementById('total-sent').innerText = '0 XRP';
     document.getElementById('transaction-table-body').innerHTML = '<tr><td colspan="4">No transactions found</td></tr>';
 
     // Show login button and hide logout button
@@ -285,7 +280,7 @@ xumm.on("logout", async () => {
 
         document.getElementById('total-transactions').innerText = totalTransactions;
         document.getElementById('total-received').innerText = `${totalReceived.toFixed(6)} XRP`;
-        document.getElementById('total-sent').innerText = `${totalSent.toFixed(6)} XRP`;
+
     }
 
     function updateTable() {
