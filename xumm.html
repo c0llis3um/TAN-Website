@@ -100,6 +100,12 @@
 </div>
 
 </div>
+
+<div id="donut-chart-container">
+    <h3>Balance Comparison</h3>
+    <canvas id="donutChart"></canvas>
+</div>
+
   <!-- Transactions Table -->
 <div id="transaction-container">
     <h3>Recent Transactions</h3>
@@ -183,45 +189,47 @@ xumm.on("logout", async () => {
 });
 
 
-    async function fetchBalance(account) {
-        try {
-            const client = new xrpl.Client("wss://xrplcluster.com"); // Connect to XRP Ledger
-            await client.connect();
-
-            const response = await client.request({
-                command: "account_info",
-                account: account,
-                ledger_index: "validated"
-            });
-
-            let balanceXRP = response.result.account_data.Balance / 1000000; // Convert drops to XRP
-            document.getElementById('total-balance').innerText = balanceXRP;
-
-            // Fetch XRP to USD conversion rate and update USD balance
-            updateBalanceInUSD(balanceXRP);
-
-            // Fetch RLUSD Balance
-            const trustLines = await client.request({
-                command: "account_lines",
-                account: account
-            });
-
-            let rlusdBalance = "0"; // Default RLUSD balance
-            trustLines.result.lines.forEach(line => {
-                if (line.currency === "524C555344000000000000000000000000000000") { // RLUSD currency code
-                    rlusdBalance = line.balance; // RLUSD balance
-                }
-            });
-
-            document.getElementById('rlusd-balance').innerText = `${rlusdBalance} RLUSD`;
 
 
-            await client.disconnect();
-        } catch (error) {
-            console.error("Error fetching balance:", error);
-            document.getElementById('total-balance').innerText = "Error";
-        }
+async function fetchBalance(account) {
+    try {
+        const client = new xrpl.Client("wss://xrplcluster.com");
+        await client.connect();
+
+        // Fetch XRP balance
+        const accountInfo = await client.request({
+            command: "account_info",
+            account: account,
+            ledger_index: "validated"
+        });
+        let balanceXRP = accountInfo.result.account_data.Balance / 1000000; // Convert drops to XRP
+        document.getElementById('total-balance').innerText = balanceXRP;
+
+        // Fetch RLUSD balance
+        const trustLines = await client.request({
+            command: "account_lines",
+            account: account
+        });
+        let rlusdBalance = 0; // Default RLUSD balance
+        trustLines.result.lines.forEach(line => {
+            if (line.currency === "524C555344000000000000000000000000000000") { // RLUSD currency code
+                rlusdBalance = parseFloat(line.balance); // RLUSD balance
+            }
+        });
+        document.getElementById('rlusd-balance').innerText = `${rlusdBalance} RLUSD`;
+
+        // Update the donut chart
+        updateDonutChart(balanceXRP, rlusdBalance);
+
+        // Fetch XRP to USD conversion rate and update USD balance
+        updateBalanceInUSD(balanceXRP);
+
+        await client.disconnect();
+    } catch (error) {
+        console.error("Error fetching balance:", error);
+        document.getElementById('total-balance').innerText = "Error";
     }
+}
 
     async function updateBalanceInUSD(balanceXRP) {
         try {
@@ -374,6 +382,7 @@ xumm.on("logout", async () => {
 
         // Load default chart (1-hour timeframe)
         loadChart("1");
+
 </script>
 
 
