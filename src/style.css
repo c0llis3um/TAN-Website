@@ -87,13 +87,10 @@ small{
 }
 button#signinbutton {
     width: 100%;
-    max-width: 200px;
-    padding: 21px;
+    padding: 25px;
     background: #006aff;
     color: #0b171b;
-    position: absolute;
-    top: 1px;
-    right: 10px;
+
 }
   .theme-sel
   {
@@ -263,7 +260,7 @@ label{
     height: auto;
     width: 100%;
 }
-        canvas { max-width: 90%; margin: 5px; background: #0b171b; border-radius: 10px; }
+        canvas { max-width: 99%; margin: 5px; background: #0b171b; border-radius: 10px; }
         .time-buttons button {
             background-color: #0d1c27; color: white; border: none; padding: 8px 12px; margin: 5px;
             cursor: pointer; border-radius: 5px; font-weight: bold;
