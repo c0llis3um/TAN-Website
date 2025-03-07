@@ -208,7 +208,7 @@ xumm.on("logout", async () => {
 
             let rlusdBalance = "0"; // Default RLUSD balance
             trustLines.result.lines.forEach(line => {
-                if (line.currency === "524C55534400000") { // RLUSD currency code
+                if (line.currency === "524C555344000000000000000000000000000000") { // RLUSD currency code
                     rlusdBalance = line.balance; // RLUSD balance
                 }
             });
