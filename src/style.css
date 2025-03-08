@@ -604,6 +604,11 @@ tbody#transaction-table-body {
     border-radius: 5px;
     text-align: center;
 }
+p#xrpPrice{
+    color: white;
+    font-size: 32px;
+    font-weight: bold;
+}
 p#balance-usd {
     color: white;
     font-size: 32px;
