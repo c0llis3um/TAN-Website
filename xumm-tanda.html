@@ -51,7 +51,7 @@
     </div>
     
 <script type="text/javascript">
-  function setupSwapUI() {
+function setupSwapUI() {
     document.getElementById('xrpAmount').addEventListener('input', async function () {
         const xrpAmount = parseFloat(this.value) || 0;
         const xrpToUsdRate = await getXRPPrice();
@@ -76,46 +76,66 @@ async function getXRPPrice() {
     }
 }
 
+async function getUserAccount() {
+    return xumm.user.account; // Ensure the user is logged in and their account is fetched
+}
+
 async function swapXRPtoRLUSD() {
     const xrpAmount = parseFloat(document.getElementById('xrpAmount').value);
     if (xrpAmount <= 0) return alert('Enter a valid XRP amount');
-    
+
+    const userAccount = await getUserAccount();
+    if (!userAccount) return alert('Please sign in with Xumm');
+
     try {
+        const xrpToUsdRate = await getXRPPrice();
         const swapPayload = {
             TransactionType: "Payment",
             Account: userAccount,
-            Destination: "rIssuingWalletAddress",
+            Destination: "rIssuingWalletAddress", // Replace with the actual RLUSD issuer
             Amount: (xrpAmount * 1000000).toString(),
             SendMax: (xrpAmount * 1000000).toString(),
-            DeliverMin: (xrpAmount * await getXRPPrice()).toFixed(6)
+            DeliverMin: (xrpAmount * xrpToUsdRate).toFixed(6).toString()
         };
-        
-        const result = await xumm.payload.createAndSubscribe(swapPayload);
-        if (result) alert('Swap initiated! Approve in Xumm.');
+
+        const result = await xumm.payload.create(swapPayload);
+        if (result && result.uuid) {
+            xumm.xapp.openSignRequest({ uuid: result.uuid });
+            alert('Swap initiated! Approve in Xumm.');
+        }
     } catch (error) {
         console.error("Swap failed:", error);
+        alert("Swap failed. Check console for details.");
     }
 }
 
 async function swapRLUSDtoXRP() {
     const rlusdAmount = parseFloat(document.getElementById('rlusdAmount').value);
     if (rlusdAmount <= 0) return alert('Enter a valid RLUSD amount');
-    
+
+    const userAccount = await getUserAccount();
+    if (!userAccount) return alert('Please sign in with Xumm');
+
     try {
-        const xrpEquivalent = (rlusdAmount / await getXRPPrice()).toFixed(6);
+        const xrpToUsdRate = await getXRPPrice();
+        const xrpEquivalent = (rlusdAmount / xrpToUsdRate).toFixed(6);
         const swapPayload = {
             TransactionType: "Payment",
             Account: userAccount,
-            Destination: "rIssuingWalletAddress",
+            Destination: "rIssuingWalletAddress", // Replace with actual RLUSD issuer
             Amount: (xrpEquivalent * 1000000).toString(),
             SendMax: (xrpEquivalent * 1000000).toString(),
             DeliverMin: rlusdAmount.toString()
         };
-        
-        const result = await xumm.payload.createAndSubscribe(swapPayload);
-        if (result) alert('Swap initiated! Approve in Xumm.');
+
+        const result = await xumm.payload.create(swapPayload);
+        if (result && result.uuid) {
+            xumm.xapp.openSignRequest({ uuid: result.uuid });
+            alert('Swap initiated! Approve in Xumm.');
+        }
     } catch (error) {
         console.error("Swap failed:", error);
+        alert("Swap failed. Check console for details.");
     }
 }
 
@@ -123,6 +143,7 @@ document.getElementById('swapXRPtoRLUSD').addEventListener('click', swapXRPtoRLU
 document.getElementById('swapRLUSDtoXRP').addEventListener('click', swapRLUSDtoXRP);
 
 setupSwapUI();
+
 
 </script>
     </div>
