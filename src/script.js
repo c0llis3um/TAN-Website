@@ -56,32 +56,84 @@ async function fetchBalance(account) {
         const xrpToUsdRate = priceData.ripple.usd;
         let balanceXRPInUSD = balanceXRP * xrpToUsdRate;
 
-        // Fetch RLUSD Balance
+        // Fetch all tokens (trust lines)
         const trustLines = await client.request({
             command: "account_lines",
             account: account
         });
 
-        let rlusdBalance = 0; // Default RLUSD balance
-        trustLines.result.lines.forEach(line => {
-            if (line.currency === "524C555344000000000000000000000000000000") { // RLUSD currency code
-                rlusdBalance = parseFloat(line.balance); // RLUSD balance (already in USD)
+        let rlusdBalance = 0;
+        let tokens = [];
+
+        for (let line of trustLines.result.lines) {
+            let balance = parseFloat(line.balance);
+            let currency = line.currency;
+            let issuer = line.account;
+
+            if (currency === "524C555344000000000000000000000000000000") {
+                rlusdBalance = balance; // RLUSD balance (already in USD)
+            } else {
+                tokens.push({ currency, balance, issuer });
             }
-        });
+        }
 
         document.getElementById('rlusd-balance').innerText = `${rlusdBalance} RLUSD`;
 
         await client.disconnect();
 
-        // Calculate and update the total wallet balance in USD
+        // Calculate total wallet balance
         let totalWalletBalance = balanceXRPInUSD + rlusdBalance;
         document.getElementById('total-wallet-balance').innerText = `$${totalWalletBalance.toFixed(2)}`;
+
+        // Fetch token prices and update table
+        await updateTokenTable(tokens);
 
     } catch (error) {
         console.error("Error fetching balance:", error);
         document.getElementById('total-balance').innerText = "Error";
     }
 }
+
+async function updateTokenTable(tokens) {
+    const tableBody = document.getElementById("token-table-body");
+    tableBody.innerHTML = "<tr><td colspan='5'>Loading...</td></tr>";
+
+    if (tokens.length === 0) {
+        tableBody.innerHTML = "<tr><td colspan='5'>No tokens found</td></tr>";
+        return;
+    }
+
+    let tokenRows = "";
+    
+    for (let token of tokens) {
+        let tokenPriceUSD = await fetchTokenPrice(token.currency);
+        let tokenBalanceUSD = token.balance * tokenPriceUSD;
+
+        tokenRows += `
+            <tr>
+                <td>👜</td>
+                <td>${token.currency}</td>
+                <td>${token.currency.slice(0, 6)}</td>
+                <td>${token.balance.toFixed(2)}</td>
+                <td>$${tokenPriceUSD.toFixed(4)}</td>
+            </tr>
+        `;
+    }
+
+    tableBody.innerHTML = tokenRows;
+}
+
+async function fetchTokenPrice(currency) {
+    try {
+        const response = await fetch(`https://api.coingecko.com/api/v3/simple/token_price/xrp-ledger?contract_addresses=${currency}&vs_currencies=usd`);
+        const data = await response.json();
+        return data[currency.toLowerCase()]?.usd || 0;
+    } catch (error) {
+        console.error(`Error fetching price for ${currency}:`, error);
+        return 0;
+    }
+}
+
 
 
     async function updateBalanceInUSD(balanceXRP) {
