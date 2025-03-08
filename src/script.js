@@ -94,17 +94,35 @@ async function fetchBalance(account) {
     }
 }
 
-async function updateTokenTable(tokens) {
+async function updateTokenTable(tokens, balanceXRP, balanceXRPInUSD, rlusdBalance) {
     const tableBody = document.getElementById("token-table-body");
     tableBody.innerHTML = "<tr><td colspan='5'>Loading...</td></tr>";
 
-    if (tokens.length === 0) {
-        tableBody.innerHTML = "<tr><td colspan='5'>No tokens found</td></tr>";
-        return;
-    }
-
     let tokenRows = "";
-    
+
+    // 🔹 Add XRP manually
+    tokenRows += `
+        <tr>
+            <td>👜</td>
+            <td>XRP</td>
+            <td>XRP</td>
+            <td>${balanceXRP.toFixed(2)}</td>
+            <td>$${balanceXRPInUSD.toFixed(4)}</td>
+        </tr>
+    `;
+
+    // 🔹 Add RLUSD manually
+    tokenRows += `
+        <tr>
+            <td>👜</td>
+            <td>RLUSD</td>
+            <td>RLUSD</td>
+            <td>${rlusdBalance.toFixed(2)}</td>
+            <td>$${rlusdBalance.toFixed(4)}</td>
+        </tr>
+    `;
+
+    // 🔹 Process other issued tokens
     for (let token of tokens) {
         let tokenPriceUSD = await fetchTokenPrice(token.currency);
         let tokenBalanceUSD = token.balance * tokenPriceUSD;
@@ -115,13 +133,8 @@ async function updateTokenTable(tokens) {
                 <td>${token.currency}</td>
                 <td>${token.currency.slice(0, 6)}</td>
                 <td>${token.balance.toFixed(2)}</td>
-                <td>$${tokenPriceUSD.toFixed(4)}</td>
-            </tr>
-        `;
-    }
+                <td>$${tokenBalanceUSD.toFixed(4)}</t
 
-    tableBody.innerHTML = tokenRows;
-}
 
 async function fetchTokenPrice(currency) {
     try {
