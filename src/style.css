@@ -604,7 +604,7 @@ tbody#transaction-table-body {
     border-radius: 5px;
     text-align: center;
 }
-p#xrpPrice, p#total-balance-usd, p#total-balance, p#total-wallet-balance{
+p#xrpPrice, p#total-balance-usd, p#total-balance, p#wallet-balance{
     color: white;
     font-size: 32px;
     font-weight: bold;
