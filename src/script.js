@@ -130,6 +130,28 @@ xumm.on("logout", async () => {
         }
     }
 
+async function updateXRPPrice() {
+    try {
+        const response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd");
+        const data = await response.json();
+        const xrpToUsdRate = data.ripple.usd;
+
+        // Update the XRP price in the HTML
+        document.getElementById("xrpPrice").innerText = `$${xrpToUsdRate.toFixed(4)}`;
+
+    } catch (error) {
+        console.error("Error fetching XRP price:", error);
+        document.getElementById("xrpPrice").innerText = "Error";
+    }
+}
+
+// Call function on page load
+updateXRPPrice();
+
+// Refresh price every 30 seconds
+setInterval(updateXRPPrice, 30000);
+
+
     function updateKPIs(account) {
         let totalReceived = 0;
         let totalSent = 0;
