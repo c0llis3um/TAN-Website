@@ -145,59 +145,6 @@ async function updateXRPPrice() {
     }
 }
 
-async function updateWalletBalance(account) {
-    try {
-        const client = new xrpl.Client("wss://xrplcluster.com"); // Connect to XRPL
-        await client.connect();
-
-        // Fetch XRP Balance
-        const response = await client.request({
-            command: "account_info",
-            account: account,
-            ledger_index: "validated"
-        });
-
-        let balanceXRP = response.result.account_data.Balance / 1000000; // Convert drops to XRP
-
-        // Fetch XRP price in USD
-        const priceResponse = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd");
-        const priceData = await priceResponse.json();
-        const xrpToUsdRate = priceData.ripple.usd;
-        let xrpInUSD = balanceXRP * xrpToUsdRate;
-
-        // Fetch RLUSD Balance
-        const trustLines = await client.request({
-            command: "account_lines",
-            account: account
-        });
-
-        let rlusdBalance = 0; // Default RLUSD balance
-        trustLines.result.lines.forEach(line => {
-            if (line.currency === "524C555344000000000000000000000000000000") { // RLUSD currency code
-                rlusdBalance = parseFloat(line.balance); // RLUSD balance (already in USD)
-            }
-        });
-
-        await client.disconnect();
-
-        // Calculate total wallet balance in USD
-        let totalWalletBalance = xrpInUSD + rlusdBalance;
-
-        // Update HTML element
-        document.getElementById("wallet-balance").innerText = `$${totalWalletBalance.toFixed(2)}`;
-
-    } catch (error) {
-        console.error("Error fetching wallet balance:", error);
-        document.getElementById("wallet-balance").innerText = "Error";
-    }
-}
-
-// Call function after login
-xumm.on("success", async () => {
-    xumm.user.account.then(async (account) => {
-        updateWalletBalance(account); // Update total wallet balance
-    });
-});
 
 // Call function on page load
 updateXRPPrice();
