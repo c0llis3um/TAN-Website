@@ -51,7 +51,7 @@
     </div>
     
 <script type="text/javascript">
-    function setupSwapUI() {
+  function setupSwapUI() {
     document.getElementById('xrpAmount').addEventListener('input', async function () {
         const xrpAmount = parseFloat(this.value) || 0;
         const xrpToUsdRate = await getXRPPrice();
@@ -77,7 +77,7 @@ async function getXRPPrice() {
 }
 
 async function swapXRPtoRLUSD() {
-    const xrpAmount = document.getElementById('xrpAmount').value;
+    const xrpAmount = parseFloat(document.getElementById('xrpAmount').value);
     if (xrpAmount <= 0) return alert('Enter a valid XRP amount');
     
     try {
@@ -85,7 +85,9 @@ async function swapXRPtoRLUSD() {
             TransactionType: "Payment",
             Account: userAccount,
             Destination: "rIssuingWalletAddress",
-            Amount: (xrpAmount * 1000000).toString()
+            Amount: (xrpAmount * 1000000).toString(),
+            SendMax: (xrpAmount * 1000000).toString(),
+            DeliverMin: (xrpAmount * await getXRPPrice()).toFixed(6)
         };
         
         const result = await xumm.payload.createAndSubscribe(swapPayload);
@@ -95,7 +97,30 @@ async function swapXRPtoRLUSD() {
     }
 }
 
-document.getElementById('swapButton').addEventListener('click', swapXRPtoRLUSD);
+async function swapRLUSDtoXRP() {
+    const rlusdAmount = parseFloat(document.getElementById('rlusdAmount').value);
+    if (rlusdAmount <= 0) return alert('Enter a valid RLUSD amount');
+    
+    try {
+        const xrpEquivalent = (rlusdAmount / await getXRPPrice()).toFixed(6);
+        const swapPayload = {
+            TransactionType: "Payment",
+            Account: userAccount,
+            Destination: "rIssuingWalletAddress",
+            Amount: (xrpEquivalent * 1000000).toString(),
+            SendMax: (xrpEquivalent * 1000000).toString(),
+            DeliverMin: rlusdAmount.toString()
+        };
+        
+        const result = await xumm.payload.createAndSubscribe(swapPayload);
+        if (result) alert('Swap initiated! Approve in Xumm.');
+    } catch (error) {
+        console.error("Swap failed:", error);
+    }
+}
+
+document.getElementById('swapXRPtoRLUSD').addEventListener('click', swapXRPtoRLUSD);
+document.getElementById('swapRLUSDtoXRP').addEventListener('click', swapRLUSDtoXRP);
 
 setupSwapUI();
 
