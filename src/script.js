@@ -1,4 +1,4 @@
-    var xumm = new Xumm('223d472d-89f5-4e1a-89a4-b71a0769fac2');
+  var xumm = new Xumm('223d472d-89f5-4e1a-89a4-b71a0769fac2');
     var transactions = [];
     var currentPage = 0;
     var pageSize = 5;
@@ -15,7 +15,6 @@ xumm.on("success", async () => {
 
         // Fetch balance
         fetchBalance(account);
-
 
         // Fetch transactions & update KPIs
         fetchTransactions(account);
@@ -38,49 +37,45 @@ xumm.on("logout", async () => {
 });
 
 
-async function fetchBalance(account) {
-    try {
-        const client = new xrpl.Client("wss://xrplcluster.com");
-        await client.connect();
+    async function fetchBalance(account) {
+        try {
+            const client = new xrpl.Client("wss://xrplcluster.com"); // Connect to XRP Ledger
+            await client.connect();
 
-        // Fetch XRP balance
-        const accountInfo = await client.request({
-            command: "account_info",
-            account: account,
-            ledger_index: "validated"
-        });
-        let balanceXRP = accountInfo.result.account_data.Balance / 1000000; // Convert drops to XRP
-        document.getElementById('total-balance').innerText = balanceXRP;
+            const response = await client.request({
+                command: "account_info",
+                account: account,
+                ledger_index: "validated"
+            });
 
-        // Fetch RLUSD balance
-        const trustLines = await client.request({
-            command: "account_lines",
-            account: account
-        });
-        let rlusdBalance = 0; // Default RLUSD balance
-        trustLines.result.lines.forEach(line => {
-            if (line.currency === "524C555344000000000000000000000000000000") { // RLUSD currency code
-                rlusdBalance = parseFloat(line.balance); // RLUSD balance
-            }
-        });
-        document.getElementById('rlusd-balance').innerText = `${rlusdBalance} RLUSD`;
+            let balanceXRP = response.result.account_data.Balance / 1000000; // Convert drops to XRP
+            document.getElementById('total-balance').innerText = balanceXRP;
 
-        // Fetch XRP price
-        const xrpPrice = await fetchXRPPrice();
+            // Fetch XRP to USD conversion rate and update USD balance
+            updateBalanceInUSD(balanceXRP);
 
-        // Calculate total balance in USD
-        const totalBalanceUSD = (balanceXRP * xrpPrice) + rlusdBalance; // XRP balance + RLUSD balance
-        document.getElementById('total-balance-usd').innerText = `$${totalBalanceUSD.toFixed(2)}`;
+            // Fetch RLUSD Balance
+            const trustLines = await client.request({
+                command: "account_lines",
+                account: account
+            });
 
-        // Update the donut chart
-        updateDonutChart(balanceXRP, rlusdBalance);
+            let rlusdBalance = "0"; // Default RLUSD balance
+            trustLines.result.lines.forEach(line => {
+                if (line.currency === "524C555344000000000000000000000000000000") { // RLUSD currency code
+                    rlusdBalance = line.balance; // RLUSD balance
+                }
+            });
 
-        await client.disconnect();
-    } catch (error) {
-        console.error("Error fetching balance:", error);
-        document.getElementById('total-balance').innerText = "Error";
+            document.getElementById('rlusd-balance').innerText = `${rlusdBalance} RLUSD`;
+
+
+            await client.disconnect();
+        } catch (error) {
+            console.error("Error fetching balance:", error);
+            document.getElementById('total-balance').innerText = "Error";
+        }
     }
-}
 
     async function updateBalanceInUSD(balanceXRP) {
         try {
@@ -134,20 +129,6 @@ async function fetchBalance(account) {
             document.getElementById('transaction-table-body').innerHTML = '<tr><td colspan="4">Error fetching transactions</td></tr>';
         }
     }
-
-async function fetchXRPPrice() {
-    try {
-        const response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd");
-        const data = await response.json();
-        const xrpPrice = data.ripple.usd;
-        document.getElementById('xrp-price').innerText = `$${xrpPrice.toFixed(4)}`; // Display XRP price
-        return xrpPrice; // Return the price for use in other calculations
-    } catch (error) {
-        console.error("Error fetching XRP price:", error);
-        document.getElementById('xrp-price').innerText = "Error";
-        return 0; // Return 0 if there's an error
-    }
-}
 
     function updateKPIs(account) {
         let totalReceived = 0;
