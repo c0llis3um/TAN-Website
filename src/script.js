@@ -36,52 +36,7 @@ xumm.on("logout", async () => {
     document.getElementById('logoutbutton').style.display = "none";
 });
 
-async function fetchBalance(account) {
-    try {
-        const client = new xrpl.Client("wss://xrplcluster.com"); // Connect to XRP Ledger
-        await client.connect();
 
-        const response = await client.request({
-            command: "account_info",
-            account: account,
-            ledger_index: "validated"
-        });
-
-        let balanceXRP = response.result.account_data.Balance / 1000000; // Convert drops to XRP
-        document.getElementById('total-balance').innerText = balanceXRP;
-
-        // Fetch XRP price in USD
-        const priceResponse = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd");
-        const priceData = await priceResponse.json();
-        const xrpToUsdRate = priceData.ripple.usd;
-        let balanceXRPInUSD = balanceXRP * xrpToUsdRate;
-
-        // Fetch RLUSD Balance
-        const trustLines = await client.request({
-            command: "account_lines",
-            account: account
-        });
-
-        let rlusdBalance = 0; // Default RLUSD balance
-        trustLines.result.lines.forEach(line => {
-            if (line.currency === "524C555344000000000000000000000000000000") { // RLUSD currency code
-                rlusdBalance = parseFloat(line.balance); // RLUSD balance (already in USD)
-            }
-        });
-
-        document.getElementById('rlusd-balance').innerText = `${rlusdBalance} RLUSD`;
-
-        await client.disconnect();
-
-        // Calculate and update the total wallet balance in USD
-        let totalWalletBalance = balanceXRPInUSD + rlusdBalance;
-        document.getElementById('total-wallet-balance').innerText = `$${totalWalletBalance.toFixed(2)}`;
-
-    } catch (error) {
-        console.error("Error fetching balance:", error);
-        document.getElementById('total-balance').innerText = "Error";
-    }
-}
 
 async function fetchBalance(account) {
     try {
