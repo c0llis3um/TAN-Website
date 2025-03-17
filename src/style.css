@@ -31,11 +31,7 @@ small{
     display: inline-block;
     width: 49%;
 }
-div#kpi-container {
-    display: inline-block;
-    width: 49%;
-    vertical-align: top;
-}
+
 .bk{
     padding-top: 5%;
     padding-bottom: 5%;
@@ -359,27 +355,7 @@ th, td {
       color: white;
     }
 
-    /* Responsive Table Styling */
-    .table-wrapper {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    table {
-      min-width: 100%;
-    }
-    @media (max-width: 900px) {
-      table {
-        font-size: 12px;
-      }
-      th, td {
-        padding: 8px;
-        white-space-collapse: initial;
-        word-break: break-word;
-      }
-      tr{
-      
-      }
-    }
+
 
     /* Excel Button */
     .excel-button {
@@ -460,7 +436,31 @@ body.daytheme {
   color: black!important;
 }
 
-@media screen and (max-width: 600px) {
+
+    /* Responsive Table Styling */
+    .table-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    table {
+      min-width: 100%;
+    }
+    @media (max-width: 900px) {
+      table {
+        font-size: 12px;
+      }
+      th, td {
+        padding: 8px;
+        white-space-collapse: initial;
+        word-break: break-word;
+      }
+      tr{
+      
+      }
+    }
+
+@media screen (max-width: 600px) {
+
   #signinbutton{
         width: 100%;
         background: #00ff007d;
@@ -480,14 +480,13 @@ body.daytheme {
         /* margin: 7px; */
         border-radius: 5px;
         text-align: center;
-        
-
     }
+
 div#total-balance {
     font-size: 32px;
 }
 
-  input[type="text" ] {
+  input[type="text"] {
       width: 65%;
   }
   .content-inputs {
@@ -674,5 +673,9 @@ img.tanda-app.p-5.aos-init.aos-animate {
 }
 img.metric-img.mt-5.float-right.aos-init.aos-animate {
     width: 349px;
+}
+.half{
+    display: inline-block;
+    width: 99%;
 }
 }

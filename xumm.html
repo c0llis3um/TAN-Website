@@ -7,9 +7,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Exo:wght@300&display=swap" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="src/style.css">
 
- 
+
   <script src="https://xumm.app/assets/cdn/xumm.min.js"></script>
   <script src="https://unpkg.com/xrpl"></script> <!-- Import xrpl.js -->
+
 
    <script type="text/javascript">
   document.addEventListener("DOMContentLoaded", function() {
@@ -42,7 +43,8 @@
 
 <body>
 
-  <nav>    <a href="index.html"> 
+  <nav>    
+    <a href="index.html"> 
       <img src="media/tlogo.png" class="logoi mr-5">  
     </a>
     <strong>ANDA</strong><br>
@@ -50,6 +52,11 @@
   <p id="accountaddress">...</p>
  </nav>
 <div class="half">
+
+<div id="qrcode-container" style="display: none;">
+    <p>Scan the QR code with Xumm:</p>
+    <img id="qrcode" alt="Xumm QR Code" />
+</div>
 
   <div id="transaction-summary">
     <div class="cl5 totalt">
