@@ -82,9 +82,7 @@ async function fetchBalance(account) {
         console.error("Error fetching balance:", error);
         document.getElementById('total-balance').innerText = "Error";
     }
-}
 
-async function fetchBalance(account) {
     try {
         const client = new xrpl.Client("wss://xrplcluster.com"); // Connect to XRP Ledger
         await client.connect();
