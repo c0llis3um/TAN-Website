@@ -1,9 +1,10 @@
   var xumm = new Xumm('223d472d-89f5-4e1a-89a4-b71a0769fac2');
     var transactions = [];
     var currentPage = 0;
-    var pageSize = 5;
+    var pageSize = 50;
 
     xumm.on("ready", () => console.log("Ready (e.g. hide loading state of page)"));
+
 
 xumm.on("success", async () => {
     xumm.user.account.then(async (account) => {
