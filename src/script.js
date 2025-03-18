@@ -83,45 +83,6 @@ async function fetchBalance(account) {
     }
 }
 
-    async function fetchBalance(account) {
-        try {
-            const client = new xrpl.Client("wss://xrplcluster.com"); // Connect to XRP Ledger
-            await client.connect();
-
-            const response = await client.request({
-                command: "account_info",
-                account: account,
-                ledger_index: "validated"
-            });
-
-            let balanceXRP = response.result.account_data.Balance / 1000000; // Convert drops to XRP
-            document.getElementById('total-balance').innerText = balanceXRP;
-
-            // Fetch XRP to USD conversion rate and update USD balance
-            updateBalanceInUSD(balanceXRP);
-
-            // Fetch RLUSD Balance
-            const trustLines = await client.request({
-                command: "account_lines",
-                account: account
-            });
-
-            let rlusdBalance = "0"; // Default RLUSD balance
-            trustLines.result.lines.forEach(line => {
-                if (line.currency === "524C555344000000000000000000000000000000") { // RLUSD currency code
-                    rlusdBalance = line.balance; // RLUSD balance
-                }
-            });
-
-            document.getElementById('rlusd-balance').innerText = `${rlusdBalance} RLUSD`;
-
-
-            await client.disconnect();
-        } catch (error) {
-            console.error("Error fetching balance:", error);
-            document.getElementById('total-balance').innerText = "Error";
-        }
-    }
 
     async function updateBalanceInUSD(balanceXRP) {
         try {
