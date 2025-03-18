@@ -252,3 +252,23 @@ setInterval(updateXRPPrice, 30000);
 
         // Load default chart (1-hour timeframe)
         loadChart("1");
+
+
+        function updateTotalWalletValue() {
+    // Get the text content of the elements
+    const balanceUsdText = document.getElementById('balance-usd').innerText;
+    const rlusdBalanceText = document.getElementById('rlusd-balance').innerText;
+
+    // Remove the '$' and convert to numbers
+    const balanceUsd = parseFloat(balanceUsdText.replace('$', ''));
+    const rlusdBalance = parseFloat(rlusdBalanceText.replace('$', ''));
+
+    // Calculate the sum
+    const totalWalletValue = balanceUsd + rlusdBalance;
+
+    // Update the sum-wallet element
+    document.getElementById('wallet-balance').innerText = `$${totalWalletValue.toFixed(2)}`;
+}
+
+// Call the function to update the total
+updateTotalWalletValue();
