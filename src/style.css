@@ -95,13 +95,16 @@ button#signinbutton {
     color: #0b171b;
 
 }
+a#night-theme {
+    display: flex;
+}
   .theme-sel
   {
     right: 10px;
     top: 10px;
     display: block;
-    width: 57px;
-    height: 26px;
+    width: 66px;
+    height: 42px;
     background: #3a3a3a;
     border-radius: 15px;
     padding: 10px;
