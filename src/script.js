@@ -147,6 +147,25 @@ async function updateXRPPrice() {
     }
 }
 
+function updateTotalWalletValue() {
+    // Get the text content of the elements
+    const balanceUsdText = document.getElementById('balance-usd').innerText;
+    const rlusdBalanceText = document.getElementById('rlusd-balance').innerText;
+
+    // Remove non-numeric characters and convert to numbers
+    const balanceUsd = parseFloat(balanceUsdText.replace('$', '').trim()) || 0;
+    const rlusdBalance = parseFloat(rlusdBalanceText.replace('RLUSD', '').trim()) || 0;
+
+    // Calculate total wallet value in USD
+    const totalWalletValue = balanceUsd + rlusdBalance;
+
+    // Update the wallet balance display
+    document.getElementById('wallet-balance').innerText = `$${totalWalletValue.toFixed(2)}`;
+}
+
+// Delay the total wallet balance update by 5 seconds
+setTimeout(updateTotalWalletValue, 5000);
+
 
 // Call function on page load
 updateXRPPrice();
