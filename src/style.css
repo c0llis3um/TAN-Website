@@ -619,6 +619,7 @@ tbody#transaction-table-body {
     width: 49%;
     border-radius: 5px;
     text-align: center;
+    padding-top: 10px;
 }
 p#xrpPrice, p#total-balance-usd, p#total-balance, p#wallet-balance{
     color: white;
