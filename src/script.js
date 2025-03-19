@@ -255,21 +255,21 @@ setInterval(updateXRPPrice, 30000);
         loadChart("1");
 
 
-        function updateTotalWalletValue() {
-    // Get the text content of the elements
-    const balanceUsdText = document.getElementById('balance-usd').innerText;
-    const rlusdBalanceText = document.getElementById('rlusd-balance').innerText;
+    function updateTotalWalletValue() {
+        // Get the text content of the elements
+        const balanceUsdText = document.getElementById('balance-usd').innerText;
+        const rlusdBalanceText = document.getElementById('rlusd-balance').innerText;
 
-    // Remove the '$' and convert to numbers
-    const balanceUsd = parseFloat(balanceUsdText.replace('$', ''));
-    const rlusdBalance = parseFloat(rlusdBalanceText.replace('$', ''));
+        // Remove non-numeric characters and convert to numbers
+        const balanceUsd = parseFloat(balanceUsdText.replace('$', '').trim());
+        const rlusdBalance = parseFloat(rlusdBalanceText.replace('RLUSD', '').trim());
 
-    // Calculate the sum
-    const totalWalletValue = balanceUsd + rlusdBalance;
+        // Ensure both values are valid numbers
+        const totalWalletValue = (isNaN(balanceUsd) ? 0 : balanceUsd) + (isNaN(rlusdBalance) ? 0 : rlusdBalance);
 
-    // Update the sum-wallet element
-    document.getElementById('wallet-balance').innerText = `$${totalWalletValue.toFixed(2)}`;
-}
+        // Update the wallet balance display
+        document.getElementById('wallet-balance').innerText = `$${totalWalletValue.toFixed(2)}`;
+    }
 
-// Call the function to update the total
-updateTotalWalletValue();
+    // Call the function to update the total
+    updateTotalWalletValue();
