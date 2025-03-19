@@ -254,31 +254,3 @@ setInterval(updateXRPPrice, 30000);
         // Load default chart (1-hour timeframe)
         loadChart("1");
 
-
-    function updateTotalWalletValue() {
-        // Get the text content of the elements
-        const balanceUsdText = document.getElementById('balance-usd').innerText;
-        const rlusdBalanceText = document.getElementById('rlusd-balance').innerText;
-
-        // Remove non-numeric characters and convert to numbers
-        const balanceUsd = parseFloat(balanceUsdText.replace('$', '').trim());
-        const rlusdBalance = parseFloat(rlusdBalanceText.replace('RLUSD', '').trim());
-
-        // Ensure both values are valid numbers
-        const totalWalletValue = (isNaN(balanceUsd) ? 0 : balanceUsd) + (isNaN(rlusdBalance) ? 0 : rlusdBalance);
-
-        // Update the wallet balance display
-        document.getElementById('wallet-balance').innerText = `$${totalWalletValue.toFixed(2)}`;
-    }
-
-    // Call the function to update the total
-
-// Delay execution by 5 seconds
-
-setTimeout(() => {
-    if (document.getElementById('wallet-balance')) {
-        updateTotalWalletValue();
-    } else {
-        console.error("Element 'wallet-balance' not found after 5 seconds.");
-    }
-}, 5000);
