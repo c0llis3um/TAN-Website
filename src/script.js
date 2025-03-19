@@ -273,3 +273,12 @@ setInterval(updateXRPPrice, 30000);
 
     // Call the function to update the total
     updateTotalWalletValue();
+// Delay execution by 5 seconds
+
+setTimeout(() => {
+    if (document.getElementById('wallet-balance')) {
+        updateTotalWalletValue();
+    } else {
+        console.error("Element 'wallet-balance' not found after 5 seconds.");
+    }
+}, 5000);
