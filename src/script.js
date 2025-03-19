@@ -64,11 +64,12 @@ xumm.on("logout", async () => {
             let rlusdBalance = "0"; // Default RLUSD balance
             trustLines.result.lines.forEach(line => {
                 if (line.currency === "524C555344000000000000000000000000000000") { // RLUSD currency code
-                    rlusdBalance = line.balance; // RLUSD balance
+                    rlusdBalance = parseFloat(line.balance).toFixed(2); // Format to 2 decimal places
                 }
             });
 
             document.getElementById('rlusd-balance').innerText = `${rlusdBalance} RLUSD`;
+
 
 
             await client.disconnect();

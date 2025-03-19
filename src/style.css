@@ -88,6 +88,10 @@ small{
   .container{
     max-width: 100% !important;
   }
+  button#logoutbutton {
+    float: right;
+}
+
 .logo{
   filter: invert(1);
 }
