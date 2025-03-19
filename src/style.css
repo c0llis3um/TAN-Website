@@ -31,7 +31,9 @@ small{
     display: inline-block;
     width: 49%;
 }
-
+.text-center{
+    text-align: center;
+}
 .bk{
     padding-top: 5%;
     padding-bottom: 5%;
