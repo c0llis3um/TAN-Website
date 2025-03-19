@@ -2,8 +2,13 @@
     var transactions = [];
     var currentPage = 0;
     var pageSize = 5;
+ 
+  xumm.on("ready", () => {
+            console.log("Ready (e.g. hide loading state of page)");
+            generateQRCode();
+        });
 
-    xumm.on("ready", () => console.log("Ready (e.g. hide loading state of page)"));
+  
 
 xumm.on("success", async () => {
     xumm.user.account.then(async (account) => {
@@ -34,9 +39,28 @@ xumm.on("logout", async () => {
     // Show login button and hide logout button
     document.getElementById('signinbutton').style.display = "block";
     document.getElementById('logoutbutton').style.display = "none";
+
+
+    generateQRCode();
 });
 
-
+        function generateQRCode() {
+            xumm.authorize()
+                .then(payload => {
+                    console.log("Payload received:", payload);
+                    QRCode.toCanvas(document.getElementById('qrcode'), payload.refs.qr_png, function (error) {
+                        if (error) {
+                            console.error("Error generating QR code:", error);
+                        } else {
+                            console.log('QR code generated successfully!');
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error("Error generating payload:", error);
+                    alert("Error generating QR code. Please check your XUMM API credentials and redirect URL.");
+                });
+        }
 
     async function fetchBalance(account) {
         try {
