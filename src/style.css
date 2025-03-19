@@ -85,6 +85,9 @@ small{
     border: none;
     width: 100%;
   }
+  .container{
+    max-width: 100% !important;
+  }
 .logo{
   filter: invert(1);
 }
