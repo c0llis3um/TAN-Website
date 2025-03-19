@@ -272,7 +272,7 @@ setInterval(updateXRPPrice, 30000);
     }
 
     // Call the function to update the total
-    updateTotalWalletValue();
+
 // Delay execution by 5 seconds
 
 setTimeout(() => {
