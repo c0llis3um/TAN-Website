@@ -256,8 +256,8 @@ label{
     background: #e7e7e7;
 }
 
-.daytheme  .logoi {
-    filter: brightness(1);
+.daytheme .logoi {
+    filter: invert(1);
     width: 10px;
 }
 .daytheme .content-inputs {
