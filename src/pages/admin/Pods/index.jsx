@@ -4,7 +4,7 @@ import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import { adminGetAllPods } from '@/lib/db'
 import { releaseCollateral } from '@/lib/contracts'
-import { useAppStore } from '@/store'
+import useAppStore from '@/store/useAppStore'
 
 const STATUS_COLORS = { ACTIVE: 'green', COMPLETED: 'blue', DEFAULTED: 'red', OPEN: 'yellow', LOCKED: 'yellow', CANCELLED: 'muted' }
 const CHAIN_COLORS  = { XRPL: 'blue', Solana: 'muted', Ethereum: 'muted' }
