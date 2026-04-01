@@ -1,8 +1,8 @@
 /**
  * xrpl.js — XUMM (Xaman) wallet + XRP/RLUSD transfers
  *
- * Wallet detection: window.xumm (Xaman browser extension)
- * Fallback: deep-link to XUMM mobile app via SignRequest URL
+ * Uses the Xumm SDK (npm: xumm) which works on mobile and desktop.
+ * Set VITE_XUMM_API_KEY in .env — get one free at apps.xumm.dev
  *
  * RLUSD issuer (testnet): rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh (placeholder)
  * For mainnet RLUSD issuer contact Ripple.
@@ -10,6 +10,20 @@
 
 import * as xrpl from 'xrpl'
 import { Client, xrpToDrops } from 'xrpl'
+import { Xumm } from 'xumm'
+
+// ── Xumm SDK singleton ────────────────────────────────────────
+
+let _xumm = null
+
+export function getXumm() {
+  if (!_xumm) {
+    const apiKey = import.meta.env.VITE_XUMM_API_KEY
+    if (!apiKey) throw new Error('VITE_XUMM_API_KEY is not set. Get a free API key at apps.xumm.dev')
+    _xumm = new Xumm(apiKey)
+  }
+  return _xumm
+}
 
 const NODES = {
   dev:  'wss://s.altnet.rippletest.net:51233',
@@ -24,20 +38,31 @@ const RLUSD_ISSUER = {
 
 // ── Wallet detection ──────────────────────────────────────────
 
+/** Always true — SDK works on mobile and desktop without browser extension */
 export function isXummInstalled() {
-  return typeof window !== 'undefined' && !!window.xumm
+  return true
 }
 
 export async function connectXumm() {
-  if (!isXummInstalled()) {
-    throw new Error('Xaman (XUMM) wallet not found. Install the Xaman browser extension or use the mobile app.')
-  }
-  const account = await window.xumm.authorize()
-  return account?.me?.account ?? null
+  const xumm = getXumm()
+  return new Promise((resolve, reject) => {
+    xumm.on('success', async () => {
+      try {
+        const account = await xumm.user.account
+        resolve(account ?? null)
+      } catch (e) { reject(e) }
+    })
+    xumm.on('error', reject)
+    xumm.authorize().catch(reject)
+  })
 }
 
-export function getXummAddress() {
-  return window.xumm?.user?.account ?? null
+export async function getXummAddress() {
+  try {
+    return await getXumm().user.account ?? null
+  } catch {
+    return null
+  }
 }
 
 // ── Balances ──────────────────────────────────────────────────
@@ -94,11 +119,9 @@ export async function getXrplBalances(walletAddress, env) {
  * @returns {{ txHash: string }}
  */
 export async function sendXrplContribution(toAddress, amount, token, env) {
-  if (!isXummInstalled()) {
-    throw new Error('Xaman (XUMM) wallet not found. Install the Xaman browser extension.')
-  }
+  const xumm = getXumm()
 
-  const fromAddress = getXummAddress()
+  const fromAddress = await getXummAddress()
   if (!fromAddress) throw new Error('Connect your Xaman wallet first.')
 
   let payment
@@ -127,16 +150,15 @@ export async function sendXrplContribution(toAddress, amount, token, env) {
     throw new Error(`Token ${token} not supported on XRPL.`)
   }
 
-  // Submit to XUMM for signing — returns a payload with a sign URL
-  const payload = await window.xumm.payload.createAndSubscribe(
+  // Submit to Xumm SDK — handles QR code on desktop, deep link on mobile
+  const { resolved } = await xumm.payload.createAndSubscribe(
     { txjson: payment },
     (event) => {
-      // Resolve when user signs or rejects
       if ('signed' in event.data) return event.data
     }
   )
 
-  const result = await payload.resolved
+  const result = await resolved
   if (!result?.signed) throw new Error('Transaction rejected in Xaman.')
 
   return { txHash: result.txid }

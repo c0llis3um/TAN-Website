@@ -4,42 +4,53 @@ pragma solidity ^0.8.20;
 import "./interfaces/IERC20.sol";
 
 /**
- * @title TandaPod
- * @notice Manages the full lifecycle of a single DeFi Tanda (ROSCA) pod on EVM chains.
+ * @title  TandaPod v1.1
+ * @notice Manages the full lifecycle of a single DeFi Tanda (ROSCA) pod.
  *
- * @dev  Flow:
- *       1. Factory deploys a TandaPod with the agreed parameters.
- *       2. `size` members call joinPod() and deposit 2× collateral.
- *          When the last member joins the pod becomes ACTIVE.
- *       3. Each cycle, every member calls contribute(cycle).
- *          When all N members have paid, the pot is released to the
- *          payout recipient for that cycle and the next cycle begins.
- *          After cycle `size - 1` (0-indexed) the pod is COMPLETED and
- *          all collateral is refunded automatically.
- *       4. If the pod is cancelled while OPEN, members call claimRefund().
- *       5. If a member defaults (owner calls markDefault), their collateral
- *          is split among the remaining non-defaulted members.
+ * @dev  Intended flow (on-chain contributions):
+ *       1. Factory or deployer creates this contract with pod parameters.
+ *       2. `size` members call joinPod() depositing 2× contributionAmount as collateral.
+ *          The last member to join activates the pod automatically.
+ *       3. Each cycle every member calls contribute(cycle).
+ *          When all active members pay, the pot releases to the cycle recipient
+ *          and the next cycle begins. After the final cycle, pod COMPLETES and
+ *          collateral becomes claimable.
+ *       4. Cancelled pod (OPEN or ACTIVE): members call claimRefund().
+ *       5. Completed pod: members call claimCollateral() — pull pattern, no loops.
+ *       6. Admin escape hatch: forceComplete() marks COMPLETED so members can
+ *          claim collateral when payments happened off-chain (direct transfers).
+ *       7. Member default: owner calls markDefault(member) → collateral is
+ *          distributed to remaining members; pod auto-completes at 1 member left.
+ *
+ * @dev  payoutSlot is 0-indexed on-chain.
+ *       The off-chain DB stores payout_slot as 1-indexed — subtract 1 when
+ *       calling getPayoutRecipient() with a DB cycle value.
+ *
+ * @dev  cycleDurationSeconds is passed directly by the deployer.
+ *       Dev/testnet: pass hours (e.g., 3600 = 1 hour).
+ *       Live:        pass days  (e.g., 604800 = 7 days).
  *
  *  Token handling:
- *       _token == address(0)  →  native ETH (msg.value)
- *       _token != address(0)  →  ERC-20 (USDC / USDT) via transferFrom
+ *       token == address(0)  →  native ETH (msg.value)
+ *       token != address(0)  →  ERC-20 (USDC / USDT) via transferFrom
  *
  *  Security: ReentrancyGuard, checks-effects-interactions throughout.
  */
 contract TandaPod {
 
+    string public constant VERSION = "1.1.0";
+
     // ── Enums ────────────────────────────────────────────────────
 
-    enum PodStatus { OPEN, ACTIVE, COMPLETED, CANCELLED }
+    enum PodStatus    { OPEN, ACTIVE, COMPLETED, CANCELLED }
     enum MemberStatus { NONE, ACTIVE, DEFAULTED }
 
     // ── Structs ──────────────────────────────────────────────────
 
     struct Member {
-        address wallet;
-        uint8   payoutSlot;      // 0-indexed cycle in which this member receives the pot
-        uint256 collateral;      // collateral deposited (2 × contributionAmount)
-        uint256 lastCyclePaid;   // last cycle index for which the member contributed (1-indexed sentinel: 0 = never)
+        address      wallet;
+        uint8        payoutSlot;   // 0-indexed; DB payout_slot = payoutSlot + 1
+        uint256      collateral;   // 2 × contributionAmount deposited
         MemberStatus status;
     }
 
@@ -47,27 +58,29 @@ contract TandaPod {
 
     address public immutable factory;
     uint256 public immutable podId;
-    address public immutable token;       // address(0) for ETH
+    address public immutable token;              // address(0) for ETH
     uint256 public immutable contributionAmount;
     uint8   public immutable size;
-    uint256 public immutable cycleDuration; // in seconds (cycleDays * 1 days)
+    uint256 public immutable cycleDurationSeconds;
     address public immutable treasury;
 
     // ── State ────────────────────────────────────────────────────
 
-    address public owner;          // factory at deploy; can be transferred
+    address   public owner;
     PodStatus public podStatus;
 
-    address[]                  public memberList;        // join order
+    address[]                  public memberList;
     mapping(address => Member) public members;
     mapping(address => bool)   public isMember;
+    mapping(uint256 => address) public slotRecipient; // slot → wallet (O(1) lookup)
 
-    // cycle → member → paid
+    // Contribution tracking (used only when going through contribute())
     mapping(uint256 => mapping(address => bool)) public cyclePaid;
-    mapping(uint256 => uint256) public cyclePaymentCount; // how many paid in each cycle
+    mapping(uint256 => uint256)                  public cyclePaymentCount;
 
-    uint256 public currentCycle;    // 0-indexed, increments after each full round of payments
-    uint256 public cycleStartedAt;  // timestamp when currentCycle began
+    uint256 public currentCycle;    // 0-indexed; increments via _releasePot()
+    uint256 public cycleStartedAt;  // timestamp of current cycle start
+    uint256 public activeCount;     // decremented on markDefault; set to size at activation
 
     // Reentrancy guard
     uint256 private _guardStatus;
@@ -81,9 +94,11 @@ contract TandaPod {
     event ContributionReceived(uint256 indexed podId, address indexed member, uint256 cycle, uint256 amount);
     event PayoutSent(uint256 indexed podId, address indexed recipient, uint256 cycle, uint256 amount);
     event PodCompleted(uint256 indexed podId, uint256 completedAt);
+    event PodForceCompleted(uint256 indexed podId, address indexed by, uint256 completedAt);
+    event PodCancelled(uint256 indexed podId, uint256 cancelledAt);
     event MemberDefaulted(uint256 indexed podId, address indexed member, uint256 slashedCollateral);
     event CollateralRefunded(uint256 indexed podId, address indexed member, uint256 amount);
-    event PodCancelled(uint256 indexed podId, uint256 cancelledAt);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     // ── Modifiers ────────────────────────────────────────────────
 
@@ -107,13 +122,13 @@ contract TandaPod {
     // ── Constructor ──────────────────────────────────────────────
 
     /**
-     * @param _factory           Address of the TandaFactory (also acts as owner).
-     * @param _podId             Unique pod ID assigned by the factory.
-     * @param _token             ERC-20 token address, or address(0) for native ETH.
-     * @param _contributionAmount Amount each member contributes per cycle.
-     * @param _size              Number of members (2-20).
-     * @param _cycleDays         Duration of each cycle in days.
-     * @param _treasury          Address that receives protocol fees (unused in MVP, kept for extensibility).
+     * @param _factory              Factory or deployer address (becomes owner).
+     * @param _podId                Unique pod identifier.
+     * @param _token                ERC-20 address, or address(0) for native ETH.
+     * @param _contributionAmount   Per-cycle contribution in token units (wei for ETH).
+     * @param _size                 Number of members (2–20).
+     * @param _cycleDurationSeconds Cycle length in seconds. Use hours for dev, days for live.
+     * @param _treasury             Protocol treasury address.
      */
     constructor(
         address _factory,
@@ -121,37 +136,37 @@ contract TandaPod {
         address _token,
         uint256 _contributionAmount,
         uint8   _size,
-        uint256 _cycleDays,
+        uint256 _cycleDurationSeconds,
         address _treasury
     ) {
-        require(_factory   != address(0), "Zero factory");
-        require(_contributionAmount > 0,  "Zero contribution");
-        require(_size >= 2 && _size <= 20, "Size must be 2-20");
-        require(_cycleDays > 0,           "Zero cycle days");
-        require(_treasury  != address(0), "Zero treasury");
+        require(_factory              != address(0), "Zero factory");
+        require(_contributionAmount   > 0,           "Zero contribution");
+        require(_size >= 2 && _size  <= 20,          "Size must be 2-20");
+        require(_cycleDurationSeconds > 0,           "Zero cycle duration");
+        require(_treasury             != address(0), "Zero treasury");
 
-        factory            = _factory;
-        owner              = _factory;
-        podId              = _podId;
-        token              = _token;
-        contributionAmount = _contributionAmount;
-        size               = _size;
-        cycleDuration      = _cycleDays * 1 days;
-        treasury           = _treasury;
-        podStatus          = PodStatus.OPEN;
-        _guardStatus       = _NOT_ENTERED;
+        factory              = _factory;
+        owner                = _factory;
+        podId                = _podId;
+        token                = _token;
+        contributionAmount   = _contributionAmount;
+        size                 = _size;
+        cycleDurationSeconds = _cycleDurationSeconds;
+        treasury             = _treasury;
+        podStatus            = PodStatus.OPEN;
+        _guardStatus         = _NOT_ENTERED;
     }
 
     // ── Join ─────────────────────────────────────────────────────
 
     /**
-     * @notice Join the pod by depositing collateral (2 × contributionAmount).
+     * @notice Join the pod by depositing collateral (exactly 2 × contributionAmount).
      *
-     * For ETH pods: send exactly 2 × contributionAmount as msg.value.
-     * For ERC-20 pods: approve this contract first, then call joinPod().
+     * Payout slots are assigned in join order (slot 0 = first joiner, 1 = second, …).
+     * When the last member joins the pod transitions to ACTIVE automatically.
      *
-     * Payout slots are assigned in join order (slot 0 = first joiner, etc.).
-     * When the pod fills up it automatically transitions to ACTIVE.
+     * ETH pods:   send exactly 2 × contributionAmount as msg.value.
+     * ERC-20 pods: approve this contract first, then call joinPod() with msg.value = 0.
      */
     function joinPod() external payable nonReentrant {
         require(podStatus == PodStatus.OPEN, "Pod not open");
@@ -161,33 +176,38 @@ contract TandaPod {
         uint256 collateralRequired = contributionAmount * 2;
 
         if (token == address(0)) {
-            // Native ETH collateral
-            require(msg.value == collateralRequired, "Wrong ETH collateral amount");
+            // ETH: refund any overpayment rather than rejecting the tx
+            require(msg.value >= collateralRequired, "Insufficient ETH collateral");
+            uint256 overpaid = msg.value - collateralRequired;
+            if (overpaid > 0) {
+                (bool ok,) = payable(msg.sender).call{value: overpaid}("");
+                require(ok, "Overpayment refund failed");
+            }
         } else {
-            // ERC-20 collateral — no ETH expected
             require(msg.value == 0, "ETH not accepted for token pods");
             bool ok = IERC20(token).transferFrom(msg.sender, address(this), collateralRequired);
             require(ok, "Collateral transfer failed");
         }
 
-        uint8 slot = uint8(memberList.length); // 0-indexed join order == payout slot
+        uint8 slot = uint8(memberList.length); // 0-indexed
 
         members[msg.sender] = Member({
-            wallet:       msg.sender,
-            payoutSlot:   slot,
-            collateral:   collateralRequired,
-            lastCyclePaid: 0,
-            status:       MemberStatus.ACTIVE
+            wallet:     msg.sender,
+            payoutSlot: slot,
+            collateral: collateralRequired,
+            status:     MemberStatus.ACTIVE
         });
 
-        isMember[msg.sender] = true;
+        isMember[msg.sender]  = true;
+        slotRecipient[slot]   = msg.sender;
         memberList.push(msg.sender);
 
         emit MemberJoined(podId, msg.sender, slot, collateralRequired);
 
-        // Activate when the pod is full
+        // Activate when full
         if (memberList.length == size) {
-            podStatus     = PodStatus.ACTIVE;
+            podStatus      = PodStatus.ACTIVE;
+            activeCount    = size;
             cycleStartedAt = block.timestamp;
             emit PodActivated(podId, memberList, block.timestamp);
         }
@@ -196,47 +216,61 @@ contract TandaPod {
     // ── Contribute ───────────────────────────────────────────────
 
     /**
-     * @notice Pay your contribution for the given cycle.
+     * @notice Pay your contribution for the current cycle (on-chain payment flow).
      *
-     * @param cycle The cycle index (0-indexed) to pay for.
-     *              Must equal currentCycle.
+     * @param cycle The 0-indexed cycle to pay for — must equal currentCycle.
      *
-     * When all N active members have paid:
-     *   - The pot (N × contributionAmount) is sent to the payout recipient.
-     *   - currentCycle is incremented.
-     *   - If all cycles are done: pod is COMPLETED and collateral is refunded.
+     * When all active members have paid, the pot releases to the cycle recipient,
+     * currentCycle increments, and the next cycle begins. After the final cycle
+     * the pod is marked COMPLETED and collateral becomes claimable.
+     *
+     * @dev This function is used in the full on-chain flow. When payments happen
+     *      off-chain (direct wallet transfers), use forceComplete() instead.
      */
     function contribute(uint256 cycle) external payable nonReentrant onlyActive {
-        require(isMember[msg.sender],                       "Not a member");
+        require(isMember[msg.sender],                              "Not a member");
         require(members[msg.sender].status == MemberStatus.ACTIVE, "Member defaulted");
-        require(cycle == currentCycle,                      "Wrong cycle");
-        require(!cyclePaid[cycle][msg.sender],              "Already paid this cycle");
+        require(cycle == currentCycle,                             "Wrong cycle");
+        require(!cyclePaid[cycle][msg.sender],                     "Already paid this cycle");
 
         if (token == address(0)) {
-            require(msg.value == contributionAmount, "Wrong ETH contribution amount");
+            require(msg.value == contributionAmount, "Wrong ETH amount");
         } else {
             require(msg.value == 0, "ETH not accepted for token pods");
             bool ok = IERC20(token).transferFrom(msg.sender, address(this), contributionAmount);
             require(ok, "Contribution transfer failed");
         }
 
-        // Mark paid (effects before interactions)
-        cyclePaid[cycle][msg.sender]   = true;
-        cyclePaymentCount[cycle]      += 1;
-        members[msg.sender].lastCyclePaid = cycle + 1; // 1-indexed sentinel
+        cyclePaid[cycle][msg.sender] = true;
+        cyclePaymentCount[cycle]    += 1;
 
         emit ContributionReceived(podId, msg.sender, cycle, contributionAmount);
 
-        // Count active (non-defaulted) members to determine quorum
-        uint256 activeCount = _activeCount();
-
         if (cyclePaymentCount[cycle] == activeCount) {
-            // All active members have paid — release the pot
-            _releasePot(cycle, activeCount);
+            _releasePot(cycle);
         }
     }
 
-    // ── Claim Refund ─────────────────────────────────────────────
+    // ── Claim Collateral (pull pattern) ──────────────────────────
+
+    /**
+     * @notice Claim your collateral after the pod completes.
+     *         Works after either natural completion or forceComplete().
+     *         Pull pattern — each member claims individually (gas-safe).
+     */
+    function claimCollateral() external nonReentrant {
+        require(podStatus == PodStatus.COMPLETED, "Pod not completed");
+        require(isMember[msg.sender],             "Not a member");
+
+        uint256 amount = members[msg.sender].collateral;
+        require(amount > 0, "No collateral to claim");
+
+        members[msg.sender].collateral = 0;
+        _send(msg.sender, amount);
+        emit CollateralRefunded(podId, msg.sender, amount);
+    }
+
+    // ── Claim Refund (cancelled pods) ────────────────────────────
 
     /**
      * @notice Claim collateral refund when the pod is CANCELLED.
@@ -248,9 +282,7 @@ contract TandaPod {
         uint256 amount = members[msg.sender].collateral;
         require(amount > 0, "No collateral to refund");
 
-        // Effects before interactions
         members[msg.sender].collateral = 0;
-
         _send(msg.sender, amount);
         emit CollateralRefunded(podId, msg.sender, amount);
     }
@@ -258,59 +290,76 @@ contract TandaPod {
     // ── Cancel ───────────────────────────────────────────────────
 
     /**
-     * @notice Cancel an OPEN pod (before any member joins or immediately after
-     *         the factory decides to abort). Collateral is not affected here —
-     *         members must call claimRefund() individually.
+     * @notice Cancel the pod. Works on both OPEN and ACTIVE pods.
+     *         Members claim their collateral via claimRefund().
      *
-     * @dev  Only the factory/owner may cancel.
+     * Use when the pod fails to fill (OPEN) or in an emergency (ACTIVE).
      */
     function cancelPod() external nonReentrant onlyOwner {
-        require(podStatus == PodStatus.OPEN, "Can only cancel OPEN pods");
+        require(
+            podStatus == PodStatus.OPEN || podStatus == PodStatus.ACTIVE,
+            "Cannot cancel a completed or already-cancelled pod"
+        );
         podStatus = PodStatus.CANCELLED;
         emit PodCancelled(podId, block.timestamp);
+    }
+
+    // ── Force Complete (admin escape hatch) ──────────────────────
+
+    /**
+     * @notice Mark the pod COMPLETED so members can claim collateral via
+     *         claimCollateral(). Use when payments happened off-chain (direct
+     *         wallet transfers) and contribute() was never called.
+     *
+     * Only callable by the factory/owner. Does not push ETH — members pull
+     * via claimCollateral(), keeping gas bounded per member.
+     */
+    function forceComplete() external nonReentrant onlyOwner {
+        require(podStatus == PodStatus.ACTIVE, "Pod not active");
+        podStatus = PodStatus.COMPLETED;
+        emit PodForceCompleted(podId, msg.sender, block.timestamp);
+        emit PodCompleted(podId, block.timestamp);
     }
 
     // ── Mark Default ─────────────────────────────────────────────
 
     /**
-     * @notice Mark a member as defaulted and distribute their collateral
-     *         proportionally among the remaining active members.
+     * @notice Mark a member as defaulted. Their collateral is distributed
+     *         proportionally to remaining active members.
      *
-     * @dev  Call after the cycle deadline has passed without payment.
-     *       The defaulting member forfeits their entire remaining collateral.
-     *       Distribution is done here to avoid gas issues; if only 1 active
-     *       member remains the contract completes automatically.
+     * @dev No time check — the owner/admin determines default based on
+     *      off-chain payment records (DB). This avoids stale cycleStartedAt
+     *      when payments flow through direct wallet transfers.
      *
-     * @param member  Address of the defaulting member.
+     * If only 1 active member remains after this call, the pod auto-completes
+     * and that member's collateral becomes claimable via claimCollateral().
+     *
+     * @param member Address of the defaulting member.
      */
     function markDefault(address member) external nonReentrant onlyOwner {
-        require(podStatus == PodStatus.ACTIVE,                  "Pod not active");
-        require(isMember[member],                               "Not a member");
-        require(members[member].status == MemberStatus.ACTIVE,  "Already defaulted");
-        require(
-            block.timestamp > cycleStartedAt + cycleDuration,
-            "Cycle deadline not passed"
-        );
+        require(podStatus == PodStatus.ACTIVE,                   "Pod not active");
+        require(isMember[member],                                "Not a member");
+        require(members[member].status == MemberStatus.ACTIVE,   "Already defaulted");
 
         uint256 slashed = members[member].collateral;
         members[member].collateral = 0;
         members[member].status     = MemberStatus.DEFAULTED;
+        activeCount               -= 1;
 
         emit MemberDefaulted(podId, member, slashed);
 
-        // Distribute slashed collateral to remaining active members
-        uint256 remaining = _activeCount(); // recomputed after status change
+        // Distribute slashed collateral among remaining active members
+        uint256 remaining = activeCount;
         if (remaining > 0 && slashed > 0) {
-            uint256 share  = slashed / remaining;
+            uint256 share    = slashed / remaining;
             uint256 leftover = slashed - (share * remaining);
 
             bool firstActive = true;
             for (uint256 i = 0; i < memberList.length; i++) {
                 address m = memberList[i];
                 if (members[m].status == MemberStatus.ACTIVE) {
-                    if (firstActive && leftover > 0) {
-                        // Give dust to first active member
-                        members[m].collateral += share + leftover;
+                    if (firstActive) {
+                        members[m].collateral += share + leftover; // dust goes to first
                         firstActive = false;
                     } else {
                         members[m].collateral += share;
@@ -319,13 +368,24 @@ contract TandaPod {
             }
         }
 
-        // If only one member left, complete the pod and refund them
+        // Auto-complete when only 1 member remains
         if (remaining == 1) {
-            _completeAndRefundAll();
+            podStatus = PodStatus.COMPLETED;
+            emit PodCompleted(podId, block.timestamp);
+            // Last member claims via claimCollateral()
         }
     }
 
     // ── Views ────────────────────────────────────────────────────
+
+    /**
+     * @notice Returns the wallet address of the payout recipient for a given slot.
+     * @param slot 0-indexed slot number (equals on-chain cycle index).
+     *             If using DB payout_slot (1-indexed), pass payout_slot - 1.
+     */
+    function getPayoutRecipient(uint256 slot) public view returns (address) {
+        return slotRecipient[slot];
+    }
 
     function getMemberCount() external view returns (uint256) {
         return memberList.length;
@@ -335,86 +395,54 @@ contract TandaPod {
         return members[wallet];
     }
 
-    function getPayoutRecipient(uint256 cycle) public view returns (address) {
-        // The member whose payoutSlot equals cycle receives the pot for that cycle
-        for (uint256 i = 0; i < memberList.length; i++) {
-            if (members[memberList[i]].payoutSlot == uint8(cycle)) {
-                return memberList[i];
-            }
-        }
-        return address(0);
-    }
-
     function isDeadlinePassed() external view returns (bool) {
-        return block.timestamp > cycleStartedAt + cycleDuration;
+        return block.timestamp > cycleStartedAt + cycleDurationSeconds;
     }
 
-    // ── Internal ─────────────────────────────────────────────────
+    // ── Admin ────────────────────────────────────────────────────
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "Zero address");
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+    // ── Internal ────────────────────────────────────────────────
 
     /**
-     * @dev Release the pot for a completed cycle.
-     *      Pot = activeCount × contributionAmount (defaulted members don't pay,
-     *      so we use actual payment count which equals activeCount at trigger point).
+     * @dev Release the pot for a completed cycle and advance to the next.
+     *      Called internally from contribute() when all active members have paid.
      */
-    function _releasePot(uint256 cycle, uint256 activeCount) internal {
-        uint256 pot      = contributionAmount * activeCount;
-        address recipient = getPayoutRecipient(cycle);
+    function _releasePot(uint256 cycle) internal {
+        uint256 pot       = contributionAmount * activeCount;
+        address recipient = slotRecipient[cycle];
 
-        // If the designated recipient defaulted, send to treasury
+        // If designated recipient defaulted, send pot to treasury instead
         if (recipient == address(0) || members[recipient].status == MemberStatus.DEFAULTED) {
             recipient = treasury;
         }
 
-        // Advance cycle state before transfer (CEI)
+        // Advance cycle state before transfer (checks-effects-interactions)
         uint256 nextCycle = currentCycle + 1;
         currentCycle      = nextCycle;
         cycleStartedAt    = block.timestamp;
 
         emit PayoutSent(podId, recipient, cycle, pot);
-
         _send(recipient, pot);
 
-        // If all cycles complete, wrap up
+        // All cycles done → complete and let members pull their collateral
         if (nextCycle == size) {
-            _completeAndRefundAll();
+            podStatus = PodStatus.COMPLETED;
+            emit PodCompleted(podId, block.timestamp);
         }
     }
 
     /**
-     * @dev Mark pod COMPLETED and refund all remaining collateral.
-     */
-    function _completeAndRefundAll() internal {
-        podStatus = PodStatus.COMPLETED;
-        emit PodCompleted(podId, block.timestamp);
-
-        for (uint256 i = 0; i < memberList.length; i++) {
-            address m = memberList[i];
-            uint256 refund = members[m].collateral;
-            if (refund > 0) {
-                members[m].collateral = 0;
-                _send(m, refund);
-                emit CollateralRefunded(podId, m, refund);
-            }
-        }
-    }
-
-    /**
-     * @dev Count members with ACTIVE status.
-     */
-    function _activeCount() internal view returns (uint256 count) {
-        for (uint256 i = 0; i < memberList.length; i++) {
-            if (members[memberList[i]].status == MemberStatus.ACTIVE) {
-                count++;
-            }
-        }
-    }
-
-    /**
-     * @dev Unified send: ETH or ERC-20.
+     * @dev Unified send: ETH via low-level call, ERC-20 via transfer().
      */
     function _send(address to, uint256 amount) internal {
         if (token == address(0)) {
-            (bool ok, ) = payable(to).call{value: amount}("");
+            (bool ok,) = payable(to).call{value: amount}("");
             require(ok, "ETH transfer failed");
         } else {
             bool ok = IERC20(token).transfer(to, amount);
@@ -422,14 +450,7 @@ contract TandaPod {
         }
     }
 
-    // ── Admin ────────────────────────────────────────────────────
-
-    function transferOwnership(address newOwner) external onlyOwner {
-        require(newOwner != address(0), "Zero address");
-        owner = newOwner;
-    }
-
-    // Reject stray ETH sends to token pods
+    // Reject stray ETH on ERC-20 pods
     receive() external payable {
         require(token == address(0), "ETH not accepted for token pods");
     }

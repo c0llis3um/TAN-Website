@@ -89,25 +89,22 @@ export async function connectPhantom() {
 
 // ── Xaman / XUMM (XRPL) ─────────────────────────────────────
 
+/** Always true — Xumm SDK works on mobile and desktop without a browser extension */
 export function isXamanInstalled() {
-  return typeof window !== 'undefined' && !!window.xumm
+  return true
 }
 
 export async function connectXaman() {
-  if (!isXamanInstalled()) {
-    throw 'Xaman (XUMM) wallet not found. Install the Xaman browser extension at xumm.app'
-  }
-
-  const account = await window.xumm.authorize()
-  const address = account?.me?.account
+  const { connectXumm } = await import('@/lib/xrpl')
+  const address = await connectXumm()
   if (!address) throw 'Xaman authorisation cancelled or failed.'
 
   return {
     address,
-    chain:    'XRPL',
-    chainId:  null,
+    chain:     'XRPL',
+    chainId:   null,
     chainName: 'XRP Ledger',
-    provider: 'xaman',
+    provider:  'xaman',
   }
 }
 

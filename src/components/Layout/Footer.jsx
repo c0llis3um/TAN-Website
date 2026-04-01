@@ -18,7 +18,6 @@ export default function Footer() {
           <div className="flex items-center gap-3">
             <img src="/media/tlogo.png" alt="DeFi Tanda" className="w-7 h-7 dark:brightness-[10] brightness-0" />
             <span className="font-bold dark:text-white text-slate-800">DeFi Tanda</span>
-            <span className="dark:text-brand-muted text-slate-400 text-sm">Chicago, IL</span>
           </div>
 
           {/* Links */}

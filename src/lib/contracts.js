@@ -210,10 +210,20 @@ async function simulateDeploy({ name, size, token, payoutMethod }) {
 const TANDA_POD_ABI = [
   'function joinPod() payable',
   'function contribute(uint256 cycle) payable',
+  'function claimCollateral()',
+  'function claimRefund()',
+  'function cancelPod()',
+  'function forceComplete()',
+  'function markDefault(address member)',
   'function currentCycle() view returns (uint256)',
+  'function activeCount() view returns (uint256)',
   'function podStatus() view returns (uint8)',
   'function contributionAmount() view returns (uint256)',
-  'function getPayoutRecipient(uint256 cycle) view returns (address)',
+  'function cycleDurationSeconds() view returns (uint256)',
+  'function getPayoutRecipient(uint256 slot) view returns (address)',
+  'function isDeadlinePassed() view returns (bool)',
+  'function memberList(uint256 index) view returns (address)',
+  'function getMember(address wallet) view returns (tuple(address wallet, uint8 payoutSlot, uint256 collateral, uint8 status))',
 ]
 
 /**
@@ -285,6 +295,38 @@ export async function setFactoryTreasury(newAddress, env) {
   const factory = new Contract(factoryAddr, FACTORY_ADMIN_ABI, signer)
   const tx      = await factory.setTreasury(newAddress)
   const receipt = await tx.wait()
+  return { txHash: receipt.hash }
+}
+
+/**
+ * Admin escape hatch: mark an ACTIVE TandaPod as COMPLETED so members can
+ * pull their collateral via claimCollateral(). Use when payments happened
+ * off-chain (direct wallet transfers) and contribute() was bypassed.
+ * Caller must be the factory/owner of the contract.
+ */
+export async function releaseCollateral(env, podContractAddress) {
+  const address = resolveTandaPodAddress(env, podContractAddress)
+  if (!address) throw new Error('No TandaPod contract configured for this network.')
+  await assertCorrectNetwork(env)
+  const signer   = await getSigner()
+  const contract = new Contract(address, TANDA_POD_ABI, signer)
+  const tx       = await contract.forceComplete()
+  const receipt  = await tx.wait()
+  return { txHash: receipt.hash }
+}
+
+/**
+ * Member claims their own collateral after pod completes.
+ * Works after natural completion or after admin calls forceComplete().
+ */
+export async function claimCollateral(env, podContractAddress) {
+  const address = resolveTandaPodAddress(env, podContractAddress)
+  if (!address) throw new Error('No TandaPod contract configured for this network.')
+  await assertCorrectNetwork(env)
+  const signer   = await getSigner()
+  const contract = new Contract(address, TANDA_POD_ABI, signer)
+  const tx       = await contract.claimCollateral()
+  const receipt  = await tx.wait()
   return { txHash: receipt.hash }
 }
 

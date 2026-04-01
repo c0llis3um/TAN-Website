@@ -3,6 +3,8 @@ import { motion } from 'framer-motion'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import { adminGetAllPods } from '@/lib/db'
+import { releaseCollateral } from '@/lib/contracts'
+import { useAppStore } from '@/store'
 
 const STATUS_COLORS = { ACTIVE: 'green', COMPLETED: 'blue', DEFAULTED: 'red', OPEN: 'yellow', LOCKED: 'yellow', CANCELLED: 'muted' }
 const CHAIN_COLORS  = { XRPL: 'blue', Solana: 'muted', Ethereum: 'muted' }
@@ -114,8 +116,30 @@ export default function AdminPods() {
 }
 
 function PodDetail({ pod, onClose }) {
-  const members  = pod.pod_members?.length ?? 0
+  const members   = pod.pod_members?.length ?? 0
   const organizer = pod.organizer?.alias ?? pod.organizer?.wallet_address ?? '—'
+  const env       = useAppStore(s => s.env)
+
+  const [releasing, setReleasing] = useState(false)
+  const [releaseTx, setReleaseTx] = useState(null)
+  const [releaseErr, setReleaseErr] = useState(null)
+
+  const canRelease = pod.chain === 'Ethereum' && pod.status === 'COMPLETED' && pod.contract_address
+
+  async function handleRelease() {
+    if (!window.confirm('This will call forceComplete() on the TandaPod contract and return all collateral to members. Continue?')) return
+    setReleasing(true)
+    setReleaseErr(null)
+    try {
+      const { txHash } = await releaseCollateral(env, pod.contract_address)
+      setReleaseTx(txHash)
+    } catch (e) {
+      setReleaseErr(e?.reason ?? e?.message ?? String(e))
+    } finally {
+      setReleasing(false)
+    }
+  }
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-4"
@@ -154,6 +178,28 @@ function PodDetail({ pod, onClose }) {
           <div className="mb-4 p-3 rounded-xl dark:bg-brand-dark bg-slate-50">
             <p className="text-xs dark:text-brand-muted text-slate-400 mb-1">Contract Address</p>
             <p className="font-mono text-xs dark:text-brand-cyan text-brand-blue break-all">{pod.contract_address}</p>
+          </div>
+        )}
+
+        {canRelease && !releaseTx && (
+          <div className="mt-4 p-4 rounded-xl border dark:border-amber-500/30 border-amber-300 dark:bg-amber-500/10 bg-amber-50">
+            <p className="text-xs dark:text-amber-300 text-amber-700 font-semibold mb-1">Collateral Release</p>
+            <p className="text-xs dark:text-amber-200/70 text-amber-600 mb-3">
+              All cycles complete. Connect MetaMask as the factory owner, then release collateral back to members on-chain.
+            </p>
+            {releaseErr && <p className="text-xs text-red-400 mb-2">{releaseErr}</p>}
+            <button onClick={handleRelease} disabled={releasing}
+              className="w-full py-2 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-white font-bold text-sm transition-colors">
+              {releasing ? 'Releasing…' : 'Release Collateral On-Chain'}
+            </button>
+          </div>
+        )}
+
+        {releaseTx && (
+          <div className="mt-4 p-4 rounded-xl dark:bg-emerald-500/10 bg-emerald-50 border dark:border-emerald-500/30 border-emerald-300">
+            <p className="text-xs font-bold dark:text-emerald-300 text-emerald-700 mb-1">Collateral Released</p>
+            <a href={`https://sepolia.etherscan.io/tx/${releaseTx}`} target="_blank" rel="noopener noreferrer"
+              className="font-mono text-xs dark:text-brand-cyan text-brand-blue underline break-all">{releaseTx}</a>
           </div>
         )}
       </motion.div>
