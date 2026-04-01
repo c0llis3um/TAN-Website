@@ -1,0 +1,26 @@
+{
+  "_note": "LIVE — mainnet. Real funds. 2-of-3 super_admin required to activate.",
+  "xrpl": {
+    "networkUrl": "wss://xrplcluster.com",
+    "networkName": "XRPL Mainnet",
+    "fulfillmentAccount": "",
+    "insuranceAccount": "",
+    "rlusdIssuer": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
+  },
+  "ethereum": {
+    "chainId": 1,
+    "networkName": "Ethereum Mainnet",
+    "rpcUrl": "",
+    "factory": "",
+    "tandaPod": "",
+    "insurance": "",
+    "reputation": "",
+    "usdc": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+  },
+  "solana": {
+    "cluster": "mainnet-beta",
+    "networkName": "Solana Mainnet",
+    "programId": "",
+    "usdc": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+  }
+}

@@ -1,2 +1,16 @@
 API Key
 .env
+
+# Hardhat
+artifacts/
+cache/
+
+# Dependencies & build
+node_modules/
+dist/
+
+# Claude Code
+.claude/
+
+# Backup
+bu/

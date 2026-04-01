@@ -1,0 +1,27 @@
+{
+  "_note": "DEV — testnet only. No real funds.",
+  "xrpl": {
+    "networkUrl": "wss://s.altnet.rippletest.net:51233",
+    "networkName": "XRPL Testnet",
+    "fulfillmentAccount": "",
+    "insuranceAccount": "",
+    "rlusdIssuer": ""
+  },
+  "ethereum": {
+    "chainId": 31337,
+    "networkName": "Hardhat Local",
+    "rpcUrl": "",
+    "factory": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+    "tandaPod": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+    "insurance": "",
+    "reputation": "",
+    "usdc": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+    "rpc": "http://127.0.0.1:8545"
+  },
+  "solana": {
+    "cluster": "devnet",
+    "networkName": "Solana Devnet",
+    "programId": "",
+    "usdc": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
+  }
+}

@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Smooth theme transitions ── */
+*, *::before, *::after {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.15s ease;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1a3d52; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #006aff; }
+
+/* ── Base ── */
+html { scroll-behavior: smooth; }
+body { @apply font-sans antialiased; }
+
+/* ── Dark theme base ── */
+.dark body  { @apply bg-brand-dark text-brand-text; }
+.dark body  { background-color: #0b171b; }
+
+/* ── Light theme base ── */
+body        { @apply bg-slate-50 text-slate-800; }
+
+/* ── Gradient text ── */
+.gradient-text {
+  background: linear-gradient(135deg, #006aff, #00c1ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Glow border card ── */
+.card-glow {
+  position: relative;
+  border-radius: 1.25rem;
+  overflow: hidden;
+}
+.card-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(0,106,255,0.4), rgba(0,193,255,0.2), transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ── Orb backgrounds ── */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  opacity: 0.18;
+}
+.dark .orb { opacity: 0.22; }
+
+/* ── Active pulse dot ── */
+.pulse-dot {
+  position: relative;
+  display: inline-flex;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.pulse-dot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: inherit;
+  animation: ping 2s cubic-bezier(0,0,.2,1) infinite;
+  opacity: 0.6;
+}
+
+/* ── Shimmer loading ── */
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, transparent 25%, rgba(0,106,255,0.08) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ── Number ticker ── */
+.ticker { font-variant-numeric: tabular-nums; }
+
+/* ── Glass card (light mode) ── */
+.glass {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ── Admin DEV banner ── */
+.dev-banner {
+  background: repeating-linear-gradient(
+    45deg,
+    #f59e0b,
+    #f59e0b 10px,
+    #fbbf24 10px,
+    #fbbf24 20px
+  );
+}

@@ -1,0 +1,168 @@
+{
+  "nav": {
+    "howItWorks": "Cómo funciona",
+    "chains": "Redes",
+    "learn": "Aprender",
+    "docs": "Documentación",
+    "joinWaitlist": "Unirse a la Lista",
+    "launchApp": "Abrir App",
+    "dashboard": "Inicio",
+    "myPods": "Mis Tandas",
+    "wallet": "Billetera",
+    "history": "Historial",
+    "profile": "Perfil",
+    "create": "Crear Tanda"
+  },
+  "hero": {
+    "headline1": "Ahorra juntos.",
+    "headline2": "Gana juntos.",
+    "sub": "Una {{word}} es un círculo de ahorro que tu comunidad ha llevado por generaciones. Lo hicimos inquebrantable — seguro, automático, sin necesidad de banco.",
+    "cta1": "Únete a la Lista",
+    "cta2": "Ver cómo funciona",
+    "testnetBadge": "TESTNET — Sin dinero real"
+  },
+  "tanda": {
+    "title": "¿Qué es una Tanda?",
+    "p1": "Una Tanda es un círculo comunitario de ahorro. Un grupo de personas acuerda poner la misma cantidad cada semana — y cada semana, una persona se lleva todo el dinero del pozo. Rota hasta que todos hayan recibido su pago.",
+    "p2": "Sin intereses. Sin banco. Sin ánimo de lucro. Solo un grupo de personas ayudándose mutuamente a ahorrar y salir adelante — como las comunidades lo han hecho por siglos.",
+    "p3": "Quizás la conozcas como Osusu, Hui, Stokvel, Chit Fund o Arisan — misma idea, cada cultura la tiene.",
+    "p4": "¿El problema? Cuando el organizador desaparece con el dinero, o alguien deja de pagar después de recibir su pago. DeFi Tanda lo soluciona con un contrato inteligente — código que nadie puede anular, ni siquiera nosotros."
+  },
+  "how": {
+    "title": "Cómo funciona",
+    "sub": "Tres pasos. Sin cuenta bancaria.",
+    "step1Title": "Crea o únete a un pod",
+    "step1": "El organizador configura la tanda — tamaño del grupo, cantidad semanal y duración. Los miembros se unen con un pequeño depósito de seguridad que genera intereses y te lo devolvemos al final.",
+    "step2Title": "Contribuye cada ciclo",
+    "step2": "Paga tu parte semanal, quincenal o mensualmente. Usa Apple Pay, Google Pay, tarjeta de débito — o conecta tu billetera cripto directamente.",
+    "step3Title": "Recibe tu pago",
+    "step3": "Cuando llega tu turno, el pozo completo llega a tu billetera automáticamente. ¿Turno temprano? = préstamo sin intereses. ¿Turno tarde? = plan de ahorro disciplinado.",
+    "exampleTitle": "Ejemplo: 10 amigos, $100/semana",
+    "members": "Miembros",
+    "contribution": "Contribución",
+    "pot": "Pozo cada semana",
+    "duration": "Duración",
+    "receives": "Todos reciben",
+    "fee": "Tarifa del protocolo",
+    "feeValue": "¡Gratis durante el piloto! 🎉"
+  },
+  "why": {
+    "title": "¿Por qué DeFi Tanda?",
+    "sub": "Todo lo que hacía quebrar las tandas tradicionales — solucionado.",
+    "fraud": {
+      "title": "Nadie puede huir con el dinero",
+      "body": "Un contrato inteligente guarda cada dólar. El organizador maneja el grupo — pero nunca toca los fondos. Los pagos son automáticos, a tiempo, siempre."
+    },
+    "bank": {
+      "title": "Sin cuenta bancaria",
+      "body": "Solo necesitas un teléfono. Paga con Apple Pay o Google Pay — o conecta una billetera cripto. Tu dinero, tu control."
+    },
+    "remit": {
+      "title": "Envía tu pago a cualquier lugar",
+      "body": "Recibe en USDC y envía dinero a tu familia en México en segundos — casi sin comisión. Sin Western Union. Sin el 7% de comisión."
+    },
+    "record": {
+      "title": "Un registro permanente",
+      "body": "Cada contribución y pago queda registrado en la blockchain para siempre. Sin disputas, sin 'yo ya pagué'."
+    },
+    "whatsapp": {
+      "title": "Funciona por WhatsApp",
+      "body": "Recordatorios, confirmaciones y alertas de pago directo a tu WhatsApp. Organiza donde tu comunidad ya está."
+    },
+    "yield": {
+      "title": "Tu depósito gana intereses",
+      "body": "Tu depósito de seguridad genera rendimiento mientras está bloqueado. Te lo devolvemos todo al terminar la tanda — más un poco extra."
+    }
+  },
+  "pay": {
+    "title": "Paga como quieras",
+    "sub": "No necesitas cripto para empezar. Usa lo que ya tienes en tu teléfono.",
+    "fiatTitle": "💳 Paga con dólares",
+    "fiatBody": "Paga con Apple Pay, Google Pay o tarjeta de débito. Convertimos tus dólares a USDC automáticamente.",
+    "walletTitle": "🔗 Conecta tu billetera",
+    "walletBody": "¿Ya tienes cripto? Conecta Phantom, MetaMask, Coinbase Wallet o Xaman y paga directamente."
+  },
+  "chains": {
+    "title": "Disponible en 3 redes",
+    "sub": "Elige la blockchain que mejor se adapte a tu comunidad.",
+    "sol": {
+      "token": "USDC",
+      "body": "Rapidísimo y ultra barato. La mayoría de nuestras tandas corren en Solana — ideal para cualquier grupo.",
+      "best": "⭐ La más popular · Recomendada para nuevos miembros"
+    },
+    "eth": {
+      "token": "USDC · USDT",
+      "body": "El ecosistema DeFi más grande. Ideal para tandas grandes y grupos con experiencia en cripto.",
+      "best": "Mejor para tandas grandes"
+    },
+    "xrpl": {
+      "token": "RLUSD",
+      "body": "Liquidación en 3 segundos por una fracción de centavo. Excelente para pagos internacionales.",
+      "best": "Mejor para pagos internacionales"
+    }
+  },
+  "learn": {
+    "title": "¿Nunca usaste cripto?",
+    "body1": "Está bien — la mayoría de nuestros usuarios tampoco. Akademia es nuestro centro de educación gratuito, hecho para personas que crecieron con tandas pero son nuevas en el mundo digital.",
+    "body2": "Videos cortos en español e inglés. Sin jerga técnica. Desde '¿qué es cripto?' hasta 'cómo enviar dinero a México gratis'.",
+    "cta": "Avísame cuando lancemos",
+    "courseLabel": "Akademia — Curso Gratuito",
+    "l1": "¿Qué es una tanda? — Ya lo sabes",
+    "l2": "¿Qué es crypto? — Dinero digital explicado",
+    "l3": "¿Qué es una wallet? — Tu alcancía digital",
+    "l4": "Cómo unirte a tu primera tanda — paso a paso",
+    "l5": "Envía tu pago a México sin comisión"
+  },
+  "waitlist": {
+    "title": "Sé el primero en unirte",
+    "body": "Estamos lanzando en Chicago con un pequeño grupo de miembros de la comunidad primero. Deja tu correo y te avisamos cuando tu lugar esté listo.",
+    "placeholder": "tucorreo@email.com",
+    "cta": "Notificarme",
+    "success": "✓ ¡Estás en la lista! Te contactaremos pronto.",
+    "note": "Sin spam. Sin compartir. Solo un aviso cuando abramos."
+  },
+  "dashboard": {
+    "greeting": "Bienvenido",
+    "noWallet": "Conecta tu billetera para empezar",
+    "activePods": "Tandas Activas",
+    "nextPayment": "Próximo pago",
+    "reputation": "Reputación",
+    "payNow": "Pagar Ahora",
+    "createPod": "Crear Tanda",
+    "browsePods": "Ver Tandas",
+    "buyUsdc": "Comprar USDC",
+    "recentActivity": "Actividad Reciente",
+    "due": "vence",
+    "paid": "pagado este ciclo",
+    "overdue": "vencido"
+  },
+  "pod": {
+    "week": "Semana",
+    "of": "de",
+    "membersTitle": "Miembros",
+    "collateral": "Depósito bloqueado",
+    "contributed": "Total contribuido",
+    "payoutReceived": "Pago recibido",
+    "payNow": "Pagar ${{amount}}",
+    "shareWa": "Compartir en WhatsApp",
+    "shareTg": "Compartir en Telegram",
+    "shareInvite": "¡Únete a mi Tanda DeFi! 💰\n${{amount}} por semana durante {{members}} semanas. Seguro, automático, sin banco.\n👉 {{url}}\nLugares: {{spots}}",
+    "shareInviteEs": "¡Únete a mi Tanda DeFi! 💰\n${{amount}} por semana durante {{members}} semanas. Seguro, automático, sin banco.\n👉 {{url}}\nLugares: {{spots}}"
+  },
+  "common": {
+    "connectWallet": "Conectar Billetera",
+    "disconnect": "Desconectar",
+    "copy": "Copiar",
+    "copied": "¡Copiado!",
+    "viewExplorer": "Ver en Explorer",
+    "loading": "Cargando...",
+    "error": "Algo salió mal",
+    "retry": "Intentar de nuevo",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "done": "Listo"
+  }
+}
