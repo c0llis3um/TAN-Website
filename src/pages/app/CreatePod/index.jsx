@@ -493,12 +493,10 @@ export default function CreatePod() {
                   ['Pod name',     form.name],
                   ['Network',      form.chain],
                   ['Token',        form.token],
-                  ['Contribution', `${form.contribution} ${form.token} / week`],
-                  ['Members',      form.size],
+                  ['Contribution', `${form.contribution} ${form.token} / cycle`],
+                  ['Members',      `${form.size} people`],
                   ['Total pot',    `${totalPot} ${form.token}`],
                   ['Payout order', form.payoutOrder],
-                  ['To join',      `${upfront} ${form.token} upfront`],
-                  ['Creation fee', 'Small ETH fee (paid to deploy)'],
                 ].map(([l, v]) => (
                   <div key={l} className="flex justify-between py-2.5 border-b dark:border-brand-border/40 border-slate-100 last:border-0">
                     <span className="text-sm dark:text-brand-muted text-slate-500">{l}</span>
@@ -507,9 +505,45 @@ export default function CreatePod() {
                 ))}
               </div>
 
+              {/* Cost breakdown */}
+              <div className="rounded-2xl dark:bg-brand-dark bg-slate-50 border dark:border-brand-border border-slate-200 p-4 mb-4">
+                <p className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-3">What you'll need</p>
+                <div className="space-y-2">
+                  {form.chain === 'Ethereum' && (
+                    <div className="flex justify-between text-sm">
+                      <span className="dark:text-brand-muted text-slate-500">Gas to deploy contract</span>
+                      <span className="font-bold dark:text-white text-slate-900">~0.005 ETH</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm">
+                    <span className="dark:text-brand-muted text-slate-500">Collateral to join (2×)</span>
+                    <span className="font-bold dark:text-white text-slate-900">{form.contribution * 2} {form.token}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="dark:text-brand-muted text-slate-500">First contribution</span>
+                    <span className="font-bold dark:text-white text-slate-900">{form.contribution} {form.token}</span>
+                  </div>
+                  <div className="flex justify-between text-sm border-t dark:border-brand-border border-slate-200 pt-2 mt-2">
+                    <span className="font-bold dark:text-white text-slate-900">Total upfront to join</span>
+                    <span className="font-extrabold text-brand-cyan">{form.contribution * 3} {form.token}{form.chain === 'Ethereum' ? ' + gas' : ''}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Refund policy */}
+              <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4 mb-4">
+                <p className="text-xs font-bold text-amber-400 mb-2">⚠ What if the pod doesn't fill?</p>
+                <ul className="text-xs dark:text-brand-muted text-slate-500 space-y-1">
+                  <li>• You (the organizer) can cancel the pod anytime before it fills</li>
+                  <li>• All members who joined get their full collateral back automatically</li>
+                  <li>• The gas fee to deploy is not refundable</li>
+                  <li>• No one loses their contribution — the pot never forms until the pod is full</li>
+                </ul>
+              </div>
+
               <div className="p-3 rounded-xl dark:bg-brand-blue/5 bg-blue-50 border dark:border-brand-blue/20 border-blue-200 text-xs dark:text-brand-text text-slate-700">
                 {form.chain === 'Ethereum'
-                  ? '🔒 MetaMask will ask you to confirm one transaction (ETH fee). No token approvals needed.'
+                  ? '🔒 MetaMask will ask you to confirm one transaction. No token approvals needed.'
                   : '🔒 Xaman will confirm the transaction on the XRP Ledger.'}
               </div>
             </Card>

@@ -265,6 +265,20 @@ export async function tandaPodContribute(env, currentCycle, contributionAmount, 
   return { txHash: receipt.hash }
 }
 
+/**
+ * Cancel an OPEN TandaPod so members can claim their collateral back.
+ */
+export async function cancelTandaPod(env, podContractAddress) {
+  const address = resolveTandaPodAddress(env, podContractAddress)
+  if (!address) throw new Error('No TandaPod contract configured for this network.')
+  await assertCorrectNetwork(env)
+  const signer   = await getSigner()
+  const contract = new Contract(address, TANDA_POD_ABI, signer)
+  const tx       = await contract.cancelPod()
+  const receipt  = await tx.wait()
+  return { txHash: receipt.hash }
+}
+
 // ── Solana (Sprint 2) ─────────────────────────────────────────
 
 export async function deployPodSolana() {

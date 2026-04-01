@@ -6,8 +6,8 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import useAppStore from '@/store/useAppStore'
-import { getPod, joinPod, getUser, upsertUser, maybeActivatePod, cycleMs } from '@/lib/db'
-import { tandaPodJoin } from '@/lib/contracts'
+import { getPod, joinPod, getUser, upsertUser, maybeActivatePod, cycleMs, updatePodStatus } from '@/lib/db'
+import { tandaPodJoin, cancelTandaPod } from '@/lib/contracts'
 
 function shareWa(text) { window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank') }
 function shareTg(url, text) { window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank') }
@@ -23,9 +23,11 @@ export default function PodView() {
   const [pod,       setPod]       = useState(null)
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
-  const [joining,   setJoining]   = useState(false)
-  const [joinError, setJoinError] = useState(null)
-  const [joinDone,  setJoinDone]  = useState(false)
+  const [joining,    setJoining]    = useState(false)
+  const [joinError,  setJoinError]  = useState(null)
+  const [joinDone,   setJoinDone]   = useState(false)
+  const [cancelling, setCancelling] = useState(false)
+  const [cancelErr,  setCancelErr]  = useState(null)
 
   useEffect(() => {
     if (!id) return
@@ -76,6 +78,23 @@ export default function PodView() {
     if (fresh) setPod(fresh)
     setJoinDone(true)
     setJoining(false)
+  }
+
+  async function handleCancel() {
+    if (!window.confirm('Cancel this pod? Members will be able to claim their collateral back.')) return
+    setCancelling(true)
+    setCancelErr(null)
+    try {
+      if (pod.chain === 'Ethereum' && pod.contract_address) {
+        await cancelTandaPod(env, pod.contract_address)
+      }
+      await updatePodStatus(pod.id, 'CANCELLED')
+      const { data: fresh } = await getPod(pod.id)
+      if (fresh) setPod(fresh)
+    } catch (err) {
+      setCancelErr(err?.message ?? 'Cancel failed.')
+    }
+    setCancelling(false)
   }
 
   if (loading) {
@@ -150,6 +169,15 @@ export default function PodView() {
           )}
           {pod.status === 'OPEN' && !wallet?.address && (
             <p className="text-xs dark:text-brand-muted text-slate-400">Connect wallet to join</p>
+          )}
+          {pod.status === 'OPEN' && wallet?.address && pod.organizer?.wallet_address === wallet.address && (
+            <div className="flex flex-col items-end gap-1">
+              <button onClick={handleCancel} disabled={cancelling}
+                className="text-xs px-3 py-1.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors">
+                {cancelling ? 'Cancelling…' : 'Cancel Pod'}
+              </button>
+              {cancelErr && <p className="text-xs text-red-400 text-right max-w-[180px]">{cancelErr}</p>}
+            </div>
           )}
         </div>
       </motion.div>
