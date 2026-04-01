@@ -5,8 +5,9 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import useAppStore from '@/store/useAppStore'
-import { createPod, upsertUser, updatePodContract } from '@/lib/db'
+import { createPod, upsertUser, updatePodContract, savePodEscrow } from '@/lib/db'
 import { deployPodEVM } from '@/lib/contracts'
+import { createXrplPodEscrow } from '@/lib/xrpl'
 
 // ── Config ───────────────────────────────────────────────────
 
@@ -142,8 +143,13 @@ export default function CreatePod() {
             payoutMethod: form.payoutOrder,
             env,
           })
+        } else if (form.chain === 'XRPL') {
+          // Generate a dedicated escrow wallet for this pod
+          const { escrowAddress, escrowSeed } = await createXrplPodEscrow(podId, wallet.address, env)
+          // Save seed server-side (service_role only — never readable by frontend)
+          await savePodEscrow(podId, escrowSeed)
+          contractResult = { simulated: false, txHash: null, contractAddress: escrowAddress }
         }
-        // XRPL: handled via xrpl.js escrow at join time
       } catch (chainErr) {
         await updatePodContract(podId, { status: 'FAILED' }).catch(() => {})
         throw chainErr

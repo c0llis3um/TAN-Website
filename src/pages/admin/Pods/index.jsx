@@ -124,15 +124,36 @@ function PodDetail({ pod, onClose }) {
   const [releaseTx, setReleaseTx] = useState(null)
   const [releaseErr, setReleaseErr] = useState(null)
 
-  const canRelease = pod.chain === 'Ethereum' && pod.status === 'COMPLETED' && pod.contract_address
+  const canReleaseEVM  = pod.chain === 'Ethereum' && pod.status === 'COMPLETED' && pod.contract_address
+  const canReleaseXRPL = pod.chain === 'XRPL'     && pod.status === 'COMPLETED' && pod.contract_address
+  const canRelease     = canReleaseEVM || canReleaseXRPL
 
   async function handleRelease() {
-    if (!window.confirm('This will call forceComplete() on the TandaPod contract and return all collateral to members. Continue?')) return
+    if (!window.confirm('Release collateral back to all members? This cannot be undone.')) return
     setReleasing(true)
     setReleaseErr(null)
+
     try {
-      const { txHash } = await releaseCollateral(env, pod.contract_address)
-      setReleaseTx(txHash)
+      if (canReleaseEVM) {
+        // Ethereum: call forceComplete() on TandaPod contract via MetaMask
+        const { txHash } = await releaseCollateral(env, pod.contract_address)
+        setReleaseTx(txHash)
+      } else if (canReleaseXRPL) {
+        // XRPL: Netlify function reads escrow seed server-side and sends to members
+        const { data: { session } } = await import('@/lib/supabase').then(m => m.default.auth.getSession())
+        const res = await fetch('/.netlify/functions/release-xrpl-collateral', {
+          method:  'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${session?.access_token ?? ''}`,
+          },
+          body: JSON.stringify({ podId: pod.id }),
+        })
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error ?? 'Release failed')
+        const txHashes = json.results.filter(r => r.status === 'ok').map(r => r.txHash).join(', ')
+        setReleaseTx(txHashes || 'done')
+      }
     } catch (e) {
       setReleaseErr(e?.reason ?? e?.message ?? String(e))
     } finally {

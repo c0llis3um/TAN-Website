@@ -55,12 +55,25 @@ export default function PodView() {
       setJoining(false)
       return
     }
-    // ── On-chain join (Ethereum with deployed contract) ──────────
-    if (pod.chain === 'Ethereum' && pod.contract_address) {
+    // ── On-chain join: lock collateral ──────────────────────────
+    if (pod.contract_address) {
       try {
-        await tandaPodJoin(env, pod.contribution_amount, pod.contract_address)
+        if (pod.chain === 'Ethereum') {
+          // Lock 2× collateral in TandaPod contract
+          await tandaPodJoin(env, pod.contribution_amount, pod.contract_address)
+        } else if (pod.chain === 'XRPL') {
+          // Send 2× collateral to pod escrow wallet via Xaman
+          const { sendContribution } = await import('@/lib/contracts')
+          await sendContribution(
+            pod.contract_address,
+            pod.contribution_amount * 2,
+            pod.token,
+            pod.chain,
+            env,
+          )
+        }
       } catch (err) {
-        setJoinError(err?.message ?? 'On-chain join failed.')
+        setJoinError(err?.message ?? 'Collateral deposit failed.')
         setJoining(false)
         return
       }

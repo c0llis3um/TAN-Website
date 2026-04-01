@@ -130,6 +130,16 @@ export async function updatePodContract(podId, { contract_address, creation_fee_
     .single()
 }
 
+// Save XRPL escrow seed — written once at pod creation.
+// Readable only by service_role (Netlify functions), never via anon key.
+export async function savePodEscrow(podId, escrowSeed) {
+  return supabase
+    .from('pod_escrows')
+    .insert({ pod_id: podId, escrow_seed: escrowSeed })
+    .select('pod_id')
+    .single()
+}
+
 export async function createPod({
   chain, token, name, organizer_id,
   contribution_amount, size, payout_method,
