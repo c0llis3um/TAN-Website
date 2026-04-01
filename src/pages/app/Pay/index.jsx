@@ -62,12 +62,6 @@ export default function Pay() {
     let txHashResult = null
 
     if (m === 'wallet') {
-      // Real on-chain transfer — MetaMask will prompt
-      if (!recipientAddr) {
-        setPayError('Payout recipient wallet not found.')
-        setStep('select')
-        return
-      }
       try {
         let result
         if (pod.chain === 'Ethereum') {
