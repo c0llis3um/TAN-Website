@@ -5,8 +5,8 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import useAppStore from '@/store/useAppStore'
-import { createPod, upsertUser, updatePodContract, joinPod, maybeActivatePod } from '@/lib/db'
-import { deployPodEVM, sendContribution } from '@/lib/contracts'
+import { createPod, upsertUser, updatePodContract } from '@/lib/db'
+import { deployPodEVM } from '@/lib/contracts'
 import supabase from '@/lib/supabase'
 
 // ── Config ───────────────────────────────────────────────────
@@ -32,11 +32,10 @@ const CHAIN_TOKENS = {
 const STEP_LABELS  = ['Chain', 'Token', 'Settings', 'Payout', 'Review']
 
 const DEPLOY_STEPS = [
-  { key: 'save',       label: 'Saving pod to database…'          },
-  { key: 'approve',    label: 'Confirm in wallet…'                },
-  { key: 'collateral', label: 'Depositing your collateral…'       },
-  { key: 'confirm',    label: 'Waiting for confirmation…'         },
-  { key: 'done',       label: 'Pod created!'                      },
+  { key: 'save',    label: 'Saving pod to database…'    },
+  { key: 'approve', label: 'Creating escrow wallet…'    },
+  { key: 'confirm', label: 'Waiting for confirmation…'  },
+  { key: 'done',    label: 'Pod created!'               },
 ]
 
 export default function CreatePod() {
@@ -159,23 +158,7 @@ export default function CreatePod() {
           if (!escrowRes.ok) throw new Error(escrowJson.error ?? 'Escrow creation failed')
           const escrowAddress = escrowJson.escrowAddress
           contractResult = { simulated: false, txHash: null, contractAddress: escrowAddress }
-
-          // ── Organizer deposits their own collateral ────────────
-          setDeployStep('collateral')
-          await sendContribution(
-            escrowAddress,
-            form.contribution * 2,
-            form.token,
-            form.chain,
-            env,
-          )
-
-          // ── Add organizer as member #1 ─────────────────────────
-          const { data: orgUser } = await upsertUser({ wallet_address: wallet.address, chain: wallet.chain ?? 'XRPL', lang: 'es' })
-          if (orgUser?.id) {
-            await joinPod(podId, orgUser.id)
-            await maybeActivatePod(podId)
-          }
+          // Organizer joins + deposits collateral from the pod page (better UX than doing it here)
         }
       } catch (chainErr) {
         await updatePodContract(podId, { status: 'FAILED' }).catch(() => {})
