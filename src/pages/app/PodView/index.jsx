@@ -176,6 +176,11 @@ export default function PodView() {
           )}
           {(pod.status === 'OPEN' || (pod.status === 'ACTIVE' && !pod.current_cycle)) && !myMember && wallet?.address && (
             <>
+              {pod.organizer?.wallet_address === wallet.address && (
+                <p className="text-xs text-amber-400 font-semibold text-right max-w-[200px]">
+                  You created this pod — join it to deposit your collateral
+                </p>
+              )}
               <Button onClick={handleJoin} disabled={joining || joinDone}>
                 {joining ? 'Joining…' : joinDone ? '✓ Joined!' : `Join Pod →`}
               </Button>
