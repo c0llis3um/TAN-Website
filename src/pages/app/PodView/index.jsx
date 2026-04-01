@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import MoonPayButton from '@/components/MoonPayButton'
 import useAppStore from '@/store/useAppStore'
 import { getPod, joinPod, getUser, upsertUser, maybeActivatePod, cycleMs, updatePodStatus, getPodPayments } from '@/lib/db'
 import { tandaPodJoin, cancelTandaPod } from '@/lib/contracts'
@@ -188,7 +189,18 @@ export default function PodView() {
             </>
           )}
           {pod.status === 'OPEN' && !wallet?.address && (
-            <p className="text-xs dark:text-brand-muted text-slate-400">Connect wallet to join</p>
+            <div className="flex flex-col items-end gap-2">
+              <p className="text-xs dark:text-brand-muted text-slate-400">Connect wallet to join</p>
+              {pod.chain === 'XRPL' && (
+                <MoonPayButton
+                  token={pod.token === 'XRP' ? 'XRP' : pod.token}
+                  amount={pod.contribution_amount * 3}
+                  env={env}
+                  label="Buy XRP with Apple/Google Pay"
+                  className="!w-auto !py-2 !px-4 !text-xs"
+                />
+              )}
+            </div>
           )}
           {pod.status === 'OPEN' && wallet?.address && pod.organizer?.wallet_address === wallet.address && (
             <div className="flex flex-col items-end gap-1">
@@ -484,6 +496,26 @@ export default function PodView() {
                   </div>
                 )
               })()}
+            </Card>
+          )}
+
+          {/* Buy XRP — onramp for XRPL pods */}
+          {pod.chain === 'XRPL' && !myMember && (
+            <Card hover={false} className="p-5">
+              <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-1">Don't have XRP?</h3>
+              <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">
+                Buy XRP with Apple Pay, Google Pay, or a credit card — no crypto experience needed.
+              </p>
+              <p className="text-xs dark:text-brand-muted text-slate-400 mb-3">
+                You'll need ~<span className="font-bold dark:text-white text-slate-900">{pod.contribution_amount * 3} {pod.token}</span> to join
+                <span className="block opacity-70">(2× collateral + 1st payment)</span>
+              </p>
+              <MoonPayButton
+                walletAddress={wallet?.address}
+                token={pod.token === 'XRP' ? 'XRP' : pod.token}
+                amount={pod.contribution_amount * 3}
+                env={env}
+              />
             </Card>
           )}
 
