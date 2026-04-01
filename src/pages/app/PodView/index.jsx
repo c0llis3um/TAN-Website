@@ -52,7 +52,7 @@ export default function PodView() {
       return
     }
     // ── On-chain join (Ethereum with deployed contract) ──────────
-    if (pod.chain === 'Ethereum') {
+    if (pod.chain === 'Ethereum' && pod.contract_address) {
       try {
         await tandaPodJoin(env, pod.contribution_amount, pod.contract_address)
       } catch (err) {
@@ -140,7 +140,7 @@ export default function PodView() {
               Pay {pod.contribution_amount} {pod.token} →
             </Button>
           )}
-          {pod.status === 'OPEN' && !myMember && wallet?.address && (
+          {(pod.status === 'OPEN' || (pod.status === 'ACTIVE' && !pod.current_cycle)) && !myMember && wallet?.address && (
             <>
               <Button onClick={handleJoin} disabled={joining || joinDone}>
                 {joining ? 'Joining…' : joinDone ? '✓ Joined!' : `Join Pod →`}

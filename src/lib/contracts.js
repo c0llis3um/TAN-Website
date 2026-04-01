@@ -259,7 +259,7 @@ export async function tandaPodContribute(env, currentCycle, contributionAmount, 
   const signer   = await getSigner()
   const contract = new Contract(address, TANDA_POD_ABI, signer)
   const amount   = parseEther(String(Number(contributionAmount).toFixed(8)))
-  const cycle    = currentCycle - 1   // contract is 0-indexed
+  const cycle    = Math.max(0, (currentCycle ?? 1) - 1)   // contract is 0-indexed
   const tx       = await contract.contribute(cycle, { value: amount })
   const receipt  = await tx.wait()
   return { txHash: receipt.hash }
