@@ -299,8 +299,8 @@ export default function CreatePod() {
                   <motion.button key={c.id} onClick={() => handleChainChange(c.id)}
                     whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
                     className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
-                      form.chain === c.id ? 'border-brand-blue/60 dark:bg-brand-blue/8 bg-blue-50'
-                      : 'dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
+                      form.chain === c.id ? 'border-brand-blue/60 dark:bg-brand-blue/10 bg-blue-50'
+                      : 'dark:bg-brand-darker dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
                     <span className="text-2xl">{c.icon}</span>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
