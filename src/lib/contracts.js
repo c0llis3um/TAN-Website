@@ -158,8 +158,9 @@ export async function deployPodEVM({ name, size, token, payoutMethod, env }) {
   const signer  = await getSigner()
   const factory = new Contract(factoryAddr, FACTORY_ABI, signer)
 
-  // Fee in ETH (wei)
-  const fee        = await factory.creationFee()
+  // Fee in ETH (wei) — default to 0 if contract not responding
+  let fee = 0n
+  try { fee = await factory.creationFee() } catch { /* contract not deployed or fee=0 */ }
   const walletAddr = await signer.getAddress()
 
   // Check ETH balance covers fee + gas buffer
