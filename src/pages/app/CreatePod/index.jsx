@@ -158,7 +158,7 @@ export default function CreatePod() {
           contract_address:  contractResult.contractAddress,
           creation_fee_tx:   contractResult.txHash,
           creation_fee_paid: !contractResult.simulated,
-          status:            contractResult.simulated ? 'OPEN' : 'ACTIVE',
+          status:            'OPEN',
           deployed_at:       contractResult.simulated ? null : new Date().toISOString(),
         })
         if (!error) { dbErr = null; break }
