@@ -1,0 +1,114 @@
+/**
+ * Netlify Function: create-xrpl-escrow
+ *
+ * POST /.netlify/functions/create-xrpl-escrow
+ * Body: { podId: string, env: 'dev' | 'live' }
+ * Headers: Authorization: Bearer <supabase_access_token>
+ *
+ * Creates a dedicated XRPL escrow wallet for a pod and saves the seed
+ * server-side using the service role key (client can never read it).
+ * Returns only the escrow address to the caller.
+ *
+ * Required env vars (Netlify dashboard — NO VITE_ prefix):
+ *   SUPABASE_URL
+ *   SUPABASE_SERVICE_ROLE_KEY
+ */
+
+import { createClient } from '@supabase/supabase-js'
+import { Client, Wallet } from 'xrpl'
+
+const NODES = {
+  dev:  'wss://s.altnet.rippletest.net:51233',
+  live: 'wss://xrplcluster.com',
+}
+
+export const handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method not allowed' }
+  }
+
+  const authHeader  = event.headers['authorization'] ?? ''
+  const accessToken = authHeader.replace('Bearer ', '').trim()
+  if (!accessToken) {
+    return { statusCode: 401, body: JSON.stringify({ error: 'Missing authorization token' }) }
+  }
+
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+  )
+
+  try {
+    // ── 1. Validate session ────────────────────────────────────
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(accessToken)
+    if (authErr || !user) {
+      return { statusCode: 401, body: JSON.stringify({ error: 'Invalid session' }) }
+    }
+
+    // ── 2. Parse body ──────────────────────────────────────────
+    const { podId, env = 'dev' } = JSON.parse(event.body ?? '{}')
+    if (!podId) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'podId required' }) }
+    }
+
+    // ── 3. Make sure this pod doesn't already have an escrow ───
+    const { data: existing } = await supabase
+      .from('pod_escrows')
+      .select('pod_id')
+      .eq('pod_id', podId)
+      .maybeSingle()
+
+    if (existing) {
+      // Escrow already exists — fetch and return address from pod record
+      const { data: pod } = await supabase
+        .from('pods')
+        .select('contract_address')
+        .eq('id', podId)
+        .single()
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ escrowAddress: pod?.contract_address }),
+      }
+    }
+
+    // ── 4. Create XRPL wallet ──────────────────────────────────
+    const node   = NODES[env] ?? NODES.dev
+    const client = new Client(node)
+    await client.connect()
+
+    let wallet
+    if (env === 'dev') {
+      // Fund via testnet faucet
+      const result = await client.fundWallet()
+      wallet = result.wallet
+    } else {
+      // Mainnet: generate only — organizer funds externally
+      wallet = Wallet.generate()
+    }
+
+    await client.disconnect()
+
+    // ── 5. Save seed server-side (service_role bypasses RLS) ───
+    const { error: dbErr } = await supabase
+      .from('pod_escrows')
+      .insert({ pod_id: podId, escrow_seed: wallet.seed })
+
+    if (dbErr) {
+      console.error('[create-xrpl-escrow] DB save failed', dbErr)
+      return { statusCode: 500, body: JSON.stringify({ error: `Seed save failed: ${dbErr.message}` }) }
+    }
+
+    console.log(`[create-xrpl-escrow] Pod ${podId} escrow: ${wallet.address} (${env})`)
+
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ escrowAddress: wallet.address }),
+    }
+
+  } catch (e) {
+    console.error('[create-xrpl-escrow]', e)
+    return { statusCode: 500, body: JSON.stringify({ error: e.message }) }
+  }
+}

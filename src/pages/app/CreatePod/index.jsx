@@ -5,9 +5,9 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import useAppStore from '@/store/useAppStore'
-import { createPod, upsertUser, updatePodContract, savePodEscrow, joinPod, maybeActivatePod } from '@/lib/db'
+import { createPod, upsertUser, updatePodContract, joinPod, maybeActivatePod } from '@/lib/db'
 import { deployPodEVM, sendContribution } from '@/lib/contracts'
-import { createXrplPodEscrow } from '@/lib/xrpl'
+import supabase from '@/lib/supabase'
 
 // ── Config ───────────────────────────────────────────────────
 
@@ -145,10 +145,19 @@ export default function CreatePod() {
             env,
           })
         } else if (form.chain === 'XRPL') {
-          // Generate a dedicated escrow wallet for this pod
-          const { escrowAddress, escrowSeed } = await createXrplPodEscrow(podId, wallet.address, env)
-          // Save seed server-side (service_role only — never readable by frontend)
-          await savePodEscrow(podId, escrowSeed)
+          // Create escrow wallet + save seed server-side via Netlify function
+          const { data: { session } } = await supabase.auth.getSession()
+          const escrowRes = await fetch('/.netlify/functions/create-xrpl-escrow', {
+            method:  'POST',
+            headers: {
+              'Content-Type':  'application/json',
+              'Authorization': `Bearer ${session?.access_token ?? ''}`,
+            },
+            body: JSON.stringify({ podId, env }),
+          })
+          const escrowJson = await escrowRes.json()
+          if (!escrowRes.ok) throw new Error(escrowJson.error ?? 'Escrow creation failed')
+          const escrowAddress = escrowJson.escrowAddress
           contractResult = { simulated: false, txHash: null, contractAddress: escrowAddress }
 
           // ── Organizer deposits their own collateral ────────────
