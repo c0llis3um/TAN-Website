@@ -265,6 +265,29 @@ export async function tandaPodContribute(env, currentCycle, contributionAmount, 
   return { txHash: receipt.hash }
 }
 
+// ── Factory admin ─────────────────────────────────────────────
+
+const FACTORY_ADMIN_ABI = [
+  'function setTreasury(address _treasury) external',
+  'function treasury() view returns (address)',
+  'function owner() view returns (address)',
+]
+
+/**
+ * Update the treasury address on the TandaFactory contract.
+ * Caller must be the factory owner.
+ */
+export async function setFactoryTreasury(newAddress, env) {
+  const factoryAddr = await resolveFactoryAddress(env)
+  if (!factoryAddr) throw new Error('No factory address configured.')
+  await assertCorrectNetwork(env)
+  const signer  = await getSigner()
+  const factory = new Contract(factoryAddr, FACTORY_ADMIN_ABI, signer)
+  const tx      = await factory.setTreasury(newAddress)
+  const receipt = await tx.wait()
+  return { txHash: receipt.hash }
+}
+
 /**
  * Cancel an OPEN TandaPod so members can claim their collateral back.
  */

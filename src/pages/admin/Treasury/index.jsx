@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import { adminGetTreasuryWallets, adminGetTreasuryProposals, adminCreateTreasuryProposal, adminUpsertTreasuryWallet } from '@/lib/db'
+import { setFactoryTreasury } from '@/lib/contracts'
 import useAppStore from '@/store/useAppStore'
 
 const CHAIN_META = {
@@ -204,11 +205,13 @@ export default function AdminTreasury() {
 }
 
 function WalletModal({ mode, chain, chainLabel, currentAddress, adminId, onClose, onSaved, onProposalCreated }) {
+  const { env }                   = useAppStore()
   const [newAddr,   setNewAddr]   = useState('')
   const [reason,    setReason]    = useState('')
   const [saving,    setSaving]    = useState(false)
   const [done,      setDone]      = useState(false)
   const [error,     setError]     = useState('')
+  const [onChainTx, setOnChainTx] = useState(null)
 
   const isAdd = mode === 'add'
 
@@ -217,6 +220,18 @@ function WalletModal({ mode, chain, chainLabel, currentAddress, adminId, onClose
     if (!isAdd && !reason.trim()) return
     setSaving(true)
     setError('')
+
+    // For Ethereum: update treasury on-chain first
+    if (chain === 'Ethereum') {
+      try {
+        const { txHash } = await setFactoryTreasury(newAddr.trim(), env)
+        setOnChainTx(txHash)
+      } catch (err) {
+        setError(`On-chain update failed: ${err?.message ?? err}. Make sure you are the factory owner and MetaMask is connected.`)
+        setSaving(false)
+        return
+      }
+    }
 
     // Always log a proposal
     const { data: proposal, error: propErr } = await adminCreateTreasuryProposal(chain, newAddr.trim(), reason.trim() || 'Initial setup', adminId)
@@ -307,9 +322,14 @@ function WalletModal({ mode, chain, chainLabel, currentAddress, adminId, onClose
           <div className="text-center py-6">
             <div className="text-5xl mb-4">✅</div>
             <h2 className="text-xl font-extrabold dark:text-white text-slate-900 mb-2">Wallet Saved</h2>
-            <p className="text-sm dark:text-brand-muted text-slate-500 mb-6">
+            <p className="text-sm dark:text-brand-muted text-slate-500 mb-2">
               The {chain} treasury wallet has been updated. All future fees will go to the new address.
             </p>
+            {onChainTx && (
+              <p className="text-xs font-mono dark:text-brand-muted text-slate-400 mb-4 break-all px-2">
+                On-chain tx: {onChainTx.slice(0,20)}…{onChainTx.slice(-6)}
+              </p>
+            )}
             <button onClick={onClose} className="px-8 py-3 rounded-2xl bg-gradient-brand text-white font-bold text-sm shadow-glow-sm">
               Close
             </button>
