@@ -11,6 +11,8 @@ export function isMetaMaskInstalled() {
   return typeof window !== 'undefined' && !!window.ethereum?.isMetaMask
 }
 
+const SEPOLIA_CHAIN_ID = 11155111
+
 export async function connectMetaMask() {
   if (!isMetaMaskInstalled()) {
     throw 'MetaMask is not installed. Install it at metamask.io'
@@ -19,10 +21,32 @@ export async function connectMetaMask() {
   const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
   if (!accounts?.length) throw 'No accounts returned from MetaMask.'
 
+  // Switch to Sepolia automatically
+  try {
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: `0x${SEPOLIA_CHAIN_ID.toString(16)}` }],
+    })
+  } catch (switchErr) {
+    // Chain not added yet — add it
+    if (switchErr.code === 4902) {
+      await window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [{
+          chainId:         `0x${SEPOLIA_CHAIN_ID.toString(16)}`,
+          chainName:       'Sepolia Testnet',
+          nativeCurrency:  { name: 'ETH', symbol: 'ETH', decimals: 18 },
+          rpcUrls:         ['https://rpc.sepolia.org'],
+          blockExplorerUrls: ['https://sepolia.etherscan.io'],
+        }],
+      })
+    }
+    // If user rejected the switch, continue with current chain
+  }
+
   const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' })
   const chainId    = parseInt(chainIdHex, 16)
-
-  const chainName = EVM_CHAINS[chainId] ?? `Chain ${chainId}`
+  const chainName  = EVM_CHAINS[chainId] ?? `Chain ${chainId}`
 
   return {
     address:  accounts[0],
