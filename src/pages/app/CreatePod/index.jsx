@@ -357,7 +357,7 @@ export default function CreatePod() {
                     whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
                     className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
                       form.token === t.id ? 'border-brand-blue/60 dark:bg-brand-blue/8 bg-blue-50'
-                      : 'dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
+                      : 'dark:bg-brand-darker dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
                     <span className="text-2xl">{t.icon}</span>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -444,7 +444,7 @@ export default function CreatePod() {
                     <button key={f.days} onClick={() => upd('frequencyDays', f.days)}
                       className={`p-3 rounded-xl border-2 text-left transition-all ${form.frequencyDays === f.days
                         ? 'border-brand-blue/60 dark:bg-brand-blue/8 bg-blue-50'
-                        : 'dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
+                        : 'dark:bg-brand-darker dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
                       <p className="font-semibold dark:text-white text-slate-900 text-xs">{f.label}</p>
                       <p className="text-[10px] dark:text-brand-muted text-slate-400 mt-0.5">{f.sub}</p>
                     </button>
@@ -487,7 +487,7 @@ export default function CreatePod() {
                     whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
                     className={`w-full text-left p-4 rounded-2xl border-2 transition-all ${
                       form.payoutOrder === o.id ? 'border-brand-blue/60 dark:bg-brand-blue/8 bg-blue-50'
-                      : 'dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
+                      : 'dark:bg-brand-darker dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
                     <div className="flex items-center gap-3">
                       <span className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${form.payoutOrder === o.id ? 'bg-brand-blue border-brand-blue' : 'dark:border-brand-border border-slate-300'}`} />
                       <div>
