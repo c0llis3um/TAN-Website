@@ -249,6 +249,18 @@ export async function recordPayment({ pod_id, user_id, cycle, amount, token, cha
     .single()
 }
 
+export async function getPodPayments(podId) {
+  return supabase
+    .from('payments')
+    .select(`
+      *,
+      user:users ( alias, wallet_address )
+    `)
+    .eq('pod_id', podId)
+    .order('cycle', { ascending: true })
+    .order('paid_at', { ascending: true })
+}
+
 export async function getMyPayments(userId, podId) {
   return supabase
     .from('payments')

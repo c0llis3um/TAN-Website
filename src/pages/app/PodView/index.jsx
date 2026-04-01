@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import useAppStore from '@/store/useAppStore'
-import { getPod, joinPod, getUser, upsertUser, maybeActivatePod, cycleMs, updatePodStatus } from '@/lib/db'
+import { getPod, joinPod, getUser, upsertUser, maybeActivatePod, cycleMs, updatePodStatus, getPodPayments } from '@/lib/db'
 import { tandaPodJoin, cancelTandaPod } from '@/lib/contracts'
 
 function shareWa(text) { window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank') }
@@ -28,13 +28,15 @@ export default function PodView() {
   const [joinDone,   setJoinDone]   = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [cancelErr,  setCancelErr]  = useState(null)
+  const [payments,   setPayments]   = useState([])
 
   useEffect(() => {
     if (!id) return
     setLoading(true)
-    getPod(id).then(({ data, error: err }) => {
+    Promise.all([getPod(id), getPodPayments(id)]).then(([{ data, error: err }, { data: pays }]) => {
       if (err || !data) setError(err?.message ?? 'Pod not found.')
       else setPod(data)
+      setPayments(pays ?? [])
       setLoading(false)
     })
   }, [id])
@@ -302,6 +304,74 @@ export default function PodView() {
               })
             )}
           </Card>
+          {/* Payment History */}
+          {payments.length > 0 && (
+            <Card hover={false} className="overflow-hidden">
+              <div className="px-6 py-4 border-b dark:border-brand-border border-slate-200">
+                <h3 className="font-bold dark:text-white text-slate-900 text-sm uppercase tracking-wider">Payment History</h3>
+              </div>
+              <div className="divide-y dark:divide-brand-border/40 divide-slate-100">
+                {Array.from({ length: pod.total_cycles ?? pod.size }, (_, i) => {
+                  const cycle       = i + 1
+                  const cyclePays   = payments.filter(p => p.cycle === cycle)
+                  const recipient   = pod.pod_members?.find(m => m.payout_slot === cycle)
+                  const recipientName = recipient?.user?.alias ?? recipient?.user?.wallet_address?.slice(0, 8) ?? '—'
+                  const totalPaid   = cyclePays.reduce((s, p) => s + Number(p.amount), 0)
+                  const isComplete  = cyclePays.length === (pod.size ?? 0)
+
+                  return (
+                    <div key={cycle} className="px-6 py-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0
+                            ${isComplete ? 'bg-emerald-500/20 text-emerald-400' : 'dark:bg-brand-dark bg-slate-100 dark:text-brand-muted text-slate-400'}`}>
+                            {isComplete ? '✓' : cycle}
+                          </span>
+                          <span className="text-sm font-bold dark:text-white text-slate-900">Cycle {cycle}</span>
+                          {isComplete && <span className="text-xs text-emerald-400 font-semibold">Complete</span>}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs dark:text-brand-muted text-slate-400">Pot → <span className="font-bold dark:text-white text-slate-900">{recipientName}</span></p>
+                          <p className="text-xs text-brand-cyan font-bold">{totalPaid} {pod.token}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        {cyclePays.map(p => {
+                          const addr  = p.user?.wallet_address ?? ''
+                          const short = addr ? `${addr.slice(0,6)}…${addr.slice(-4)}` : '—'
+                          const name  = p.user?.alias ?? short
+                          const explorerBase = pod.chain === 'Ethereum'
+                            ? `https://${env === 'dev' ? 'sepolia.' : ''}etherscan.io/tx/`
+                            : `https://${env === 'dev' ? 'testnet.' : ''}xrpl.org/transactions/`
+                          return (
+                            <div key={p.id} className="flex items-center justify-between text-xs dark:bg-brand-dark bg-slate-50 rounded-xl px-3 py-2">
+                              <div className="flex items-center gap-2">
+                                <span className="dark:text-brand-muted text-slate-500">{name}</span>
+                                <span className="font-bold dark:text-white text-slate-900">{p.amount} {p.token}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="dark:text-brand-muted text-slate-400">{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : '—'}</span>
+                                {p.tx_hash && (
+                                  <a href={`${explorerBase}${p.tx_hash}`} target="_blank" rel="noopener noreferrer"
+                                    className="text-brand-cyan hover:underline font-mono">
+                                    {p.tx_hash.slice(0,8)}…↗
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                        {cyclePays.length === 0 && (
+                          <p className="text-xs dark:text-brand-muted text-slate-400 italic">No payments yet</p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </Card>
+          )}
+
         </div>
 
         {/* Sidebar */}
