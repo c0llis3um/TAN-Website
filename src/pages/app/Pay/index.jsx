@@ -65,12 +65,18 @@ export default function Pay() {
       try {
         let result
         if (pod.chain === 'Ethereum') {
-          // ── TandaPod contract — pays into contract, auto-releases pot ──
-          result = await tandaPodContribute(
-            env,
-            pod.current_cycle,
+          // ── Direct ETH transfer to payout recipient ──
+          if (!recipientAddr) {
+            setPayError('Payout recipient not assigned yet.')
+            setStep('select')
+            return
+          }
+          result = await sendContribution(
+            recipientAddr,
             pod.contribution_amount,
-            pod.contract_address,
+            pod.token,
+            pod.chain,
+            env,
           )
         } else {
           // ── Direct wallet-to-wallet (XRPL) ──
