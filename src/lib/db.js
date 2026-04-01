@@ -57,7 +57,7 @@ export async function getOpenPods({ chain } = {}) {
     .from('pods')
     .select(`
       *,
-      organizer:users!organizer_id!left ( alias, wallet_address ),
+      organizer:users!organizer_id ( alias, wallet_address ),
       pod_members ( id )
     `)
     .eq('status', 'OPEN')
