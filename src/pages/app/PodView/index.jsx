@@ -312,48 +312,70 @@ export default function PodView() {
               </div>
               <div className="divide-y dark:divide-brand-border/40 divide-slate-100">
                 {Array.from({ length: pod.total_cycles ?? pod.size }, (_, i) => {
-                  const cycle       = i + 1
-                  const cyclePays   = payments.filter(p => p.cycle === cycle)
-                  const recipient   = pod.pod_members?.find(m => m.payout_slot === cycle)
-                  const recipientName = recipient?.user?.alias ?? recipient?.user?.wallet_address?.slice(0, 8) ?? '—'
-                  const totalPaid   = cyclePays.reduce((s, p) => s + Number(p.amount), 0)
-                  const isComplete  = cyclePays.length === (pod.size ?? 0)
+                  const cycle         = i + 1
+                  const cyclePays     = payments.filter(p => p.cycle === cycle)
+                  const recipient     = pod.pod_members?.find(m => m.payout_slot === cycle)
+                  const recipientAddr = recipient?.user?.wallet_address ?? ''
+                  const recipientName = recipient?.user?.alias ?? (recipientAddr ? `${recipientAddr.slice(0,6)}…${recipientAddr.slice(-4)}` : '—')
+                  const totalPot      = cyclePays.reduce((s, p) => s + Number(p.amount), 0)
+                  const isComplete    = cyclePays.length > 0 && cyclePays.length >= (pod.pod_members?.filter(m => m.status === 'ACTIVE').length ?? pod.size)
+                  const explorerBase  = pod.chain === 'Ethereum'
+                    ? `https://${env === 'dev' ? 'sepolia.' : ''}etherscan.io/tx/`
+                    : `https://${env === 'dev' ? 'testnet.' : ''}xrpl.org/transactions/`
 
                   return (
-                    <div key={cycle} className="px-6 py-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0
-                            ${isComplete ? 'bg-emerald-500/20 text-emerald-400' : 'dark:bg-brand-dark bg-slate-100 dark:text-brand-muted text-slate-400'}`}>
-                            {isComplete ? '✓' : cycle}
-                          </span>
-                          <span className="text-sm font-bold dark:text-white text-slate-900">Cycle {cycle}</span>
-                          {isComplete && <span className="text-xs text-emerald-400 font-semibold">Complete</span>}
+                    <div key={cycle} className="px-6 py-5">
+
+                      {/* Cycle header */}
+                      <div className="flex items-center gap-3 mb-4">
+                        <span className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0
+                          ${isComplete ? 'bg-emerald-500/20 text-emerald-400' : 'dark:bg-brand-dark bg-slate-100 dark:text-brand-muted text-slate-400'}`}>
+                          {isComplete ? '✓' : cycle}
+                        </span>
+                        <span className="font-bold dark:text-white text-slate-900">Cycle {cycle}</span>
+                        {isComplete
+                          ? <span className="text-xs text-emerald-400 font-semibold">Completed</span>
+                          : <span className="text-xs dark:text-brand-muted text-slate-400">In progress</span>}
+                      </div>
+
+                      {/* Payout box */}
+                      <div className={`rounded-2xl p-4 mb-3 border ${isComplete
+                        ? 'dark:bg-emerald-500/5 bg-emerald-50 dark:border-emerald-500/20 border-emerald-200'
+                        : 'dark:bg-brand-dark bg-slate-50 dark:border-brand-border border-slate-200'}`}>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs dark:text-brand-muted text-slate-500 font-semibold uppercase tracking-wider">Pot Recipient</p>
+                          {isComplete && <span className="text-xs text-emerald-400">💰 Paid out</span>}
                         </div>
-                        <div className="text-right">
-                          <p className="text-xs dark:text-brand-muted text-slate-400">Pot → <span className="font-bold dark:text-white text-slate-900">{recipientName}</span></p>
-                          <p className="text-xs text-brand-cyan font-bold">{totalPaid} {pod.token}</p>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-bold dark:text-white text-slate-900">{recipientName}</p>
+                            {recipientAddr && (
+                              <p className="text-xs font-mono dark:text-brand-muted text-slate-400 mt-0.5">{recipientAddr.slice(0,10)}…{recipientAddr.slice(-6)}</p>
+                            )}
+                          </div>
+                          <p className="text-xl font-extrabold text-brand-cyan">{totalPot || (pod.contribution_amount * (pod.pod_members?.length ?? pod.size))} {pod.token}</p>
                         </div>
                       </div>
-                      <div className="space-y-2">
+
+                      {/* Individual payments */}
+                      <p className="text-xs font-bold dark:text-brand-muted text-slate-400 uppercase tracking-wider mb-2">Contributions</p>
+                      <div className="space-y-1.5">
                         {cyclePays.map(p => {
                           const addr  = p.user?.wallet_address ?? ''
                           const short = addr ? `${addr.slice(0,6)}…${addr.slice(-4)}` : '—'
                           const name  = p.user?.alias ?? short
-                          const explorerBase = pod.chain === 'Ethereum'
-                            ? `https://${env === 'dev' ? 'sepolia.' : ''}etherscan.io/tx/`
-                            : `https://${env === 'dev' ? 'testnet.' : ''}xrpl.org/transactions/`
                           return (
-                            <div key={p.id} className="flex items-center justify-between text-xs dark:bg-brand-dark bg-slate-50 rounded-xl px-3 py-2">
-                              <div className="flex items-center gap-2">
-                                <span className="dark:text-brand-muted text-slate-500">{name}</span>
-                                <span className="font-bold dark:text-white text-slate-900">{p.amount} {p.token}</span>
+                            <div key={p.id} className="flex items-center justify-between text-xs dark:bg-brand-dark bg-slate-50 rounded-xl px-3 py-2.5">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                                <span className="font-semibold dark:text-white text-slate-900 truncate">{name}</span>
+                                <span className="dark:text-brand-muted text-slate-400 flex-shrink-0">{p.amount} {p.token}</span>
                               </div>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-3 flex-shrink-0 ml-2">
                                 <span className="dark:text-brand-muted text-slate-400">{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : '—'}</span>
                                 {p.tx_hash && (
                                   <a href={`${explorerBase}${p.tx_hash}`} target="_blank" rel="noopener noreferrer"
-                                    className="text-brand-cyan hover:underline font-mono">
+                                    className="font-mono text-brand-cyan hover:underline">
                                     {p.tx_hash.slice(0,8)}…↗
                                   </a>
                                 )}
@@ -362,7 +384,7 @@ export default function PodView() {
                           )
                         })}
                         {cyclePays.length === 0 && (
-                          <p className="text-xs dark:text-brand-muted text-slate-400 italic">No payments yet</p>
+                          <p className="text-xs dark:text-brand-muted text-slate-400 italic px-1">No payments recorded yet</p>
                         )}
                       </div>
                     </div>
