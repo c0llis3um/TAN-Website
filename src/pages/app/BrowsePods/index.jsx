@@ -93,6 +93,7 @@ export default function BrowsePods() {
             const spotsLeft = pod.size - members
             const pct       = pod.size > 0 ? Math.round((members / pod.size) * 100) : 0
             const organizer = pod.organizer?.alias ?? pod.organizer?.wallet_address?.slice(0, 8) ?? '—'
+            const isActive  = pod.status === 'ACTIVE'
 
             return (
               <motion.div key={pod.id} variants={item}>
@@ -102,7 +103,10 @@ export default function BrowsePods() {
                       <p className="font-bold dark:text-white text-slate-900">{pod.name}</p>
                       <p className="text-xs dark:text-brand-muted text-slate-400 mt-0.5">by {organizer}</p>
                     </div>
-                    <Badge variant={CHAIN_VARIANT[pod.chain] ?? 'muted'}>{pod.chain}</Badge>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant={CHAIN_VARIANT[pod.chain] ?? 'muted'}>{pod.chain}</Badge>
+                      {isActive && <Badge variant="green">● Active</Badge>}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
@@ -119,7 +123,9 @@ export default function BrowsePods() {
                   <div>
                     <div className="flex justify-between text-xs dark:text-brand-muted text-slate-400 mb-1.5">
                       <span>{members}/{pod.size} members</span>
-                      <span className="text-emerald-400 font-semibold">{spotsLeft} spot{spotsLeft !== 1 ? 's' : ''} left</span>
+                      {isActive
+                        ? <span className="text-emerald-400 font-semibold">Running</span>
+                        : <span className="text-emerald-400 font-semibold">{spotsLeft} spot{spotsLeft !== 1 ? 's' : ''} left</span>}
                     </div>
                     <div className="h-1.5 dark:bg-brand-border/50 bg-slate-200 rounded-full overflow-hidden">
                       <motion.div className="h-full bg-gradient-brand rounded-full"
@@ -130,16 +136,23 @@ export default function BrowsePods() {
                     </div>
                   </div>
 
-                  <p className="text-xs dark:text-brand-muted text-slate-400">
-                    Upfront: <span className="font-bold dark:text-white text-slate-900">
-                      {pod.contribution_amount * 3} {pod.token}
-                    </span>
-                    <span className="ml-1 opacity-60">(2× collateral + 1st payment)</span>
-                  </p>
+                  {!isActive && (
+                    <p className="text-xs dark:text-brand-muted text-slate-400">
+                      Upfront: <span className="font-bold dark:text-white text-slate-900">
+                        {pod.contribution_amount * 3} {pod.token}
+                      </span>
+                      <span className="ml-1 opacity-60">(2× collateral + 1st payment)</span>
+                    </p>
+                  )}
 
-                  <Button size="sm" className="w-full justify-center" onClick={() => setJoining(pod)}>
-                    Join This Tanda →
-                  </Button>
+                  {isActive
+                    ? <Button size="sm" variant="outline" className="w-full justify-center" onClick={() => navigate(`/app/pod/${pod.id}`)}>
+                        View Pod →
+                      </Button>
+                    : <Button size="sm" className="w-full justify-center" onClick={() => setJoining(pod)}>
+                        Join This Tanda →
+                      </Button>
+                  }
                 </Card>
               </motion.div>
             )

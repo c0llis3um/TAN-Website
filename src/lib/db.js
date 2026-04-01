@@ -60,7 +60,7 @@ export async function getOpenPods({ chain } = {}) {
       organizer:users!organizer_id ( alias, wallet_address ),
       pod_members ( id )
     `)
-    .eq('status', 'OPEN')
+    .in('status', ['OPEN', 'ACTIVE'])
     .order('created_at', { ascending: false })
 
   if (chain) q = q.eq('chain', chain)
