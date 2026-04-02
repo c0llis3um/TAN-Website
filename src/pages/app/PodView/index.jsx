@@ -179,6 +179,13 @@ export default function PodView() {
   const myMember     = members.find(m => m.user?.wallet_address === wallet?.address)
   const mySlot       = myMember?.payout_slot ?? null
 
+  // Has the current user already paid (or been recorded as self-recipient) this cycle?
+  const hasPaidThisCycle = payments.some(p =>
+    p.user?.wallet_address === wallet?.address &&
+    p.cycle === currentCycle &&
+    ['CONFIRMED', 'PENDING'].includes(p.status)
+  )
+
   const dueDate = pod.cycle_started_at
     ? new Date(new Date(pod.cycle_started_at).getTime() + cycleMs(pod, env))
     : null
@@ -211,9 +218,9 @@ export default function PodView() {
         </div>
         <div className="flex flex-col items-end gap-2">
           {pod.status === 'ACTIVE' && myMember && (
-            <Button onClick={() => navigate(`/app/pod/${id}/pay`)}>
-              Pay {pod.contribution_amount} {pod.token} →
-            </Button>
+            hasPaidThisCycle
+              ? <span className="text-sm font-semibold text-emerald-400 px-4 py-2 rounded-xl bg-emerald-500/10">✓ Paid cycle {currentCycle}</span>
+              : <Button onClick={() => navigate(`/app/pod/${id}/pay`)}>Pay {pod.contribution_amount} {pod.token} →</Button>
           )}
           {(pod.status === 'OPEN' || (pod.status === 'ACTIVE' && !pod.current_cycle)) && !myMember && wallet?.address && (
             <>
