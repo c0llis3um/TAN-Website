@@ -368,7 +368,7 @@ export default function PodView() {
                   const isComplete    = cyclePays.length > 0 && cyclePays.length >= (pod.pod_members?.filter(m => m.status === 'ACTIVE').length ?? pod.size)
                   const explorerBase  = pod.chain === 'Ethereum'
                     ? `https://${env === 'dev' ? 'sepolia.' : ''}etherscan.io/tx/`
-                    : `https://${env === 'dev' ? 'testnet.' : ''}xrpl.org/transactions/`
+                    : `https://${env === 'dev' ? 'devnet.' : ''}xrpl.org/transactions/`
 
                   return (
                     <div key={cycle} className="px-6 py-5">
