@@ -8,7 +8,7 @@ import Badge from '@/components/ui/Badge'
 import MoonPayButton from '@/components/MoonPayButton'
 import useAppStore from '@/store/useAppStore'
 import { getPod, joinPod, getUser, upsertUser, maybeActivatePod, cycleMs, updatePodStatus, getPodPayments } from '@/lib/db'
-import { tandaPodJoin, cancelTandaPod } from '@/lib/contracts'
+import { tandaPodJoin, cancelTandaPod, claimCollateral } from '@/lib/contracts'
 
 function shareWa(text) { window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank') }
 function shareTg(url, text) { window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank') }
@@ -27,9 +27,12 @@ export default function PodView() {
   const [joining,    setJoining]    = useState(false)
   const [joinError,  setJoinError]  = useState(null)
   const [joinDone,   setJoinDone]   = useState(false)
-  const [cancelling, setCancelling] = useState(false)
-  const [cancelErr,  setCancelErr]  = useState(null)
-  const [payments,   setPayments]   = useState([])
+  const [cancelling,  setCancelling]  = useState(false)
+  const [cancelErr,   setCancelErr]   = useState(null)
+  const [payments,    setPayments]    = useState([])
+  const [claiming,    setClaiming]    = useState(false)
+  const [claimTx,     setClaimTx]     = useState(null)
+  const [claimErr,    setClaimErr]    = useState(null)
 
   useEffect(() => {
     if (!id) return
@@ -123,6 +126,31 @@ export default function PodView() {
       setCancelErr(err?.message ?? 'Cancel failed.')
     }
     setCancelling(false)
+  }
+
+  async function handleClaim() {
+    if (!wallet?.address) return
+    setClaiming(true)
+    setClaimErr(null)
+    try {
+      if (pod.chain === 'Ethereum') {
+        const { txHash } = await claimCollateral(env, pod.contract_address)
+        setClaimTx(txHash)
+      } else if (pod.chain === 'XRPL') {
+        const res  = await fetch('/.netlify/functions/claim-xrpl-collateral', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ podId: pod.id, walletAddress: wallet.address }),
+        })
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error ?? 'Claim failed')
+        setClaimTx(json.txHash)
+      }
+    } catch (e) {
+      setClaimErr(e?.reason ?? e?.message ?? String(e))
+    } finally {
+      setClaiming(false)
+    }
   }
 
   if (loading) {
@@ -513,6 +541,37 @@ export default function PodView() {
                   </div>
                 )
               })()}
+            </Card>
+          )}
+
+          {/* Claim Collateral */}
+          {pod.status === 'COMPLETED' && myMember && pod.contract_address && (
+            <Card hover={false} className="p-5">
+              <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-1">Collateral Return</h3>
+              <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">
+                The tanda is complete! Claim your <span className="font-bold dark:text-white text-slate-900">{pod.contribution_amount * 2} {pod.token}</span> collateral back.
+              </p>
+
+              {claimTx ? (
+                <div className="p-3 rounded-xl dark:bg-emerald-500/10 bg-emerald-50 border dark:border-emerald-500/30 border-emerald-200">
+                  <p className="text-xs font-bold dark:text-emerald-300 text-emerald-700 mb-1">✓ Collateral received!</p>
+                  <a href={pod.chain === 'Ethereum'
+                      ? `https://${env === 'dev' ? 'sepolia.' : ''}etherscan.io/tx/${claimTx}`
+                      : `https://${env === 'dev' ? 'devnet.' : ''}xrpl.org/transactions/${claimTx}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="font-mono text-xs dark:text-brand-cyan text-brand-blue underline break-all">
+                    {claimTx.slice(0, 20)}…
+                  </a>
+                </div>
+              ) : (
+                <>
+                  {claimErr && <p className="text-xs text-red-400 mb-2">{claimErr}</p>}
+                  <button onClick={handleClaim} disabled={claiming}
+                    className="w-full py-2.5 rounded-xl bg-gradient-brand text-white font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-all">
+                    {claiming ? 'Sending to your wallet…' : `Claim ${pod.contribution_amount * 2} ${pod.token} →`}
+                  </button>
+                </>
+              )}
             </Card>
           )}
 
