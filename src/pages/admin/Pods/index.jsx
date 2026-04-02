@@ -116,20 +116,57 @@ export default function AdminPods() {
 }
 
 function PodDetail({ pod, onClose }) {
-  const members   = pod.pod_members?.length ?? 0
-  const organizer = pod.organizer?.alias ?? pod.organizer?.wallet_address ?? '—'
-  const env       = useAppStore(s => s.env)
+  const memberCount = pod.pod_members?.length ?? 0
+  const organizer   = pod.organizer?.alias ?? pod.organizer?.wallet_address ?? '—'
+  const env         = useAppStore(s => s.env)
 
-  const [releasing,       setReleasing]       = useState(false)
-  const [releaseTx,       setReleaseTx]       = useState(null)
-  const [releaseErr,      setReleaseErr]      = useState(null)
-  const [completing,      setCompleting]      = useState(false)
-  const [currentStatus,   setCurrentStatus]   = useState(pod.status)
+  const [releasing,     setReleasing]     = useState(false)
+  const [releaseTx,     setReleaseTx]     = useState(null)
+  const [releaseErr,    setReleaseErr]    = useState(null)
+  const [completing,    setCompleting]    = useState(false)
+  const [currentStatus, setCurrentStatus] = useState(pod.status)
+
+  // Full member detail (payout_slot, payments for current cycle)
+  const [members,      setMembers]      = useState([])
+  const [cyclePayments,setCyclePayments] = useState([])   // payments for current_cycle
+  const [loadingDetail,setLoadingDetail] = useState(pod.status === 'ACTIVE')
+  const [slashingId,   setSlashingId]   = useState(null) // user_id being slashed
+  const [slashResults, setSlashResults] = useState({})   // user_id → { txHash, err }
+
+  // Compute whether current cycle is overdue
+  const cycleMs   = (pod.cycle_frequency_days ?? 7) * (pod.env === 'dev' ? 36e5 : 864e5)
+  const cycleDue  = pod.cycle_started_at ? new Date(pod.cycle_started_at).getTime() + cycleMs : null
+  const isOverdue = cycleDue ? Date.now() > cycleDue : false
+
+  useEffect(() => {
+    if (pod.status !== 'ACTIVE') { setLoadingDetail(false); return }
+    // Fetch full member detail + current-cycle payments
+    Promise.all([
+      import('@/lib/supabase').then(m => m.default
+        .from('pod_members')
+        .select('id, user_id, payout_slot, status, user:users(id, alias, wallet_address)')
+        .eq('pod_id', pod.id)
+        .order('payout_slot')),
+      import('@/lib/supabase').then(m => m.default
+        .from('payments')
+        .select('user_id, method, status, tx_hash')
+        .eq('pod_id', pod.id)
+        .eq('cycle', pod.current_cycle ?? 0)),
+    ]).then(([{ data: mems }, { data: pays }]) => {
+      setMembers(mems ?? [])
+      setCyclePayments(pays ?? [])
+      setLoadingDetail(false)
+    })
+  }, [pod.id, pod.status, pod.current_cycle])
 
   const canForceComplete = pod.chain === 'XRPL' && currentStatus === 'ACTIVE' && pod.contract_address
   const canReleaseEVM    = pod.chain === 'Ethereum' && currentStatus === 'COMPLETED' && pod.contract_address
   const canReleaseXRPL   = pod.chain === 'XRPL'    && currentStatus === 'COMPLETED' && pod.contract_address
   const canRelease       = canReleaseEVM || canReleaseXRPL
+
+  const xrplBase = (pod.env ?? 'dev') === 'live'
+    ? 'https://xrpl.org/transactions/'
+    : 'https://devnet.xrpl.org/transactions/'
 
   async function handleForceComplete() {
     if (!window.confirm('Mark pod as COMPLETED? This will enable collateral release.')) return
@@ -148,33 +185,64 @@ function PodDetail({ pod, onClose }) {
     if (!window.confirm('Release collateral back to all members? This cannot be undone.')) return
     setReleasing(true)
     setReleaseErr(null)
-
     try {
       if (canReleaseEVM) {
-        // Ethereum: call forceComplete() on TandaPod contract via MetaMask
         const { txHash } = await releaseCollateral(env, pod.contract_address)
         setReleaseTx(txHash)
       } else if (canReleaseXRPL) {
-        // XRPL: Netlify function reads escrow seed server-side and sends to members
-        const { data: { session } } = await import('@/lib/supabase').then(m => m.default.auth.getSession())
+        const supabaseModule = await import('@/lib/supabase')
+        const { data: { session } } = await supabaseModule.default.auth.getSession()
         const res = await fetch('/.netlify/functions/release-xrpl-collateral', {
           method:  'POST',
-          headers: {
-            'Content-Type':  'application/json',
-            'Authorization': `Bearer ${session?.access_token ?? ''}`,
-          },
-          body: JSON.stringify({ podId: pod.id }),
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token ?? ''}` },
+          body:    JSON.stringify({ podId: pod.id }),
         })
         const json = await res.json()
         if (!res.ok) throw new Error(json.error ?? 'Release failed')
-        const txHashes = json.results.filter(r => r.status === 'ok').map(r => r.txHash).join(', ')
-        setReleaseTx(txHashes || 'done')
+        setReleaseTx(json.results?.filter(r => r.status === 'ok').map(r => r.txHash).join(',') || 'done')
       }
     } catch (e) {
       setReleaseErr(e?.reason ?? e?.message ?? String(e))
     } finally {
       setReleasing(false)
     }
+  }
+
+  async function handleSlash(member) {
+    if (!window.confirm(`Slash collateral for ${member.user?.alias ?? member.user?.wallet_address}? Their collateral will cover this cycle's payout.`)) return
+    setSlashingId(member.user_id)
+    try {
+      const supabaseModule = await import('@/lib/supabase')
+      const { data: { session } } = await supabaseModule.default.auth.getSession()
+      const res = await fetch('/.netlify/functions/slash-xrpl-collateral', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token ?? ''}` },
+        body:    JSON.stringify({ podId: pod.id, memberUserId: member.user_id }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Slash failed')
+      setSlashResults(prev => ({ ...prev, [member.user_id]: { txHash: json.txHash } }))
+      // Refresh cycle payments
+      const supabase = supabaseModule.default
+      const { data: pays } = await supabase
+        .from('payments')
+        .select('user_id, method, status, tx_hash')
+        .eq('pod_id', pod.id)
+        .eq('cycle', pod.current_cycle ?? 0)
+      setCyclePayments(pays ?? [])
+    } catch (e) {
+      setSlashResults(prev => ({ ...prev, [member.user_id]: { err: e?.message ?? String(e) } }))
+    } finally {
+      setSlashingId(null)
+    }
+  }
+
+  // Per-member payment status helpers
+  function getMemberPayStatus(userId) {
+    const pays = cyclePayments.filter(p => p.user_id === userId)
+    if (pays.some(p => p.method === 'collateral_slash')) return 'slashed'
+    if (pays.some(p => ['CONFIRMED','PENDING'].includes(p.status) && p.method !== 'collateral_slash')) return 'paid'
+    return 'unpaid'
   }
 
   return (
@@ -184,7 +252,9 @@ function PodDetail({ pod, onClose }) {
       <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 280, damping: 28 }}
         onClick={e => e.stopPropagation()}
-        className="w-full max-w-lg dark:bg-brand-darker bg-white rounded-3xl border dark:border-brand-border border-slate-200 p-8 shadow-glow">
+        className="w-full max-w-xl dark:bg-brand-darker bg-white rounded-3xl border dark:border-brand-border border-slate-200 p-8 shadow-glow overflow-y-auto max-h-[90vh]">
+
+        {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
             <p className="font-mono text-xs dark:text-brand-muted text-slate-400 mb-1">{pod.id}</p>
@@ -192,18 +262,20 @@ function PodDetail({ pod, onClose }) {
           </div>
           <button onClick={onClose} className="text-2xl dark:text-brand-muted text-slate-400 hover:text-red-400 transition-colors leading-none">×</button>
         </div>
+
+        {/* Info grid */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           {[
-            ['Chain',       pod.chain],
-            ['Token',       pod.token],
-            ['Status',      currentStatus],
-            ['Members',     `${members} / ${pod.size}`],
-            ['Total Pot',   `${pod.contribution_amount * pod.size} ${pod.token}`],
-            ['Contribution',`${pod.contribution_amount} ${pod.token}/wk`],
-            ['Payout',      pod.payout_method],
-            ['Fee Paid',    pod.creation_fee_paid ? 'Yes' : 'No'],
-            ['Created',     new Date(pod.created_at).toLocaleDateString()],
-            ['Organizer',   organizer],
+            ['Chain',        pod.chain],
+            ['Token',        pod.token],
+            ['Status',       currentStatus],
+            ['Members',      `${memberCount} / ${pod.size}`],
+            ['Total Pot',    `${pod.contribution_amount * pod.size} ${pod.token}`],
+            ['Contribution', `${pod.contribution_amount} ${pod.token}/wk`],
+            ['Cycle',        pod.current_cycle ? `${pod.current_cycle} / ${pod.total_cycles}` : '—'],
+            ['Fee Paid',     pod.creation_fee_paid ? 'Yes' : 'No'],
+            ['Created',      new Date(pod.created_at).toLocaleDateString()],
+            ['Organizer',    organizer],
           ].map(([label, val]) => (
             <div key={label} className="dark:bg-brand-dark bg-slate-50 rounded-xl p-3">
               <p className="text-xs dark:text-brand-muted text-slate-400 mb-1">{label}</p>
@@ -211,18 +283,98 @@ function PodDetail({ pod, onClose }) {
             </div>
           ))}
         </div>
+
         {pod.contract_address && (
           <div className="mb-4 p-3 rounded-xl dark:bg-brand-dark bg-slate-50">
-            <p className="text-xs dark:text-brand-muted text-slate-400 mb-1">Contract Address</p>
+            <p className="text-xs dark:text-brand-muted text-slate-400 mb-1">Escrow / Contract</p>
             <p className="font-mono text-xs dark:text-brand-cyan text-brand-blue break-all">{pod.contract_address}</p>
           </div>
         )}
 
+        {/* ── Member payment status (ACTIVE pods) ── */}
+        {currentStatus === 'ACTIVE' && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold dark:text-brand-muted text-slate-500 uppercase tracking-wider">
+                Cycle {pod.current_cycle} Members
+              </p>
+              {cycleDue && (
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                  isOverdue
+                    ? 'bg-red-500/20 text-red-400'
+                    : 'bg-emerald-500/20 text-emerald-400'
+                }`}>
+                  {isOverdue ? 'OVERDUE' : `Due ${new Date(cycleDue).toLocaleString()}`}
+                </span>
+              )}
+            </div>
+
+            {loadingDetail ? (
+              <p className="text-xs dark:text-brand-muted text-slate-400 py-3 text-center">Loading members…</p>
+            ) : (
+              <div className="space-y-2">
+                {members.map(m => {
+                  const payStatus  = getMemberPayStatus(m.user_id)
+                  const isRecipient = m.payout_slot === pod.current_cycle
+                  const slashResult = slashResults[m.user_id]
+                  const canSlash   = pod.chain === 'XRPL' && isOverdue && payStatus === 'unpaid' && m.status !== 'DEFAULTED'
+
+                  return (
+                    <div key={m.id} className="flex items-center gap-3 p-3 rounded-xl dark:bg-brand-dark bg-slate-50">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold dark:text-white text-slate-900 truncate">
+                            {m.user?.alias ?? m.user?.wallet_address?.slice(0,14) ?? '—'}
+                          </p>
+                          {isRecipient && (
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-brand-blue/20 text-brand-blue font-bold">PAYOUT RECIPIENT</span>
+                          )}
+                          {m.status === 'DEFAULTED' && (
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-bold">DEFAULTED</span>
+                          )}
+                        </div>
+                        <p className="text-xs dark:text-brand-muted text-slate-400 font-mono truncate">
+                          Slot {m.payout_slot} · {m.user?.wallet_address?.slice(0,16)}…
+                        </p>
+                        {slashResult?.txHash && (
+                          <a href={`${xrplBase}${slashResult.txHash}`} target="_blank" rel="noopener noreferrer"
+                            className="text-xs text-emerald-400 underline font-mono">
+                            Slashed → tx {slashResult.txHash.slice(0,12)}…
+                          </a>
+                        )}
+                        {slashResult?.err && (
+                          <p className="text-xs text-red-400 mt-1 break-all">{slashResult.err}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
+                          payStatus === 'paid'    ? 'bg-emerald-500/20 text-emerald-400' :
+                          payStatus === 'slashed' ? 'bg-orange-500/20 text-orange-400' :
+                                                    'bg-red-500/20 text-red-400'
+                        }`}>
+                          {payStatus === 'paid' ? '✓ PAID' : payStatus === 'slashed' ? '⚡ SLASHED' : '✗ UNPAID'}
+                        </span>
+                        {canSlash && (
+                          <button onClick={() => handleSlash(m)} disabled={slashingId === m.user_id}
+                            className="text-xs px-2 py-1 rounded-lg bg-red-500 hover:bg-red-400 disabled:opacity-50 text-white font-bold transition-colors whitespace-nowrap">
+                            {slashingId === m.user_id ? '…' : 'Slash'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Force Complete */}
         {canForceComplete && (
           <div className="mt-4 p-4 rounded-xl border dark:border-blue-500/30 border-blue-300 dark:bg-blue-500/10 bg-blue-50">
             <p className="text-xs dark:text-blue-300 text-blue-700 font-semibold mb-1">Force Complete (XRPL)</p>
             <p className="text-xs dark:text-blue-200/70 text-blue-600 mb-3">
-              Mark this pod as completed so you can release collateral back to members.
+              Mark this pod as completed to enable collateral release back to members.
             </p>
             <button onClick={handleForceComplete} disabled={completing}
               className="w-full py-2 rounded-xl bg-blue-500 hover:bg-blue-400 disabled:opacity-50 text-white font-bold text-sm transition-colors">
@@ -231,6 +383,7 @@ function PodDetail({ pod, onClose }) {
           </div>
         )}
 
+        {/* Collateral Release */}
         {canRelease && !releaseTx && (
           <div className="mt-4 p-4 rounded-xl border dark:border-amber-500/30 border-amber-300 dark:bg-amber-500/10 bg-amber-50">
             <p className="text-xs dark:text-amber-300 text-amber-700 font-semibold mb-1">
@@ -238,8 +391,8 @@ function PodDetail({ pod, onClose }) {
             </p>
             <p className="text-xs dark:text-amber-200/70 text-amber-600 mb-3">
               {canReleaseXRPL
-                ? 'All cycles complete. The escrow wallet will send each member\'s collateral directly on XRPL.'
-                : 'All cycles complete. Connect MetaMask as the factory owner, then release collateral back to members on-chain.'}
+                ? 'All cycles complete. The escrow wallet will send each member\'s collateral deposit directly on XRPL.'
+                : 'All cycles complete. Connect MetaMask as the factory owner, then release collateral on-chain.'}
             </p>
             {releaseErr && (
               <div className="mb-3 p-2 rounded-lg bg-red-500/10 border border-red-500/30">
@@ -254,21 +407,17 @@ function PodDetail({ pod, onClose }) {
           </div>
         )}
 
+        {/* Release success */}
         {releaseTx && (
           <div className="mt-4 p-4 rounded-xl dark:bg-emerald-500/10 bg-emerald-50 border dark:border-emerald-500/30 border-emerald-300">
             <p className="text-xs font-bold dark:text-emerald-300 text-emerald-700 mb-2">Collateral Released ✓</p>
             {pod.chain === 'XRPL'
-              ? releaseTx.split(',').map(h => h.trim()).filter(Boolean).map(hash => {
-                  const base = (pod.env ?? 'dev') === 'live'
-                    ? 'https://xrpl.org/transactions/'
-                    : 'https://devnet.xrpl.org/transactions/'
-                  return (
-                    <a key={hash} href={`${base}${hash}`} target="_blank" rel="noopener noreferrer"
-                      className="block font-mono text-xs dark:text-brand-cyan text-brand-blue underline break-all mb-1">
-                      {hash}
-                    </a>
-                  )
-                })
+              ? releaseTx.split(',').map(h => h.trim()).filter(Boolean).map(hash => (
+                  <a key={hash} href={`${xrplBase}${hash}`} target="_blank" rel="noopener noreferrer"
+                    className="block font-mono text-xs dark:text-brand-cyan text-brand-blue underline break-all mb-1">
+                    {hash}
+                  </a>
+                ))
               : (
                 <a href={`https://sepolia.etherscan.io/tx/${releaseTx}`} target="_blank" rel="noopener noreferrer"
                   className="font-mono text-xs dark:text-brand-cyan text-brand-blue underline break-all">{releaseTx}</a>

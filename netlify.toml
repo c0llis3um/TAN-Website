@@ -6,6 +6,10 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# Daily overdue check — 10:00 UTC
+[functions."check-overdue"]
+  schedule = "0 10 * * *"
+
 # SPA routing — all paths go to index.html
 [[redirects]]
   from   = "/*"
