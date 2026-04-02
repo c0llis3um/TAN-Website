@@ -27,28 +27,27 @@ export const handler = async (event) => {
     return { statusCode: 405, body: 'Method not allowed' }
   }
 
-  const authHeader  = event.headers['authorization'] ?? ''
-  const accessToken = authHeader.replace('Bearer ', '').trim()
-  if (!accessToken) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Missing authorization token' }) }
-  }
-
   const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY,
   )
 
   try {
-    // ── 1. Validate session ────────────────────────────────────
-    const { data: { user }, error: authErr } = await supabase.auth.getUser(accessToken)
-    if (authErr || !user) {
-      return { statusCode: 401, body: JSON.stringify({ error: 'Invalid session' }) }
-    }
-
-    // ── 2. Parse body ──────────────────────────────────────────
+    // ── 1. Parse body ──────────────────────────────────────────
     const { podId, env = 'dev' } = JSON.parse(event.body ?? '{}')
     if (!podId) {
       return { statusCode: 400, body: JSON.stringify({ error: 'podId required' }) }
+    }
+
+    // ── 2. Verify the pod exists (prevents random escrow creation) ─
+    const { data: pod } = await supabase
+      .from('pods')
+      .select('id')
+      .eq('id', podId)
+      .maybeSingle()
+
+    if (!pod) {
+      return { statusCode: 404, body: JSON.stringify({ error: 'Pod not found' }) }
     }
 
     // ── 3. Make sure this pod doesn't already have an escrow ───

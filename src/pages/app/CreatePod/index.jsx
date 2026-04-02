@@ -7,7 +7,6 @@ import Badge from '@/components/ui/Badge'
 import useAppStore from '@/store/useAppStore'
 import { createPod, upsertUser, updatePodContract } from '@/lib/db'
 import { deployPodEVM } from '@/lib/contracts'
-import supabase from '@/lib/supabase'
 
 // ── Config ───────────────────────────────────────────────────
 
@@ -145,13 +144,9 @@ export default function CreatePod() {
           })
         } else if (form.chain === 'XRPL') {
           // Create escrow wallet + save seed server-side via Netlify function
-          const { data: { session } } = await supabase.auth.getSession()
           const escrowRes = await fetch('/.netlify/functions/create-xrpl-escrow', {
             method:  'POST',
-            headers: {
-              'Content-Type':  'application/json',
-              'Authorization': `Bearer ${session?.access_token ?? ''}`,
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ podId, env }),
           })
           const escrowJson = await escrowRes.json()
