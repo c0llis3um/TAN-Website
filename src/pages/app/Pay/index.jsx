@@ -12,10 +12,10 @@ function shareWa(text) { window.open(`https://wa.me/?text=${encodeURIComponent(t
 function shareTg(url, text) { window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank') }
 
 export default function Pay() {
-  const { id }            = useParams()
-  const navigate          = useNavigate()
-  const { t, i18n }       = useTranslation()
-  const { env, wallet }   = useAppStore()
+  const { id }          = useParams()
+  const navigate        = useNavigate()
+  const { t, i18n }    = useTranslation()
+  const { env, wallet } = useAppStore()
 
   const [pod,     setPod]     = useState(null)
   const [loading, setLoading] = useState(true)
@@ -133,8 +133,8 @@ export default function Pay() {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <p className="text-4xl mb-4">⚠</p>
-        <h2 className="text-xl font-bold dark:text-white text-slate-900 mb-2">Pod not found</h2>
-        <Button onClick={() => navigate('/app')}>← Back</Button>
+        <h2 className="text-xl font-bold dark:text-white text-slate-900 mb-2">{t('pay.notFound')}</h2>
+        <Button onClick={() => navigate('/app')}>{t('common.back')}</Button>
       </div>
     )
   }
@@ -146,7 +146,7 @@ export default function Pay() {
       <motion.button onClick={() => navigate(`/app/pod/${id}`)}
         className="text-sm dark:text-brand-muted text-slate-400 hover:text-brand-cyan mb-6 flex items-center gap-1"
         whileHover={{ x: -3 }}>
-        ← Back to pod
+        {t('pay.back')}
       </motion.button>
 
       <AnimatePresence mode="wait">
@@ -162,15 +162,15 @@ export default function Pay() {
                   <span className="text-2xl opacity-70 ml-2">{pod.token}</span>
                 </div>
                 <p className="text-sm opacity-70">
-                  Cycle {pod.current_cycle} of {pod.total_cycles} · {pod.chain}
-                  {env === 'dev' && ' · Testnet'}
+                  {t('pod.cycle')} {pod.current_cycle} {t('pod.of')} {pod.total_cycles} · {pod.chain}
+                  {env === 'dev' && ` · ${t('common.testnet')}`}
                 </p>
                 {(() => {
                   const rec = pod.pod_members?.find(m => m.payout_slot === pod.current_cycle)
                   const name = rec?.user?.alias ?? rec?.user?.wallet_address?.slice(0, 8)
                   return name ? (
                     <p className="text-xs mt-1 opacity-80">
-                      This cycle's payout → <span className="font-bold">{name}</span>
+                      {t('pod.potRecipient')} → <span className="font-bold">{name}</span>
                     </p>
                   ) : null
                 })()}
@@ -178,7 +178,7 @@ export default function Pay() {
 
               <div className="p-6 space-y-3">
                 <p className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 text-center mb-4">
-                  Choose payment method
+                  {t('pay.chooseMethod')}
                 </p>
 
                 <motion.button whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}
@@ -191,19 +191,19 @@ export default function Pay() {
                   onClick={() => handlePay('google')}
                   className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl dark:bg-brand-mid bg-slate-100 dark:border-brand-border border-slate-200 border font-bold text-base dark:text-white text-slate-900 hover:border-brand-blue/50 transition-all">
                   <GooglePayIcon />
-                  Google Pay
+                  {t('pay.googlePay')}
                 </motion.button>
 
                 <div className="flex items-center gap-3 my-2">
                   <div className="flex-1 h-px dark:bg-brand-border bg-slate-200" />
-                  <span className="text-xs dark:text-brand-muted text-slate-400">or pay with wallet</span>
+                  <span className="text-xs dark:text-brand-muted text-slate-400">{t('pay.orWallet')}</span>
                   <div className="flex-1 h-px dark:bg-brand-border bg-slate-200" />
                 </div>
 
                 <motion.button whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}
                   onClick={() => handlePay('wallet')}
                   className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-brand-blue/50 text-brand-cyan font-bold text-base hover:bg-brand-blue/10 hover:border-brand-blue transition-all">
-                  🔗 Pay from Wallet
+                  🔗 {t('pay.payFromWallet')}
                   <span className="text-xs font-normal dark:text-brand-muted text-slate-400">{shortAddr}</span>
                 </motion.button>
 
@@ -211,7 +211,7 @@ export default function Pay() {
                   <p className="text-xs text-red-400 text-center bg-red-500/10 rounded-xl p-3">{payError}</p>
                 )}
                 <p className="text-xs dark:text-brand-muted text-slate-400 text-center pt-1">
-                  Secured by smart contract · {pod.chain}
+                  {t('pay.secured', { chain: pod.chain })}
                 </p>
               </div>
             </Card>
@@ -226,8 +226,8 @@ export default function Pay() {
               animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}>
               <span className="text-4xl">⚡</span>
             </motion.div>
-            <h2 className="text-2xl font-extrabold dark:text-white text-slate-900 mb-2">Processing…</h2>
-            <p className="dark:text-brand-muted text-slate-500 text-sm">Confirming on {pod.chain}</p>
+            <h2 className="text-2xl font-extrabold dark:text-white text-slate-900 mb-2">{t('pay.processing')}</h2>
+            <p className="dark:text-brand-muted text-slate-500 text-sm">{t('pay.confirming', { chain: pod.chain })}</p>
             <div className="flex justify-center gap-1 mt-6">
               {[0,1,2].map(i => (
                 <motion.div key={i} className="w-2 h-2 rounded-full bg-brand-cyan"
@@ -254,7 +254,7 @@ export default function Pay() {
 
               <motion.h2 className="text-3xl font-extrabold dark:text-white text-slate-900 mb-2"
                 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-                Payment confirmed!
+                {t('pay.confirmed')}
               </motion.h2>
               <motion.p className="dark:text-brand-muted text-slate-500 mb-2"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
@@ -263,7 +263,7 @@ export default function Pay() {
               {recipient && (
                 <motion.p className="text-sm text-emerald-400 font-semibold"
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.55 }}>
-                  → Sent to {recipient}
+                  {t('pay.sentTo', { name: recipient })}
                 </motion.p>
               )}
               {txHash && txHash !== 'self-recipient' && (
@@ -275,7 +275,7 @@ export default function Pay() {
 
               <motion.div className="mt-8 space-y-3"
                 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
-                <p className="text-xs dark:text-brand-muted text-slate-400 font-semibold uppercase tracking-wider mb-3">Share your win</p>
+                <p className="text-xs dark:text-brand-muted text-slate-400 font-semibold uppercase tracking-wider mb-3">{t('pay.shareYourWin')}</p>
                 <div className="flex gap-3">
                   <Button size="sm" className="flex-1" disabled={env === 'dev'} onClick={() => shareWa(paidMsg)}>
                     <WaIcon /> WhatsApp
@@ -284,12 +284,12 @@ export default function Pay() {
                     <TgIcon /> Telegram
                   </Button>
                 </div>
-                {env === 'dev' && <p className="text-xs text-amber-500 text-center">Sharing disabled on testnet</p>}
+                {env === 'dev' && <p className="text-xs text-amber-500 text-center">{t('pay.sharingDisabled')}</p>}
               </motion.div>
 
               <motion.div className="mt-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }}>
                 <Button variant="ghost" size="sm" onClick={() => navigate(`/app/pod/${id}`)}>
-                  Back to pod
+                  {t('common.back')}
                 </Button>
               </motion.div>
             </Card>

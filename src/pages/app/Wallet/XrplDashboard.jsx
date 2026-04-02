@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
 import { Client, xrpToDrops } from 'xrpl'
 import MoonPayButton from '@/components/MoonPayButton'
@@ -131,14 +132,14 @@ function KpiCard({ label, value, sub, accent = false, loading }) {
   )
 }
 
-function TxRow({ tx, address }) {
+function TxRow({ tx }) {
+  const { t }    = useTranslation()
   const isIn     = tx.incoming
   const isOut    = tx.outgoing
-  const isOther  = !isIn && !isOut
   const success  = tx.result === 'tesSUCCESS'
 
   const typeLabel = {
-    Payment:         isIn ? 'Received' : isOut ? 'Sent' : 'Payment',
+    Payment:         isIn ? t('walletPage.incoming') : isOut ? t('walletPage.outgoing') : 'Payment',
     OfferCreate:     'DEX Offer',
     OfferDelete:     'Offer Cancel',
     TrustSet:        'Trust Line',
@@ -162,7 +163,7 @@ function TxRow({ tx, address }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className={`text-xs font-bold ${color}`}>{typeLabel}</span>
-          {!success && <span className="text-[10px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded-full">failed</span>}
+          {!success && <span className="text-[10px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded-full">{t('walletPage.failed')}</span>}
         </div>
         <p className="text-[11px] font-mono dark:text-brand-muted text-slate-400 truncate">
           {tx.hash ? `${tx.hash.slice(0, 10)}…${tx.hash.slice(-6)}` : '—'}
@@ -185,6 +186,7 @@ function TxRow({ tx, address }) {
 // ── Main component ────────────────────────────────────────────
 
 export default function XrplDashboard({ wallet, env }) {
+  const { t } = useTranslation()
   const [accountData,  setAccountData]  = useState(null)
   const [acctLoading,  setAcctLoading]  = useState(true)
   const [priceData,    setPriceData]    = useState({ price: 0, change24h: 0 })
@@ -240,10 +242,10 @@ export default function XrplDashboard({ wallet, env }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold dark:text-white text-slate-900">XRP Wallet</h1>
+          <h1 className="text-2xl font-extrabold dark:text-white text-slate-900">{t('walletPage.title')}</h1>
           <p className="text-xs font-mono dark:text-brand-muted text-slate-400 mt-0.5">
             {wallet.address.slice(0, 10)}…{wallet.address.slice(-8)}
-            {env === 'dev' && <span className="ml-2 text-amber-400">· Devnet</span>}
+            {env === 'dev' && <span className="ml-2 text-amber-400">· {t('common.testnet')}</span>}
           </p>
         </div>
         <button onClick={loadAccount} disabled={acctLoading}
@@ -259,7 +261,7 @@ export default function XrplDashboard({ wallet, env }) {
         <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-brand-blue/10 blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
 
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">Portfolio Value</p>
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">{t('walletPage.portfolio')}</p>
         {acctLoading
           ? <div className="h-10 w-40 bg-white/10 rounded-xl animate-pulse mb-2" />
           : <p className="text-4xl font-extrabold text-white mb-1">${usdValue}</p>
@@ -282,7 +284,7 @@ export default function XrplDashboard({ wallet, env }) {
       {/* Price chart */}
       <Card hover={false} className="p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold dark:text-white text-slate-900 text-sm">XRP / USD</h3>
+          <h3 className="font-bold dark:text-white text-slate-900 text-sm">{t('walletPage.chart')}</h3>
           <div className="flex gap-1">
             {PERIODS.map(p => (
               <button key={p.label} onClick={() => setPeriod(p.label)}
@@ -334,29 +336,27 @@ export default function XrplDashboard({ wallet, env }) {
 
       {/* KPI grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        <KpiCard label="XRP Balance"    value={`${xrpBalance.toLocaleString(undefined, { maximumFractionDigits: 4 })} XRP`} accent loading={acctLoading} />
-        <KpiCard label="XRP Price"      value={`$${priceData.price.toFixed(4)}`}   sub={`${isPositive ? '+' : ''}${change24h.toFixed(2)}% today`} loading={false} />
-        <KpiCard label="USD Value"      value={`$${usdValue}`}                     loading={acctLoading} />
-        <KpiCard label="RLUSD Balance"  value={rlusdBalance > 0 ? `${rlusdBalance.toFixed(2)} RLUSD` : '—'} loading={acctLoading} />
-        <KpiCard label="Total Received" value={`${totalReceived.toLocaleString(undefined, { maximumFractionDigits: 4 })} XRP`} loading={acctLoading} />
-        <KpiCard label="Transactions"   value={txCount > 0 ? txCount.toString() : '—'} sub="last 20 fetched" loading={acctLoading} />
+        <KpiCard label={t('walletPage.balance')}  value={`${xrpBalance.toLocaleString(undefined, { maximumFractionDigits: 4 })} XRP`} accent loading={acctLoading} />
+        <KpiCard label={t('walletPage.price')}    value={`$${priceData.price.toFixed(4)}`}   sub={`${isPositive ? '+' : ''}${change24h.toFixed(2)}% today`} loading={false} />
+        <KpiCard label={t('walletPage.usdValue')} value={`$${usdValue}`}                     loading={acctLoading} />
+        <KpiCard label={t('walletPage.rlusd')}    value={rlusdBalance > 0 ? `${rlusdBalance.toFixed(2)} RLUSD` : '—'} loading={acctLoading} />
+        <KpiCard label={t('walletPage.received')} value={`${totalReceived.toLocaleString(undefined, { maximumFractionDigits: 4 })} XRP`} loading={acctLoading} />
+        <KpiCard label={t('walletPage.txCount')}  value={txCount > 0 ? txCount.toString() : '—'} sub={t('walletPage.txLast')} loading={acctLoading} />
       </div>
 
       {/* Buy XRP */}
       <Card hover={false} className="p-5">
-        <h3 className="font-bold dark:text-white text-slate-900 text-sm mb-1">Buy XRP</h3>
-        <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">
-          Apple Pay · Google Pay · Credit Card — no exchange needed
-        </p>
+        <h3 className="font-bold dark:text-white text-slate-900 text-sm mb-1">{t('walletPage.buyXrp')}</h3>
+        <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">{t('walletPage.buyDesc')}</p>
         <MoonPayButton walletAddress={wallet.address} token="XRP" env={env} />
       </Card>
 
       {/* Transactions */}
       <Card hover={false} className="overflow-hidden">
         <div className="px-5 py-4 border-b dark:border-brand-border border-slate-200 flex items-center justify-between">
-          <h3 className="font-bold dark:text-white text-slate-900 text-sm">Recent Transactions</h3>
+          <h3 className="font-bold dark:text-white text-slate-900 text-sm">{t('walletPage.recentTx')}</h3>
           {!acctLoading && txCount > 0 && (
-            <span className="text-xs dark:text-brand-muted text-slate-400">{transactions.length} loaded</span>
+            <span className="text-xs dark:text-brand-muted text-slate-400">{t('walletPage.txLoaded', { n: transactions.length })}</span>
           )}
         </div>
 
@@ -374,7 +374,7 @@ export default function XrplDashboard({ wallet, env }) {
             ))}
           </div>
         ) : transactions.length === 0 ? (
-          <p className="text-center text-sm dark:text-brand-muted text-slate-400 py-10">No transactions found</p>
+          <p className="text-center text-sm dark:text-brand-muted text-slate-400 py-10">{t('walletPage.noTx')}</p>
         ) : (
           <>
             <AnimatePresence mode="wait">
@@ -388,14 +388,14 @@ export default function XrplDashboard({ wallet, env }) {
               <div className="flex items-center justify-between px-5 py-3 border-t dark:border-brand-border border-slate-100">
                 <button onClick={() => setTxPage(p => Math.max(0, p - 1))} disabled={txPage === 0}
                   className="text-xs px-3 py-1.5 rounded-lg dark:bg-brand-dark bg-slate-100 dark:text-brand-muted text-slate-500 disabled:opacity-40 font-semibold transition-all hover:border-brand-blue/30">
-                  ← Prev
+                  {t('walletPage.prev')}
                 </button>
                 <span className="text-xs dark:text-brand-muted text-slate-400">
                   {txPage + 1} / {totalPages}
                 </span>
                 <button onClick={() => setTxPage(p => Math.min(totalPages - 1, p + 1))} disabled={txPage === totalPages - 1}
                   className="text-xs px-3 py-1.5 rounded-lg dark:bg-brand-dark bg-slate-100 dark:text-brand-muted text-slate-500 disabled:opacity-40 font-semibold">
-                  Next →
+                  {t('walletPage.next')}
                 </button>
               </div>
             )}
@@ -406,13 +406,13 @@ export default function XrplDashboard({ wallet, env }) {
       {/* Devnet faucet */}
       {env === 'dev' && (
         <Card hover={false} className="p-5">
-          <h3 className="font-bold dark:text-white text-slate-900 text-sm mb-1">XRPL Devnet Faucet</h3>
-          <p className="text-xs dark:text-brand-muted text-slate-400 mb-3">Free test XRP — funded instantly.</p>
+          <h3 className="font-bold dark:text-white text-slate-900 text-sm mb-1">{t('walletPage.faucetXrpl')}</h3>
+          <p className="text-xs dark:text-brand-muted text-slate-400 mb-3">{t('walletPage.faucetXrplDesc')}</p>
           <a href="https://faucet.devnet.rippletest.net/accounts" target="_blank" rel="noopener noreferrer"
             className="flex items-center justify-between p-3 rounded-2xl dark:bg-brand-dark bg-slate-50 border dark:border-brand-border border-slate-200 hover:border-brand-blue/40 transition-colors group">
             <div>
-              <p className="text-sm font-semibold dark:text-white text-slate-900 group-hover:text-brand-blue transition-colors">Get Devnet XRP</p>
-              <p className="text-xs dark:text-brand-muted text-slate-400">Paste your address and hit fund</p>
+              <p className="text-sm font-semibold dark:text-white text-slate-900 group-hover:text-brand-blue transition-colors">{t('walletPage.getDevnet')}</p>
+              <p className="text-xs dark:text-brand-muted text-slate-400">{t('walletPage.faucetPaste')}</p>
             </div>
             <span className="text-brand-blue text-sm">→</span>
           </a>

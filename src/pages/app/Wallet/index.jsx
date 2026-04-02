@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import useAppStore from '@/store/useAppStore'
 import { getTokenBalances, getSwapQuote, swapEthForUsdc } from '@/lib/contracts'
 import XrplDashboard from './XrplDashboard'
@@ -43,6 +44,7 @@ function BalanceCard({ symbol, icon, balance, usdRate, loading, decimals = 2 }) 
 // ── Ethereum wallet view ──────────────────────────────────────
 
 function EthWalletView({ wallet, env }) {
+  const { t } = useTranslation()
   const [balances,     setBalances]     = useState(null)
   const [balLoading,   setBalLoading]   = useState(false)
   const [balError,     setBalError]     = useState(null)
@@ -106,11 +108,11 @@ function EthWalletView({ wallet, env }) {
     <div className="max-w-lg mx-auto px-4 py-8">
       <div className="flex items-center gap-3 mb-6">
         <div className="flex-1">
-          <h1 className="text-2xl font-extrabold dark:text-white text-slate-900">Wallet</h1>
+          <h1 className="text-2xl font-extrabold dark:text-white text-slate-900">{t('walletPage.title')}</h1>
           <p className="text-xs font-mono dark:text-brand-muted text-slate-400 mt-0.5">
             {wallet.address.slice(0, 8)}…{wallet.address.slice(-6)}
             <span className="ml-2 dark:text-brand-cyan text-brand-blue">{wallet.chainName ?? wallet.chain}</span>
-            {env === 'dev' && <span className="ml-1 text-amber-400">· Testnet</span>}
+            {env === 'dev' && <span className="ml-1 text-amber-400">· {t('common.testnet')}</span>}
           </p>
         </div>
         <button onClick={loadBalances} disabled={balLoading}
@@ -128,19 +130,19 @@ function EthWalletView({ wallet, env }) {
 
       <Card hover={false} className="p-6 mb-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold dark:text-white text-slate-900">Swap ETH → USDC</h2>
+          <h2 className="font-bold dark:text-white text-slate-900">{t('walletPage.swap')}</h2>
           {env === 'dev' && (
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20">
-              Testnet — use faucet
+              {t('common.testnet')}
             </span>
           )}
         </div>
 
         <div className="dark:bg-brand-dark bg-slate-50 rounded-2xl p-4 mb-2">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs dark:text-brand-muted text-slate-400 font-semibold">You send</span>
+            <span className="text-xs dark:text-brand-muted text-slate-400 font-semibold">{t('walletPage.youSend')}</span>
             <button onClick={setMax} className="text-xs text-brand-blue hover:underline font-semibold">
-              Max {balances?.eth != null ? `${Math.max(0, balances.eth - 0.005).toFixed(4)} ETH` : ''}
+              {t('walletPage.max')} {balances?.eth != null ? `${Math.max(0, balances.eth - 0.005).toFixed(4)} ETH` : ''}
             </button>
           </div>
           <div className="flex items-center gap-3">
@@ -157,7 +159,7 @@ function EthWalletView({ wallet, env }) {
         </div>
 
         <div className="dark:bg-brand-dark bg-slate-50 rounded-2xl p-4 mb-4">
-          <span className="text-xs dark:text-brand-muted text-slate-400 font-semibold block mb-1.5">You receive</span>
+          <span className="text-xs dark:text-brand-muted text-slate-400 font-semibold block mb-1.5">{t('walletPage.youReceive')}</span>
           <div className="flex items-center gap-3">
             <span className="text-2xl">💵</span>
             <div className="flex-1 text-xl font-bold dark:text-white text-slate-900">
@@ -171,7 +173,7 @@ function EthWalletView({ wallet, env }) {
 
         {quote && (
           <div className="flex justify-between text-xs dark:text-brand-muted text-slate-400 mb-4 px-1">
-            <span>Rate</span>
+            <span>{t('walletPage.rate')}</span>
             <span>1 ETH ≈ ${quote.rate.toLocaleString(undefined, { maximumFractionDigits: 0 })} USDC{quote.isEstimate && ' (estimated)'}</span>
           </div>
         )}
@@ -180,17 +182,17 @@ function EthWalletView({ wallet, env }) {
           {swapDone ? (
             <motion.div key="done" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="py-3 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-sm text-center">
-              ✓ Swap complete!{swapOut ? ` ~${swapOut.toFixed(2)} USDC received.` : ' Balances updated.'}
+              ✓ {t('walletPage.swapComplete')}{swapOut ? ` ~${swapOut.toFixed(2)} USDC received.` : ''}
             </motion.div>
           ) : (
             <motion.div key="btn" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               {env === 'dev' ? (
                 <div className="py-3 rounded-2xl dark:bg-brand-mid bg-slate-100 dark:text-brand-muted text-slate-400 text-sm text-center">
-                  Swap disabled on testnet — use the faucets below
+                  {t('walletPage.swapDisabled')}
                 </div>
               ) : (
                 <Button className="w-full" disabled={!canSwap || swapping} onClick={handleSwap}>
-                  {swapping ? 'Swapping…' : !ethIn ? 'Enter amount' : !hasEnoughEth ? 'Insufficient ETH' : 'Swap ETH → USDC'}
+                  {swapping ? 'Swapping…' : !ethIn ? t('walletPage.enterAmount') : !hasEnoughEth ? t('walletPage.insufficient') : t('walletPage.swap')}
                 </Button>
               )}
             </motion.div>
@@ -206,14 +208,14 @@ function EthWalletView({ wallet, env }) {
 
       {env === 'dev' && (
         <Card hover={false} className="p-5">
-          <h3 className="font-bold dark:text-white text-slate-900 mb-1 text-sm">Sepolia Testnet Faucets</h3>
-          <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">Free test tokens — wallet funded in ~1 minute.</p>
+          <h3 className="font-bold dark:text-white text-slate-900 mb-1 text-sm">{t('walletPage.faucets')}</h3>
+          <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">{t('walletPage.faucetDesc')}</p>
           <div className="space-y-2">
             {ETH_FAUCETS.map(f => (
               <a key={f.url} href={f.url} target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-between p-3 rounded-2xl dark:bg-brand-dark bg-slate-50 border dark:border-brand-border border-slate-200 hover:border-brand-blue/40 transition-colors group">
                 <div>
-                  <p className="text-sm font-semibold dark:text-white text-slate-900 group-hover:text-brand-blue transition-colors">Get {f.label}</p>
+                  <p className="text-sm font-semibold dark:text-white text-slate-900 group-hover:text-brand-blue transition-colors">{t('walletPage.getToken', { label: f.label })}</p>
                   <p className="text-xs dark:text-brand-muted text-slate-400">{f.note}</p>
                 </div>
                 <span className="text-brand-blue text-sm">→</span>
@@ -230,15 +232,16 @@ function EthWalletView({ wallet, env }) {
 
 export default function WalletPage() {
   const navigate        = useNavigate()
+  const { t }           = useTranslation()
   const { env, wallet } = useAppStore()
 
   if (!wallet) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
         <p className="text-5xl mb-4">👛</p>
-        <h2 className="text-xl font-bold dark:text-white text-slate-900 mb-2">No wallet connected</h2>
-        <p className="text-sm dark:text-brand-muted text-slate-500 mb-6">Connect MetaMask or Xaman to see your balances.</p>
-        <Button onClick={() => navigate('/app')}>← Back to Dashboard</Button>
+        <h2 className="text-xl font-bold dark:text-white text-slate-900 mb-2">{t('walletPage.noWallet')}</h2>
+        <p className="text-sm dark:text-brand-muted text-slate-500 mb-6">{t('walletPage.connectDesc')}</p>
+        <Button onClick={() => navigate('/app')}>{t('walletPage.back')}</Button>
       </div>
     )
   }

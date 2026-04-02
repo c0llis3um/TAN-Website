@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
@@ -15,7 +16,6 @@ const CHAINS = [
   { id: 'XRPL',    label: 'XRP Ledger', icon: '🔵', note: 'Very low fees · Fast · RLUSD'   },
 ]
 
-// Tokens available per chain
 const CHAIN_TOKENS = {
   Ethereum: [
     { id: 'ETH',  label: 'ETH',   icon: '🔷', note: 'Native — no approval needed. Price moves together.' },
@@ -28,18 +28,18 @@ const CHAIN_TOKENS = {
   ],
 }
 
-const STEP_LABELS  = ['Chain', 'Token', 'Settings', 'Payout', 'Review']
-
-const DEPLOY_STEPS = [
-  { key: 'save',    label: 'Saving pod to database…'    },
-  { key: 'approve', label: 'Creating escrow wallet…'    },
-  { key: 'confirm', label: 'Waiting for confirmation…'  },
-  { key: 'done',    label: 'Pod created!'               },
-]
-
 export default function CreatePod() {
   const navigate = useNavigate()
+  const { t }    = useTranslation()
   const { env, wallet } = useAppStore()
+
+  const STEP_LABELS  = [t('create.steps.chain'), t('create.steps.token'), t('create.steps.settings'), t('create.steps.payout'), t('create.steps.review')]
+  const DEPLOY_STEPS = [
+    { key: 'save',    label: t('create.deploy.saving')    },
+    { key: 'approve', label: t('create.deploy.escrow')    },
+    { key: 'confirm', label: t('create.deploy.confirming') },
+    { key: 'done',    label: t('create.deploy.done')      },
+  ]
 
   const defaultChain = wallet?.chain === 'Ethereum' ? 'Ethereum' : 'XRPL'
 
@@ -51,7 +51,7 @@ export default function CreatePod() {
     size:              6,
     payoutOrder:       'random',
     name:              '',
-    frequencyDays:     7,   // 7=weekly, 14=biweekly, 30=monthly
+    frequencyDays:     7,
   })
 
   const [deploying,  setDeploying]  = useState(false)
@@ -64,7 +64,6 @@ export default function CreatePod() {
   const totalPot = +(form.contribution * form.size).toFixed(6)
   const upfront  = +(form.contribution * 3).toFixed(6)
 
-  // Per-token contribution config
   const TOKEN_CONFIG = {
     ETH:   { min: 0.001, max: 10,   step: 0.001, decimals: 3 },
     XRP:   { min: 1,     max: 5000, step: 1,     decimals: 0 },
@@ -80,7 +79,6 @@ export default function CreatePod() {
     setError(null)
   }
 
-  // When chain changes, reset token + contribution default
   function handleChainChange(chain) {
     const firstToken = CHAIN_TOKENS[chain]?.[0]?.id ?? 'ETH'
     const cfg = TOKEN_CONFIG[firstToken] ?? TOKEN_CONFIG.USDC
@@ -92,7 +90,6 @@ export default function CreatePod() {
     setForm(f => ({ ...f, token, contribution: cfg.min * 10 }))
   }
 
-  // ── Deploy ───────────────────────────────────────────────────
   const handleDeploy = async () => {
     setDeploying(true)
     setError(null)
@@ -102,7 +99,6 @@ export default function CreatePod() {
     try {
       if (!wallet?.address) throw new Error('Connect your wallet first.')
 
-      // ── 1. Save to DB ────────────────────────────────────────
       setDeployStep('save')
 
       const { data: user, error: uErr } = await upsertUser({
@@ -129,7 +125,6 @@ export default function CreatePod() {
 
       podId = pod.id
 
-      // ── 2. Deploy on-chain ───────────────────────────────────
       setDeployStep('approve')
       let contractResult = { simulated: true, txHash: null, contractAddress: null }
 
@@ -143,7 +138,6 @@ export default function CreatePod() {
             env,
           })
         } else if (form.chain === 'XRPL') {
-          // Create escrow wallet + save seed server-side via Netlify function
           const escrowRes = await fetch('/.netlify/functions/create-xrpl-escrow', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -151,16 +145,13 @@ export default function CreatePod() {
           })
           const escrowJson = await escrowRes.json()
           if (!escrowRes.ok) throw new Error(escrowJson.error ?? 'Escrow creation failed')
-          const escrowAddress = escrowJson.escrowAddress
-          contractResult = { simulated: false, txHash: null, contractAddress: escrowAddress }
-          // Organizer joins + deposits collateral from the pod page (better UX than doing it here)
+          contractResult = { simulated: false, txHash: null, contractAddress: escrowJson.escrowAddress }
         }
       } catch (chainErr) {
         await updatePodContract(podId, { status: 'FAILED' }).catch(() => {})
         throw chainErr
       }
 
-      // ── 3. Update pod record ─────────────────────────────────
       setDeployStep('confirm')
 
       let dbErr = null
@@ -188,7 +179,6 @@ export default function CreatePod() {
     } catch (err) {
       console.error('[deploy]', err)
       setError(err?.message ?? 'Deployment failed.')
-      // Stay in overlay — user reads the error, then clicks Try again
     }
   }
 
@@ -207,10 +197,10 @@ export default function CreatePod() {
                 initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 15 }}>
                 <span className="text-4xl text-white">✓</span>
               </motion.div>
-              <h2 className="text-2xl font-extrabold dark:text-white text-slate-900 mb-2">Tanda Created!</h2>
-              {result.simulated && <p className="text-xs text-amber-400 mb-2">Simulated — no factory deployed yet</p>}
+              <h2 className="text-2xl font-extrabold dark:text-white text-slate-900 mb-2">{t('create.created')}</h2>
+              {result.simulated && <p className="text-xs text-amber-400 mb-2">{t('create.simulated')}</p>}
               {result.txHash && <p className="font-mono text-xs dark:text-brand-muted text-slate-400 break-all">{result.txHash.slice(0, 20)}…</p>}
-              <p className="text-sm dark:text-brand-muted text-slate-500 mt-3">Redirecting to your pod…</p>
+              <p className="text-sm dark:text-brand-muted text-slate-500 mt-3">{t('create.redirecting')}</p>
             </motion.div>
 
           ) : error ? (
@@ -218,13 +208,13 @@ export default function CreatePod() {
               <div className="w-16 h-16 rounded-full bg-red-500/20 border-2 border-red-500/40 mx-auto flex items-center justify-center mb-5">
                 <span className="text-3xl">⚠</span>
               </div>
-              <h2 className="text-xl font-extrabold dark:text-white text-slate-900 mb-3">Something went wrong</h2>
+              <h2 className="text-xl font-extrabold dark:text-white text-slate-900 mb-3">{t('create.error')}</h2>
               <div className="p-4 rounded-2xl dark:bg-red-500/10 bg-red-50 border border-red-500/20 text-sm text-red-400 text-left mb-5">
                 {error}
               </div>
               <button onClick={resetDeploy}
                 className="w-full py-3 rounded-2xl dark:bg-brand-mid bg-slate-100 dark:text-brand-text text-slate-700 font-semibold text-sm hover:opacity-80 transition-opacity">
-                ← Try again
+                {t('create.tryAgain')}
               </button>
             </motion.div>
 
@@ -268,14 +258,15 @@ export default function CreatePod() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <motion.button onClick={() => navigate('/app')} whileHover={{ x: -3 }}
         className="text-sm dark:text-brand-muted text-slate-400 hover:text-brand-cyan mb-6 flex items-center gap-1">
-        ← Back
+        {t('create.back')}
       </motion.button>
 
       <div className="mb-8">
-        <h1 className="text-2xl font-extrabold dark:text-white text-slate-900 mb-1">Create a Tanda</h1>
+        <h1 className="text-2xl font-extrabold dark:text-white text-slate-900 mb-1">{t('create.title')}</h1>
         <p className="text-sm dark:text-brand-muted text-slate-500">
-          Small ETH fee to deploy · {env === 'dev' ? 'Testnet' : 'Mainnet'}
-          {!wallet && <span className="ml-2 text-amber-400">· Connect wallet to deploy</span>}
+          {form.chain === 'Ethereum' && `${t('create.smallFeeNote')} · `}
+          {env === 'dev' ? t('common.testnet') : 'Mainnet'}
+          {!wallet && <span className="ml-2 text-amber-400">· {t('create.connectWallet')}</span>}
         </p>
       </div>
 
@@ -304,7 +295,7 @@ export default function CreatePod() {
         {step === 0 && (
           <motion.div key="s0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             <Card hover={false} className="p-6 mb-6">
-              <h3 className="font-bold dark:text-white text-slate-900 mb-4">Choose Blockchain</h3>
+              <h3 className="font-bold dark:text-white text-slate-900 mb-4">{t('create.chooseChain')}</h3>
               <div className="space-y-3">
                 {CHAINS.map(c => (
                   <motion.button key={c.id} onClick={() => handleChainChange(c.id)}
@@ -326,7 +317,7 @@ export default function CreatePod() {
                 ))}
               </div>
             </Card>
-            <Button className="w-full" onClick={() => setStep(1)}>Continue →</Button>
+            <Button className="w-full" onClick={() => setStep(1)}>{t('create.continue')}</Button>
           </motion.div>
         )}
 
@@ -334,40 +325,38 @@ export default function CreatePod() {
         {step === 1 && (
           <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             <Card hover={false} className="p-6 mb-6">
-              <h3 className="font-bold dark:text-white text-slate-900 mb-2">What will your tanda use?</h3>
-              <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">
-                All members contribute and receive payouts in this token.
-              </p>
+              <h3 className="font-bold dark:text-white text-slate-900 mb-2">{t('create.tokenLabel')}</h3>
+              <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">{t('create.tokenSub')}</p>
               <div className="space-y-3">
-                {tokens.map(t => (
-                  <motion.button key={t.id} onClick={() => handleTokenChange(t.id)}
+                {tokens.map(tok => (
+                  <motion.button key={tok.id} onClick={() => handleTokenChange(tok.id)}
                     whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
                     className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
-                      form.token === t.id ? 'border-brand-blue/60 dark:bg-brand-blue/10 bg-blue-50'
+                      form.token === tok.id ? 'border-brand-blue/60 dark:bg-brand-blue/10 bg-blue-50'
                       : 'dark:bg-brand-darker dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
-                    <span className="text-2xl">{t.icon}</span>
+                    <span className="text-2xl">{tok.icon}</span>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold dark:text-white text-slate-900">{t.label}</span>
-                        {(t.id === 'USDC' || t.id === 'RLUSD') && <Badge variant="green">Stable</Badge>}
-                        {(t.id === 'ETH' || t.id === 'XRP')    && <Badge variant="muted">Native</Badge>}
+                        <span className="font-bold dark:text-white text-slate-900">{tok.label}</span>
+                        {(tok.id === 'USDC' || tok.id === 'RLUSD') && <Badge variant="green">Stable</Badge>}
+                        {(tok.id === 'ETH'  || tok.id === 'XRP')   && <Badge variant="muted">Native</Badge>}
                       </div>
-                      <span className="text-xs dark:text-brand-muted text-slate-400">{t.note}</span>
+                      <span className="text-xs dark:text-brand-muted text-slate-400">{tok.note}</span>
                     </div>
-                    {form.token === t.id && <span className="text-brand-cyan text-xl flex-shrink-0">●</span>}
+                    {form.token === tok.id && <span className="text-brand-cyan text-xl flex-shrink-0">●</span>}
                   </motion.button>
                 ))}
               </div>
 
               {(form.token === 'ETH' || form.token === 'XRP') && (
                 <div className="mt-4 p-3 rounded-xl dark:bg-amber-500/10 bg-amber-50 border border-amber-500/20 text-xs text-amber-500">
-                  Native tokens fluctuate in price. All members share the same price exposure — when ETH goes up, everyone wins together.
+                  Native tokens fluctuate in price. All members share the same price exposure.
                 </div>
               )}
             </Card>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep(0)}>← Back</Button>
-              <Button className="flex-1" onClick={() => setStep(2)}>Continue →</Button>
+              <Button variant="outline" onClick={() => setStep(0)}>{t('create.back')}</Button>
+              <Button className="flex-1" onClick={() => setStep(2)}>{t('create.continue')}</Button>
             </div>
           </motion.div>
         )}
@@ -376,15 +365,15 @@ export default function CreatePod() {
         {step === 2 && (
           <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             <Card hover={false} className="p-6 mb-6 space-y-6">
-              <h3 className="font-bold dark:text-white text-slate-900">Pod Settings</h3>
+              <h3 className="font-bold dark:text-white text-slate-900">{t('create.steps.settings')}</h3>
               <div>
-                <label className="text-xs font-bold dark:text-brand-muted text-slate-500 block mb-2">Pod Name</label>
+                <label className="text-xs font-bold dark:text-brand-muted text-slate-500 block mb-2">{t('create.podName')}</label>
                 <input value={form.name} onChange={e => upd('name', e.target.value)}
                   placeholder="e.g. Pilsen Crew, Rodriguez Family…"
                   className="w-full px-4 py-2.5 rounded-xl text-sm dark:bg-brand-dark bg-slate-50 dark:border-brand-border border border-slate-200 dark:text-white text-slate-900 dark:placeholder-brand-muted placeholder-slate-400 outline-none focus:border-brand-blue/60" />
               </div>
               <div>
-                <label className="text-xs font-bold dark:text-brand-muted text-slate-500 block mb-2">Contribution per cycle</label>
+                <label className="text-xs font-bold dark:text-brand-muted text-slate-500 block mb-2">{t('create.contribution')}</label>
                 <div className="flex items-center gap-3 mb-2">
                   <input
                     type="number"
@@ -407,7 +396,7 @@ export default function CreatePod() {
               </div>
               <div>
                 <label className="text-xs font-bold dark:text-brand-muted text-slate-500 block mb-2">
-                  Members: <span className="text-brand-cyan font-extrabold">{form.size} people</span>
+                  {t('create.groupSize', { n: form.size })}
                 </label>
                 <input type="range" min="3" max="20" step="1" value={form.size}
                   onChange={e => upd('size', Number(e.target.value))} className="w-full accent-brand-blue" />
@@ -415,7 +404,7 @@ export default function CreatePod() {
               </div>
               <div>
                 <label className="text-xs font-bold dark:text-brand-muted text-slate-500 block mb-2">
-                  Payment Frequency
+                  {t('create.frequency')}
                   {env === 'dev' && <span className="ml-2 text-amber-400 normal-case font-normal">(dev: stored as hours)</span>}
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -440,10 +429,10 @@ export default function CreatePod() {
               </div>
               <div className="dark:bg-brand-dark bg-slate-50 rounded-2xl p-4 grid grid-cols-2 gap-3">
                 {[
-                  ['Total pot',   `${totalPot} ${form.token}`],
-                  ['Duration',    `${form.size} cycles`],
-                  ['To join',     `${upfront} ${form.token}`],
-                  ['Network',     form.chain],
+                  [t('create.weeklyPot'), `${totalPot} ${form.token}`],
+                  [t('create.duration'),  `${form.size} cycles`],
+                  [t('create.toJoin'),    `${upfront} ${form.token}`],
+                  [t('create.network'),   form.chain],
                 ].map(([l, v]) => (
                   <div key={l}>
                     <p className="text-xs dark:text-brand-muted text-slate-400">{l}</p>
@@ -453,8 +442,8 @@ export default function CreatePod() {
               </div>
             </Card>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep(1)}>← Back</Button>
-              <Button className="flex-1" onClick={() => setStep(3)} disabled={!form.name.trim()}>Continue →</Button>
+              <Button variant="outline" onClick={() => setStep(1)}>{t('create.back')}</Button>
+              <Button className="flex-1" onClick={() => setStep(3)} disabled={!form.name.trim()}>{t('create.continue')}</Button>
             </div>
           </motion.div>
         )}
@@ -463,12 +452,12 @@ export default function CreatePod() {
         {step === 3 && (
           <motion.div key="s3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             <Card hover={false} className="p-6 mb-6">
-              <h3 className="font-bold dark:text-white text-slate-900 mb-4">Payout Order</h3>
+              <h3 className="font-bold dark:text-white text-slate-900 mb-4">{t('create.payoutOrder')}</h3>
               <div className="space-y-3">
                 {[
-                  { id: 'random',    label: 'Random Draw',    desc: 'Slots assigned randomly at creation. Fairest option.' },
-                  { id: 'fixed',     label: 'Organizer Sets', desc: 'You assign each member their payout week manually.' },
-                  { id: 'volunteer', label: 'First Come',     desc: 'Members claim their preferred slot first-come.' },
+                  { id: 'random',    label: t('create.random'),    desc: 'Slots assigned randomly at creation. Fairest option.' },
+                  { id: 'fixed',     label: t('create.fixed'),     desc: 'You assign each member their payout week manually.' },
+                  { id: 'volunteer', label: t('create.firstCome'), desc: 'Members claim their preferred slot first-come.' },
                 ].map(o => (
                   <motion.button key={o.id} onClick={() => upd('payoutOrder', o.id)}
                     whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
@@ -485,11 +474,11 @@ export default function CreatePod() {
                   </motion.button>
                 ))}
               </div>
-              <p className="text-xs dark:text-brand-muted text-slate-400 mt-4 italic">Bid-order (auction) disabled during pilot.</p>
+              <p className="text-xs dark:text-brand-muted text-slate-400 mt-4 italic">{t('create.pilotNote')}</p>
             </Card>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep(2)}>← Back</Button>
-              <Button className="flex-1" onClick={() => setStep(4)}>Continue →</Button>
+              <Button variant="outline" onClick={() => setStep(2)}>{t('create.back')}</Button>
+              <Button className="flex-1" onClick={() => setStep(4)}>{t('create.continue')}</Button>
             </div>
           </motion.div>
         )}
@@ -498,16 +487,16 @@ export default function CreatePod() {
         {step === 4 && (
           <motion.div key="s4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             <Card hover={false} className="p-6 mb-4">
-              <h3 className="font-bold dark:text-white text-slate-900 mb-5">Review & Deploy</h3>
+              <h3 className="font-bold dark:text-white text-slate-900 mb-5">{t('create.reviewDeploy')}</h3>
               <div className="space-y-0 mb-5">
                 {[
-                  ['Pod name',     form.name],
-                  ['Network',      form.chain],
-                  ['Token',        form.token],
-                  ['Contribution', `${form.contribution} ${form.token} / cycle`],
-                  ['Members',      `${form.size} people`],
-                  ['Total pot',    `${totalPot} ${form.token}`],
-                  ['Payout order', form.payoutOrder],
+                  ['Pod name',          form.name],
+                  [t('create.network'), form.chain],
+                  ['Token',             form.token],
+                  [t('create.contribution'), `${form.contribution} ${form.token} / cycle`],
+                  [t('how.members'),    `${form.size} people`],
+                  [t('create.weeklyPot'), `${totalPot} ${form.token}`],
+                  [t('create.payoutOrder'), form.payoutOrder],
                 ].map(([l, v]) => (
                   <div key={l} className="flex justify-between py-2.5 border-b dark:border-brand-border/40 border-slate-100 last:border-0">
                     <span className="text-sm dark:text-brand-muted text-slate-500">{l}</span>
@@ -516,55 +505,51 @@ export default function CreatePod() {
                 ))}
               </div>
 
-              {/* Cost breakdown */}
               <div className="rounded-2xl dark:bg-brand-dark bg-slate-50 border dark:border-brand-border border-slate-200 p-4 mb-4">
-                <p className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-3">What you'll need</p>
+                <p className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-3">{t('create.whatYouNeed')}</p>
                 <div className="space-y-2">
                   {form.chain === 'Ethereum' && (
                     <div className="flex justify-between text-sm">
-                      <span className="dark:text-brand-muted text-slate-500">Gas to deploy contract</span>
+                      <span className="dark:text-brand-muted text-slate-500">{t('create.gas')}</span>
                       <span className="font-bold dark:text-white text-slate-900">~0.005 ETH</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
-                    <span className="dark:text-brand-muted text-slate-500">Collateral to join (2×)</span>
+                    <span className="dark:text-brand-muted text-slate-500">{t('create.collateral')} (2×)</span>
                     <span className="font-bold dark:text-white text-slate-900">{form.contribution * 2} {form.token}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="dark:text-brand-muted text-slate-500">First contribution</span>
+                    <span className="dark:text-brand-muted text-slate-500">{t('create.firstContrib')}</span>
                     <span className="font-bold dark:text-white text-slate-900">{form.contribution} {form.token}</span>
                   </div>
                   <div className="flex justify-between text-sm border-t dark:border-brand-border border-slate-200 pt-2 mt-2">
-                    <span className="font-bold dark:text-white text-slate-900">Total upfront to join</span>
+                    <span className="font-bold dark:text-white text-slate-900">{t('create.totalUpfront')}</span>
                     <span className="font-extrabold text-brand-cyan">{form.contribution * 3} {form.token}{form.chain === 'Ethereum' ? ' + gas' : ''}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Refund policy */}
               <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4 mb-4">
-                <p className="text-xs font-bold text-amber-400 mb-2">⚠ What if the pod doesn't fill?</p>
+                <p className="text-xs font-bold text-amber-400 mb-2">{t('create.cancelPolicy')}</p>
                 <ul className="text-xs dark:text-brand-muted text-slate-500 space-y-1">
-                  <li>• You (the organizer) can cancel the pod anytime before it fills</li>
-                  <li>• All members who joined get their full collateral back automatically</li>
-                  <li>• The gas fee to deploy is not refundable</li>
-                  <li>• No one loses their contribution — the pot never forms until the pod is full</li>
+                  <li>• {t('create.cancelPolicy1')}</li>
+                  <li>• {t('create.cancelPolicy2')}</li>
+                  <li>• {t('create.cancelPolicy3')}</li>
+                  <li>• {t('create.cancelPolicy4')}</li>
                 </ul>
               </div>
 
               <div className="p-3 rounded-xl dark:bg-brand-blue/5 bg-blue-50 border dark:border-brand-blue/20 border-blue-200 text-xs dark:text-brand-text text-slate-700">
-                {form.chain === 'Ethereum'
-                  ? '🔒 MetaMask will ask you to confirm one transaction. No token approvals needed.'
-                  : '🔒 Xaman will confirm the transaction on the XRP Ledger.'}
+                {form.chain === 'Ethereum' ? t('create.metaMaskNote') : t('create.xamanNote')}
               </div>
             </Card>
 
-            {!wallet && <p className="text-sm text-amber-400 text-center mb-4">Connect your wallet to deploy.</p>}
+            {!wallet && <p className="text-sm text-amber-400 text-center mb-4">{t('create.connectPrompt')}</p>}
 
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep(3)}>← Back</Button>
+              <Button variant="outline" onClick={() => setStep(3)}>{t('create.back')}</Button>
               <Button className="flex-1" disabled={!wallet} onClick={handleDeploy}>
-                Deploy Tanda →
+                {t('create.deployBtn')}
               </Button>
             </div>
           </motion.div>
