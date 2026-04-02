@@ -203,8 +203,8 @@ export default function AdminDash() {
                 {alerts.map((a, i) => (
                   <div key={i} className={`flex items-start gap-3 p-3 rounded-xl text-xs border cursor-pointer
                     ${a.level === 'red'    ? 'dark:bg-red-500/8 bg-red-50 dark:border-red-500/20 border-red-200' :
-                      a.level === 'yellow' ? 'dark:bg-amber-500/8 bg-amber-50 dark:border-amber-500/20 border-amber-200' :
-                      'dark:bg-brand-blue/8 bg-blue-50 dark:border-brand-blue/20 border-blue-200'}`}
+                      a.level === 'yellow' ? 'dark:bg-amber-500/10 bg-amber-50 dark:border-amber-500/20 border-amber-200' :
+                      'dark:bg-brand-blue/10 bg-blue-50 dark:border-brand-blue/20 border-blue-200'}`}
                     onClick={() => a.to && navigate(a.to)}>
                     <span>{a.icon}</span>
                     <span className="flex-1 dark:text-brand-text text-slate-700 leading-relaxed">{a.msg}</span>

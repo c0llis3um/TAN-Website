@@ -23,7 +23,7 @@
   },
   "tanda": {
     "title": "¿Qué es una Tanda?",
-    "p1": "Una Tanda es un círculo comunitario de ahorro. Un grupo de personas acuerda poner la misma cantidad cada semana — y cada semana, una persona se lleva todo el dinero del pozo. Rota hasta que todos hayan recibido su pago.",
+    "p1": "Una Tanda es un círculo comunitario de ahorro. Un grupo de personas acuerda poner la misma cantidad cada semana — y cada semana, una persona se lleva todo el pozo. Rota hasta que todos hayan recibido su pago.",
     "p2": "Sin intereses. Sin banco. Sin ánimo de lucro. Solo un grupo de personas ayudándose mutuamente a ahorrar y salir adelante — como las comunidades lo han hecho por siglos.",
     "p3": "Quizás la conozcas como Osusu, Hui, Stokvel, Chit Fund o Arisan — misma idea, cada cultura la tiene.",
     "p4": "¿El problema? Cuando el organizador desaparece con el dinero, o alguien deja de pagar después de recibir su pago. DeFi Tanda lo soluciona con un contrato inteligente — código que nadie puede anular, ni siquiera nosotros."
@@ -31,13 +31,13 @@
   "how": {
     "title": "Cómo funciona",
     "sub": "Tres pasos. Sin cuenta bancaria.",
-    "step1Title": "Crea o únete a un pod",
-    "step1": "El organizador configura la tanda — tamaño del grupo, cantidad semanal y duración. Los miembros se unen con un pequeño depósito de seguridad que genera intereses y te lo devolvemos al final.",
+    "step1Title": "Crea o únete a una tanda",
+    "step1": "El organizador configura la tanda — tamaño del grupo, cantidad semanal y duración. Los miembros se unen con un depósito de seguridad reembolsable que te devolvemos cuando la tanda termina.",
     "step2Title": "Contribuye cada ciclo",
     "step2": "Paga tu parte semanal, quincenal o mensualmente. Usa Apple Pay, Google Pay, tarjeta de débito — o conecta tu billetera cripto directamente.",
     "step3Title": "Recibe tu pago",
     "step3": "Cuando llega tu turno, el pozo completo llega a tu billetera automáticamente. ¿Turno temprano? = préstamo sin intereses. ¿Turno tarde? = plan de ahorro disciplinado.",
-    "exampleTitle": "Ejemplo: 10 amigos, $100/semana",
+    "exampleTitle": "Ejemplo: 6 amigos, 30 XRP/semana",
     "members": "Miembros",
     "contribution": "Contribución",
     "pot": "Pozo cada semana",
@@ -51,7 +51,7 @@
     "sub": "Todo lo que hacía quebrar las tandas tradicionales — solucionado.",
     "fraud": {
       "title": "Nadie puede huir con el dinero",
-      "body": "Un contrato inteligente guarda cada dólar. El organizador maneja el grupo — pero nunca toca los fondos. Los pagos son automáticos, a tiempo, siempre."
+      "body": "Un contrato inteligente guarda cada centavo. El organizador maneja el grupo — pero nunca toca los fondos. Los pagos van directo de billetera a billetera."
     },
     "bank": {
       "title": "Sin cuenta bancaria",
@@ -59,46 +59,46 @@
     },
     "remit": {
       "title": "Envía tu pago a cualquier lugar",
-      "body": "Recibe en USDC y envía dinero a tu familia en México en segundos — casi sin comisión. Sin Western Union. Sin el 7% de comisión."
+      "body": "Recibe en XRP o RLUSD y envía dinero a tu familia en segundos — casi sin comisión. Sin Western Union. Sin el 7% de comisión."
     },
     "record": {
       "title": "Un registro permanente",
       "body": "Cada contribución y pago queda registrado en la blockchain para siempre. Sin disputas, sin 'yo ya pagué'."
     },
     "whatsapp": {
-      "title": "Funciona por WhatsApp",
-      "body": "Recordatorios, confirmaciones y alertas de pago directo a tu WhatsApp. Organiza donde tu comunidad ya está."
+      "title": "Comparte en WhatsApp",
+      "body": "Invita miembros y comparte confirmaciones de pago por WhatsApp o Telegram — organiza donde tu comunidad ya está."
     },
-    "yield": {
-      "title": "Tu depósito gana intereses",
-      "body": "Tu depósito de seguridad genera rendimiento mientras está bloqueado. Te lo devolvemos todo al terminar la tanda — más un poco extra."
+    "collateral": {
+      "title": "Tu depósito te regresa",
+      "body": "Tu depósito de seguridad queda bloqueado mientras corre la tanda. Al terminar todos los ciclos, lo reclamas directo a tu billetera."
     }
   },
   "pay": {
     "title": "Paga como quieras",
     "sub": "No necesitas cripto para empezar. Usa lo que ya tienes en tu teléfono.",
-    "fiatTitle": "💳 Paga con dólares",
-    "fiatBody": "Paga con Apple Pay, Google Pay o tarjeta de débito. Convertimos tus dólares a USDC automáticamente.",
+    "fiatTitle": "💳 Compra XRP con Apple Pay",
+    "fiatBody": "Compra XRP con Apple Pay, Google Pay o tarjeta de débito a través de MoonPay — sin necesidad de cuenta en exchange.",
     "walletTitle": "🔗 Conecta tu billetera",
-    "walletBody": "¿Ya tienes cripto? Conecta Phantom, MetaMask, Coinbase Wallet o Xaman y paga directamente."
+    "walletBody": "¿Ya tienes XRP? Conecta Xaman y paga directo desde tu billetera en segundos."
   },
   "chains": {
-    "title": "Disponible en 3 redes",
-    "sub": "Elige la blockchain que mejor se adapte a tu comunidad.",
+    "title": "Construido en XRP Ledger",
+    "sub": "Rápido, barato y hecho para pagos internacionales.",
     "sol": {
       "token": "USDC",
-      "body": "Rapidísimo y ultra barato. La mayoría de nuestras tandas corren en Solana — ideal para cualquier grupo.",
-      "best": "⭐ La más popular · Recomendada para nuevos miembros"
+      "body": "Próximamente.",
+      "best": "Solana — Próximamente"
     },
     "eth": {
-      "token": "USDC · USDT",
+      "token": "ETH · USDC",
       "body": "El ecosistema DeFi más grande. Ideal para tandas grandes y grupos con experiencia en cripto.",
       "best": "Mejor para tandas grandes"
     },
     "xrpl": {
-      "token": "RLUSD",
-      "body": "Liquidación en 3 segundos por una fracción de centavo. Excelente para pagos internacionales.",
-      "best": "Mejor para pagos internacionales"
+      "token": "XRP · RLUSD",
+      "body": "Liquidación en 3 segundos por una fracción de centavo. Perfecto para pagos semanales de tanda y cobros internacionales.",
+      "best": "⭐ Disponible ahora · Recomendado"
     }
   },
   "learn": {
@@ -115,7 +115,7 @@
   },
   "waitlist": {
     "title": "Sé el primero en unirte",
-    "body": "Estamos lanzando en Chicago con un pequeño grupo de miembros de la comunidad primero. Deja tu correo y te avisamos cuando tu lugar esté listo.",
+    "body": "Estamos lanzando con un pequeño grupo de miembros de la comunidad primero. Deja tu correo y te avisamos cuando tu lugar esté listo.",
     "placeholder": "tucorreo@email.com",
     "cta": "Notificarme",
     "success": "✓ ¡Estás en la lista! Te contactaremos pronto.",
@@ -130,7 +130,7 @@
     "payNow": "Pagar Ahora",
     "createPod": "Crear Tanda",
     "browsePods": "Ver Tandas",
-    "buyUsdc": "Comprar USDC",
+    "buyUsdc": "Comprar XRP",
     "recentActivity": "Actividad Reciente",
     "due": "vence",
     "paid": "pagado este ciclo",
@@ -143,11 +143,10 @@
     "collateral": "Depósito bloqueado",
     "contributed": "Total contribuido",
     "payoutReceived": "Pago recibido",
-    "payNow": "Pagar ${{amount}}",
+    "payNow": "Pagar {{amount}}",
     "shareWa": "Compartir en WhatsApp",
     "shareTg": "Compartir en Telegram",
-    "shareInvite": "¡Únete a mi Tanda DeFi! 💰\n${{amount}} por semana durante {{members}} semanas. Seguro, automático, sin banco.\n👉 {{url}}\nLugares: {{spots}}",
-    "shareInviteEs": "¡Únete a mi Tanda DeFi! 💰\n${{amount}} por semana durante {{members}} semanas. Seguro, automático, sin banco.\n👉 {{url}}\nLugares: {{spots}}"
+    "shareInvite": "¡Únete a mi Tanda DeFi! 💰\n{{amount}} {{token}}/semana durante {{members}} semanas. Seguro, automático, sin banco.\n👉 {{url}}\nLugares disponibles: {{spots}}"
   },
   "common": {
     "connectWallet": "Conectar Billetera",

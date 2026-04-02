@@ -7,7 +7,7 @@
     "joinWaitlist": "Join Waitlist",
     "launchApp": "Launch App",
     "dashboard": "Dashboard",
-    "myPods": "My Pods",
+    "myPods": "My Tandas",
     "wallet": "Wallet",
     "history": "History",
     "profile": "Profile",
@@ -31,13 +31,13 @@
   "how": {
     "title": "How it works",
     "sub": "Three steps. No bank account required.",
-    "step1Title": "Create or join a pod",
-    "step1": "The organizer sets up a tanda — group size, weekly amount, and duration. Members join with a small security deposit that earns interest and comes back to you at the end.",
+    "step1Title": "Create or join a tanda",
+    "step1": "The organizer sets up a tanda — group size, weekly amount, and duration. Members join with a refundable security deposit that is returned to you when the tanda completes.",
     "step2Title": "Contribute every cycle",
     "step2": "Pay your share weekly, biweekly, or monthly. Use Apple Pay, Google Pay, debit card — or connect your crypto wallet directly.",
     "step3Title": "Receive your payout",
     "step3": "When your turn comes, the full pot lands in your wallet automatically. Early slot = interest-free loan. Late slot = disciplined savings plan.",
-    "exampleTitle": "Example: 10 friends, $100/week",
+    "exampleTitle": "Example: 6 friends, 30 XRP/week",
     "members": "Members",
     "contribution": "Contribution",
     "pot": "Pot each week",
@@ -51,7 +51,7 @@
     "sub": "Everything that made traditional tandas break — fixed.",
     "fraud": {
       "title": "Nobody can run off with the money",
-      "body": "A smart contract holds every dollar. The organizer manages the group — but never touches the funds. Payouts are automatic, on time, every time."
+      "body": "A smart contract holds every dollar. The organizer manages the group — but never touches the funds. Payouts happen directly wallet to wallet."
     },
     "bank": {
       "title": "No bank account needed",
@@ -59,46 +59,46 @@
     },
     "remit": {
       "title": "Send your payout anywhere",
-      "body": "Receive in USDC and send to family in Mexico in seconds — for almost no fee. No Western Union. No 7% cut."
+      "body": "Receive in XRP or RLUSD and send to family in seconds — for almost no fee. No Western Union. No 7% cut."
     },
     "record": {
       "title": "A permanent record",
-      "body": "Every contribution and payout is recorded on the blockchain forever. No disputes, no 'I paid already.'"
+      "body": "Every contribution and payout is recorded on the blockchain forever. No disputes, no 'I already paid.'"
     },
     "whatsapp": {
-      "title": "Runs through WhatsApp",
-      "body": "Reminders, confirmations, and payout alerts sent to your WhatsApp. Organize where your community already is."
+      "title": "Share on WhatsApp",
+      "body": "Invite members and share payment confirmations on WhatsApp or Telegram — organize where your community already is."
     },
-    "yield": {
-      "title": "Your deposit earns interest",
-      "body": "Your security deposit earns yield while locked. You get it all back when the tanda completes — plus a little extra."
+    "collateral": {
+      "title": "Your deposit comes back",
+      "body": "Your security deposit is locked in the tanda while it runs. Once every cycle is complete, you claim it straight back to your wallet."
     }
   },
   "pay": {
     "title": "Pay your way",
     "sub": "You do not need crypto to get started. Use what you already have on your phone.",
-    "fiatTitle": "💳 Pay with dollars",
-    "fiatBody": "Tap to pay with Apple Pay, Google Pay, or a debit card. We convert your dollars to USDC automatically.",
+    "fiatTitle": "💳 Buy XRP with Apple Pay",
+    "fiatBody": "Tap to buy XRP with Apple Pay, Google Pay, or a debit card through MoonPay — no exchange account needed.",
     "walletTitle": "🔗 Connect your wallet",
-    "walletBody": "Already have crypto? Connect Phantom, MetaMask, Coinbase Wallet, or Xaman and pay directly."
+    "walletBody": "Already have XRP? Connect Xaman and pay directly from your wallet in seconds."
   },
   "chains": {
-    "title": "Available on 3 networks",
-    "sub": "Pick the blockchain that fits your community best.",
+    "title": "Built on XRP Ledger",
+    "sub": "Fast, cheap, and built for cross-border payments.",
     "sol": {
       "token": "USDC",
-      "body": "Blazing fast and ultra cheap. Most of our tandas run on Solana — great for any group size.",
-      "best": "⭐ Most popular · Recommended for new members"
+      "body": "Coming soon.",
+      "best": "Solana — Coming soon"
     },
     "eth": {
-      "token": "USDC · USDT",
+      "token": "ETH · USDC",
       "body": "The largest DeFi ecosystem. Best for bigger tandas and crypto-savvy groups.",
       "best": "Best for larger tandas"
     },
     "xrpl": {
-      "token": "RLUSD",
-      "body": "Settles in 3 seconds for a fraction of a cent. Great for sending money cross-border.",
-      "best": "Best for cross-border payments"
+      "token": "XRP · RLUSD",
+      "body": "Settles in 3 seconds for a fraction of a cent. Perfect for weekly tanda payments and cross-border payouts.",
+      "best": "⭐ Live now · Recommended"
     }
   },
   "learn": {
@@ -115,7 +115,7 @@
   },
   "waitlist": {
     "title": "Be the first to join",
-    "body": "We're launching in Chicago with a small group of community members first. Leave your email and we'll reach out when your spot is ready.",
+    "body": "We're launching with a small group of community members first. Leave your email and we'll reach out when your spot is ready.",
     "placeholder": "your@email.com",
     "cta": "Notify me",
     "success": "✓ You're on the list! We'll be in touch.",
@@ -124,13 +124,13 @@
   "dashboard": {
     "greeting": "Welcome back",
     "noWallet": "Connect your wallet to get started",
-    "activePods": "Active Pods",
+    "activePods": "Active Tandas",
     "nextPayment": "Next payment",
     "reputation": "Reputation",
     "payNow": "Pay Now",
     "createPod": "Create Tanda",
-    "browsePods": "Browse Pods",
-    "buyUsdc": "Buy USDC",
+    "browsePods": "Browse Tandas",
+    "buyUsdc": "Buy XRP",
     "recentActivity": "Recent Activity",
     "due": "due",
     "paid": "paid this cycle",
@@ -143,11 +143,10 @@
     "collateral": "Collateral locked",
     "contributed": "Total contributed",
     "payoutReceived": "Payout received",
-    "payNow": "Pay ${{amount}}",
+    "payNow": "Pay {{amount}}",
     "shareWa": "Share on WhatsApp",
     "shareTg": "Share on Telegram",
-    "shareInvite": "Join my DeFi Tanda! 💰\n${{amount}}/week for {{members}} weeks. Safe, automatic, no bank needed.\n👉 {{url}}\nSpots left: {{spots}}",
-    "shareInviteEs": "¡Únete a mi Tanda DeFi! 💰\n${{amount}} por semana durante {{members}} semanas. Seguro, automático, sin banco.\n👉 {{url}}\nLugares: {{spots}}"
+    "shareInvite": "Join my DeFi Tanda! 💰\n{{amount}} {{token}}/week for {{members}} weeks. Safe, automatic, no bank needed.\n👉 {{url}}\nSpots left: {{spots}}"
   },
   "common": {
     "connectWallet": "Connect Wallet",

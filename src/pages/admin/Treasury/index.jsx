@@ -301,7 +301,7 @@ function WalletModal({ mode, chain, chainLabel, currentAddress, adminId, onClose
               {error && <p className="text-xs text-red-400 dark:bg-red-500/10 bg-red-50 p-3 rounded-xl">{error}</p>}
             </div>
 
-            <div className="p-3 rounded-xl dark:bg-amber-500/8 bg-amber-50 dark:border-amber-500/20 border border-amber-200 text-xs dark:text-amber-400 text-amber-600 mb-5">
+            <div className="p-3 rounded-xl dark:bg-amber-500/10 bg-amber-50 dark:border-amber-500/20 border border-amber-200 text-xs dark:text-amber-400 text-amber-600 mb-5">
               ⚠ This address will receive all {chain} creation fees immediately after saving.
             </div>
 

@@ -123,7 +123,7 @@ export default function WalletModal({ onClose }) {
                       whileTap={!loading  ? { scale: 0.98 }         : {}}
                       className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left
                         ${isLoading
-                          ? 'border-brand-blue/60 dark:bg-brand-blue/8 bg-blue-50'
+                          ? 'border-brand-blue/60 dark:bg-brand-blue/10 bg-blue-50'
                           : 'dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/50 hover:border-brand-blue/50 dark:hover:bg-brand-mid/40 hover:bg-slate-50'
                         }
                         disabled:opacity-60 disabled:cursor-not-allowed`}
