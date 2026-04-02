@@ -3,18 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import useAppStore from '@/store/useAppStore'
 import { getTokenBalances, getSwapQuote, swapEthForUsdc } from '@/lib/contracts'
-import { getXrplBalances } from '@/lib/xrpl'
-import MoonPayButton from '@/components/MoonPayButton'
+import XrplDashboard from './XrplDashboard'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 
 const ETH_FAUCETS = [
   { label: 'Sepolia ETH',   url: 'https://sepoliafaucet.com',  note: 'Gas fees'     },
   { label: 'USDC (Circle)', url: 'https://faucet.circle.com',  note: 'Creation fee' },
-]
-
-const XRPL_FAUCETS = [
-  { label: 'XRP Testnet Faucet', url: 'https://faucet.devnet.rippletest.net/accounts', note: 'Free test XRP' },
 ]
 
 function BalanceCard({ symbol, icon, balance, usdRate, loading, decimals = 2 }) {
@@ -44,89 +39,6 @@ function BalanceCard({ symbol, icon, balance, usdRate, loading, decimals = 2 }) 
   )
 }
 
-// ── XRPL wallet view ──────────────────────────────────────────
-
-function XrplWalletView({ wallet, env }) {
-  const [balances,   setBalances]   = useState(null)
-  const [balLoading, setBalLoading] = useState(false)
-  const [balError,   setBalError]   = useState(null)
-
-  const loadBalances = useCallback(async () => {
-    if (!wallet?.address) return
-    setBalLoading(true)
-    setBalError(null)
-    try {
-      const b = await getXrplBalances(wallet.address, env)
-      setBalances(b)
-    } catch (err) {
-      setBalError(err?.message ?? 'Could not load balances.')
-    } finally {
-      setBalLoading(false)
-    }
-  }, [wallet?.address, env])
-
-  useEffect(() => { loadBalances() }, [loadBalances])
-
-  return (
-    <div className="max-w-lg mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="flex-1">
-          <h1 className="text-2xl font-extrabold dark:text-white text-slate-900">Wallet</h1>
-          <p className="text-xs font-mono dark:text-brand-muted text-slate-400 mt-0.5">
-            {wallet.address.slice(0, 8)}…{wallet.address.slice(-6)}
-            <span className="ml-2 dark:text-brand-cyan text-brand-blue">XRP Ledger</span>
-            {env === 'dev' && <span className="ml-1 text-amber-400">· Testnet</span>}
-          </p>
-        </div>
-        <button onClick={loadBalances} disabled={balLoading}
-          className="p-2 rounded-xl dark:hover:bg-brand-mid hover:bg-slate-100 transition-colors dark:text-brand-muted text-slate-400 text-sm disabled:opacity-40">
-          {balLoading ? '⟳' : '↻'}
-        </button>
-      </div>
-
-      {/* Balances */}
-      <div className="flex gap-3 mb-6">
-        <BalanceCard symbol="XRP"   icon="💧" balance={balances?.xrp}   usdRate={null} loading={balLoading} decimals={4} />
-        <BalanceCard symbol="RLUSD" icon="🔵" balance={balances?.rlusd} usdRate={1}    loading={balLoading} decimals={2} />
-      </div>
-
-      {balError && <p className="text-xs text-red-400 text-center mb-4">{balError}</p>}
-
-      {/* Buy with fiat */}
-      <Card hover={false} className="p-5 mb-4">
-        <h3 className="font-bold dark:text-white text-slate-900 mb-1 text-sm">Buy XRP</h3>
-        <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">
-          Use Apple Pay, Google Pay, or a credit card — no exchange account needed.
-        </p>
-        <MoonPayButton walletAddress={wallet.address} token="XRP" env={env} />
-      </Card>
-
-      {/* Testnet faucet */}
-      {env === 'dev' && (
-        <Card hover={false} className="p-5">
-          <h3 className="font-bold dark:text-white text-slate-900 mb-1 text-sm">XRPL Testnet Faucet</h3>
-          <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">
-            Free test XRP — funded instantly.
-          </p>
-          <div className="space-y-2">
-            {XRPL_FAUCETS.map(f => (
-              <a key={f.url} href={f.url} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-between p-3 rounded-2xl dark:bg-brand-dark bg-slate-50 border dark:border-brand-border border-slate-200 hover:border-brand-blue/40 transition-colors group">
-                <div>
-                  <p className="text-sm font-semibold dark:text-white text-slate-900 group-hover:text-brand-blue transition-colors">
-                    {f.label}
-                  </p>
-                  <p className="text-xs dark:text-brand-muted text-slate-400">{f.note}</p>
-                </div>
-                <span className="text-brand-blue text-sm">→</span>
-              </a>
-            ))}
-          </div>
-        </Card>
-      )}
-    </div>
-  )
-}
 
 // ── Ethereum wallet view ──────────────────────────────────────
 
@@ -332,7 +244,7 @@ export default function WalletPage() {
   }
 
   if (wallet.chain === 'XRPL') {
-    return <XrplWalletView wallet={wallet} env={env} />
+    return <XrplDashboard wallet={wallet} env={env} />
   }
 
   return <EthWalletView wallet={wallet} env={env} />
