@@ -24,7 +24,7 @@ import * as dotenv from 'dotenv'
 
 dotenv.config()
 
-const TESTNET_WSS = 'wss://s.altnet.rippletest.net:51233'
+const TESTNET_WSS = 'wss://s.devnet.rippletest.net:51233'
 
 // ── Connect ───────────────────────────────────────────────────
 

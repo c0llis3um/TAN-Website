@@ -14,7 +14,7 @@ const ETH_FAUCETS = [
 ]
 
 const XRPL_FAUCETS = [
-  { label: 'XRP Testnet Faucet', url: 'https://faucet.altnet.rippletest.net/accounts', note: 'Free test XRP' },
+  { label: 'XRP Testnet Faucet', url: 'https://faucet.devnet.rippletest.net/accounts', note: 'Free test XRP' },
 ]
 
 function BalanceCard({ symbol, icon, balance, usdRate, loading, decimals = 2 }) {

@@ -17,7 +17,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Client, Wallet, xrpToDrops } from 'xrpl'
 
 const NODES = {
-  dev:  'wss://s.altnet.rippletest.net:51233',
+  dev:  'wss://s.devnet.rippletest.net:51233',
   live: 'wss://xrplcluster.com',
 }
 
