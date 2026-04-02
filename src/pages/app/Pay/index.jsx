@@ -62,43 +62,35 @@ export default function Pay() {
     let txHashResult = null
 
     if (m === 'wallet') {
-      try {
-        let result
-        if (pod.chain === 'Ethereum') {
-          // ── Direct ETH transfer to payout recipient ──
-          if (!recipientAddr) {
-            setPayError('Payout recipient not assigned yet.')
-            setStep('select')
-            return
-          }
-          result = await sendContribution(
-            recipientAddr,
-            pod.contribution_amount,
-            pod.token,
-            pod.chain,
-            env,
-          )
-        } else {
-          // ── Direct wallet-to-wallet (XRPL) ──
-          if (!recipientAddr) {
-            setPayError('Payout recipient not assigned yet — pod may not be fully active.')
-            setStep('select')
-            return
-          }
-          result = await sendContribution(
-            recipientAddr,
-            pod.contribution_amount,
-            pod.token,
-            pod.chain,
-            env,
-          )
-        }
-        txHashResult = result.txHash
-        setTxHash(result.txHash)
-      } catch (err) {
-        setPayError(err?.message ?? 'Transaction failed.')
+      if (!recipientAddr) {
+        setPayError('Payout recipient not assigned yet — pod may not be fully active.')
         setStep('select')
         return
+      }
+
+      // If I am the payout recipient this cycle, skip the on-chain self-transfer.
+      // The net math is the same: I receive from n-1 other members and don't pay myself.
+      const iAmRecipient = wallet?.address?.toLowerCase() === recipientAddr?.toLowerCase()
+
+      if (iAmRecipient) {
+        txHashResult = 'self-recipient'
+        setTxHash('self-recipient')
+      } else {
+        try {
+          const result = await sendContribution(
+            recipientAddr,
+            pod.contribution_amount,
+            pod.token,
+            pod.chain,
+            env,
+          )
+          txHashResult = result.txHash
+          setTxHash(result.txHash)
+        } catch (err) {
+          setPayError(err?.message ?? 'Transaction failed.')
+          setStep('select')
+          return
+        }
       }
     }
     // Apple Pay / Google Pay: fiat — record to DB, no on-chain tx yet
