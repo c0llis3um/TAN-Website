@@ -253,12 +253,10 @@ export default function Landing() {
                 <h4 className="text-lg font-bold dark:text-white text-slate-900 mb-3">{t('pay.fiatTitle')}</h4>
                 <p className="dark:text-brand-muted text-slate-500 text-sm mb-6 leading-relaxed">{t('pay.fiatBody')}</p>
                 <div className="flex flex-wrap gap-2">
-                  {[' Apple Pay','  Google Pay','Debit Card','Bank Transfer'].map(b => (
-                    <span key={b} className={`px-3 py-1.5 rounded-xl text-xs font-bold border
-                      ${b.includes('Apple') || b.includes('Google')
-                        ? 'dark:bg-brand-blue/10 bg-blue-50 border-brand-blue/40 text-brand-blue dark:text-brand-cyan'
-                        : 'dark:bg-brand-mid bg-slate-100 dark:border-brand-border border-slate-200 dark:text-brand-text text-slate-600'
-                      }`}>{b}</span>
+                  {['Debit Card','Bank Transfer'].map(b => (
+                    <span key={b} className="px-3 py-1.5 rounded-xl text-xs font-bold border dark:bg-brand-mid bg-slate-100 dark:border-brand-border border-slate-200 dark:text-brand-text text-slate-600">
+                      {b}
+                    </span>
                   ))}
                 </div>
               </Card>

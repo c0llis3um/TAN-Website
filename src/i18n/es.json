@@ -77,8 +77,8 @@
   "pay": {
     "title": "Paga como quieras",
     "sub": "No necesitas cripto para empezar. Usa lo que ya tienes en tu teléfono.",
-    "fiatTitle": "💳 Compra XRP con Apple Pay",
-    "fiatBody": "Compra XRP con Apple Pay, Google Pay o tarjeta de débito a través de MoonPay — sin necesidad de cuenta en exchange.",
+    "fiatTitle": "💳 Compra con Tarjeta o Transferencia",
+    "fiatBody": "Usa tarjeta de débito o transferencia bancaria para obtener XRP — sin cuenta de exchange. Próximamente.",
     "walletTitle": "🔗 Conecta tu billetera",
     "walletBody": "¿Ya tienes XRP? Conecta Xaman y paga directo desde tu billetera en segundos.",
     "chooseMethod": "Elige método de pago",

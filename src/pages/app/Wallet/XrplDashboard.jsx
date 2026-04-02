@@ -11,7 +11,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
 import { Client, xrpToDrops } from 'xrpl'
-import MoonPayButton from '@/components/MoonPayButton'
 import Card from '@/components/ui/Card'
 
 const NODES = {
@@ -343,13 +342,6 @@ export default function XrplDashboard({ wallet, env }) {
         <KpiCard label={t('walletPage.received')} value={`${totalReceived.toLocaleString(undefined, { maximumFractionDigits: 4 })} XRP`} loading={acctLoading} />
         <KpiCard label={t('walletPage.txCount')}  value={txCount > 0 ? txCount.toString() : '—'} sub={t('walletPage.txLast')} loading={acctLoading} />
       </div>
-
-      {/* Buy XRP */}
-      <Card hover={false} className="p-5">
-        <h3 className="font-bold dark:text-white text-slate-900 text-sm mb-1">{t('walletPage.buyXrp')}</h3>
-        <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">{t('walletPage.buyDesc')}</p>
-        <MoonPayButton walletAddress={wallet.address} token="XRP" env={env} />
-      </Card>
 
       {/* Transactions */}
       <Card hover={false} className="overflow-hidden">

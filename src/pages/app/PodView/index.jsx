@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
-import MoonPayButton from '@/components/MoonPayButton'
 import useAppStore from '@/store/useAppStore'
 import { getPod, joinPod, getUser, upsertUser, maybeActivatePod, cycleMs, updatePodStatus, getPodPayments } from '@/lib/db'
 import { tandaPodJoin, cancelTandaPod, claimCollateral } from '@/lib/contracts'
@@ -241,18 +240,7 @@ export default function PodView() {
             </>
           )}
           {pod.status === 'OPEN' && !wallet?.address && (
-            <div className="flex flex-col items-end gap-2">
-              <p className="text-xs dark:text-brand-muted text-slate-400">{t('pod.connectToJoin')}</p>
-              {pod.chain === 'XRPL' && (
-                <MoonPayButton
-                  token={pod.token === 'XRP' ? 'XRP' : pod.token}
-                  amount={pod.contribution_amount * 3}
-                  env={env}
-                  label={t('pod.buyAppleGoog')}
-                  className="!w-auto !py-2 !px-4 !text-xs"
-                />
-              )}
-            </div>
+            <p className="text-xs dark:text-brand-muted text-slate-400">{t('pod.connectToJoin')}</p>
           )}
           {pod.status === 'OPEN' && wallet?.address && pod.organizer?.wallet_address === wallet.address && (
             <div className="flex flex-col items-end gap-1">
@@ -581,25 +569,6 @@ export default function PodView() {
             </Card>
           )}
 
-          {/* Buy XRP — onramp for XRPL pods */}
-          {pod.chain === 'XRPL' && !myMember && (
-            <Card hover={false} className="p-5">
-              <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-1">{t('pod.dontHaveXRP')}</h3>
-              <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">
-                {t('pod.buyXrpHint')}
-              </p>
-              <p className="text-xs dark:text-brand-muted text-slate-400 mb-3">
-                {t('pod.toJoinHint', { amount: pod.contribution_amount * 3, token: pod.token })}
-                <span className="block opacity-70">{t('pod.collateralHint')}</span>
-              </p>
-              <MoonPayButton
-                walletAddress={wallet?.address}
-                token={pod.token === 'XRP' ? 'XRP' : pod.token}
-                amount={pod.contribution_amount * 3}
-                env={env}
-              />
-            </Card>
-          )}
 
           {/* Share */}
           <Card hover={false} className="p-5">
