@@ -3,15 +3,21 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import useAppStore from '@/store/useAppStore'
 import { getTokenBalances, getSwapQuote, swapEthForUsdc } from '@/lib/contracts'
+import { getXrplBalances } from '@/lib/xrpl'
+import MoonPayButton from '@/components/MoonPayButton'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 
-const FAUCETS = [
-  { label: 'Sepolia ETH',  url: 'https://sepoliafaucet.com',   note: 'Gas fees'     },
+const ETH_FAUCETS = [
+  { label: 'Sepolia ETH',   url: 'https://sepoliafaucet.com',  note: 'Gas fees'     },
   { label: 'USDC (Circle)', url: 'https://faucet.circle.com',  note: 'Creation fee' },
 ]
 
-function BalanceCard({ symbol, icon, balance, usdRate, loading }) {
+const XRPL_FAUCETS = [
+  { label: 'XRP Testnet Faucet', url: 'https://faucet.altnet.rippletest.net/accounts', note: 'Free test XRP' },
+]
+
+function BalanceCard({ symbol, icon, balance, usdRate, loading, decimals = 2 }) {
   const usdValue = balance != null && usdRate ? (balance * usdRate).toFixed(2) : null
   return (
     <motion.div
@@ -27,7 +33,7 @@ function BalanceCard({ symbol, icon, balance, usdRate, loading }) {
       ) : (
         <>
           <p className="text-2xl font-extrabold dark:text-white text-slate-900 leading-none">
-            {balance != null ? Number(balance).toFixed(symbol === 'ETH' ? 5 : 2) : '—'}
+            {balance != null ? Number(balance).toFixed(decimals) : '—'}
           </p>
           {usdValue && (
             <p className="text-xs dark:text-brand-muted text-slate-400 mt-1">${usdValue} USD</p>
@@ -38,24 +44,104 @@ function BalanceCard({ symbol, icon, balance, usdRate, loading }) {
   )
 }
 
-export default function WalletPage() {
-  const navigate      = useNavigate()
-  const { env, wallet } = useAppStore()
+// ── XRPL wallet view ──────────────────────────────────────────
 
-  const [balances,    setBalances]    = useState(null)   // { eth, usdc }
-  const [balLoading,  setBalLoading]  = useState(false)
-  const [balError,    setBalError]    = useState(null)
+function XrplWalletView({ wallet, env }) {
+  const [balances,   setBalances]   = useState(null)
+  const [balLoading, setBalLoading] = useState(false)
+  const [balError,   setBalError]   = useState(null)
 
-  const [amountIn,    setAmountIn]    = useState('')     // ETH amount user types
-  const [quote,       setQuote]       = useState(null)   // { usdcOut, rate, isEstimate }
+  const loadBalances = useCallback(async () => {
+    if (!wallet?.address) return
+    setBalLoading(true)
+    setBalError(null)
+    try {
+      const b = await getXrplBalances(wallet.address, env)
+      setBalances(b)
+    } catch (err) {
+      setBalError(err?.message ?? 'Could not load balances.')
+    } finally {
+      setBalLoading(false)
+    }
+  }, [wallet?.address, env])
+
+  useEffect(() => { loadBalances() }, [loadBalances])
+
+  return (
+    <div className="max-w-lg mx-auto px-4 py-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="flex-1">
+          <h1 className="text-2xl font-extrabold dark:text-white text-slate-900">Wallet</h1>
+          <p className="text-xs font-mono dark:text-brand-muted text-slate-400 mt-0.5">
+            {wallet.address.slice(0, 8)}…{wallet.address.slice(-6)}
+            <span className="ml-2 dark:text-brand-cyan text-brand-blue">XRP Ledger</span>
+            {env === 'dev' && <span className="ml-1 text-amber-400">· Testnet</span>}
+          </p>
+        </div>
+        <button onClick={loadBalances} disabled={balLoading}
+          className="p-2 rounded-xl dark:hover:bg-brand-mid hover:bg-slate-100 transition-colors dark:text-brand-muted text-slate-400 text-sm disabled:opacity-40">
+          {balLoading ? '⟳' : '↻'}
+        </button>
+      </div>
+
+      {/* Balances */}
+      <div className="flex gap-3 mb-6">
+        <BalanceCard symbol="XRP"   icon="💧" balance={balances?.xrp}   usdRate={null} loading={balLoading} decimals={4} />
+        <BalanceCard symbol="RLUSD" icon="🔵" balance={balances?.rlusd} usdRate={1}    loading={balLoading} decimals={2} />
+      </div>
+
+      {balError && <p className="text-xs text-red-400 text-center mb-4">{balError}</p>}
+
+      {/* Buy with fiat */}
+      <Card hover={false} className="p-5 mb-4">
+        <h3 className="font-bold dark:text-white text-slate-900 mb-1 text-sm">Buy XRP</h3>
+        <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">
+          Use Apple Pay, Google Pay, or a credit card — no exchange account needed.
+        </p>
+        <MoonPayButton walletAddress={wallet.address} token="XRP" env={env} />
+      </Card>
+
+      {/* Testnet faucet */}
+      {env === 'dev' && (
+        <Card hover={false} className="p-5">
+          <h3 className="font-bold dark:text-white text-slate-900 mb-1 text-sm">XRPL Testnet Faucet</h3>
+          <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">
+            Free test XRP — funded instantly.
+          </p>
+          <div className="space-y-2">
+            {XRPL_FAUCETS.map(f => (
+              <a key={f.url} href={f.url} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-between p-3 rounded-2xl dark:bg-brand-dark bg-slate-50 border dark:border-brand-border border-slate-200 hover:border-brand-blue/40 transition-colors group">
+                <div>
+                  <p className="text-sm font-semibold dark:text-white text-slate-900 group-hover:text-brand-blue transition-colors">
+                    {f.label}
+                  </p>
+                  <p className="text-xs dark:text-brand-muted text-slate-400">{f.note}</p>
+                </div>
+                <span className="text-brand-blue text-sm">→</span>
+              </a>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+// ── Ethereum wallet view ──────────────────────────────────────
+
+function EthWalletView({ wallet, env }) {
+  const [balances,     setBalances]     = useState(null)
+  const [balLoading,   setBalLoading]   = useState(false)
+  const [balError,     setBalError]     = useState(null)
+  const [amountIn,     setAmountIn]     = useState('')
+  const [quote,        setQuote]        = useState(null)
   const [quoteLoading, setQuoteLoading] = useState(false)
+  const [swapping,     setSwapping]     = useState(false)
+  const [swapError,    setSwapError]    = useState(null)
+  const [swapDone,     setSwapDone]     = useState(false)
+  const [swapOut,      setSwapOut]      = useState(null)
 
-  const [swapping,    setSwapping]    = useState(false)
-  const [swapError,   setSwapError]   = useState(null)
-  const [swapDone,    setSwapDone]    = useState(false)
-  const [swapOut,     setSwapOut]     = useState(null)   // USDC received
-
-  // ── Load balances ──────────────────────────────────────────
   const loadBalances = useCallback(async () => {
     if (!wallet?.address) return
     setBalLoading(true)
@@ -72,73 +158,41 @@ export default function WalletPage() {
 
   useEffect(() => { loadBalances() }, [loadBalances])
 
-  // ── Live quote as user types ───────────────────────────────
   useEffect(() => {
-    if (!amountIn || isNaN(Number(amountIn)) || Number(amountIn) <= 0) {
-      setQuote(null)
-      return
-    }
+    if (!amountIn || isNaN(Number(amountIn)) || Number(amountIn) <= 0) { setQuote(null); return }
     const t = setTimeout(async () => {
       setQuoteLoading(true)
-      try {
-        const q = await getSwapQuote(Number(amountIn), env)
-        setQuote(q)
-      } finally {
-        setQuoteLoading(false)
-      }
+      try { const q = await getSwapQuote(Number(amountIn), env); setQuote(q) }
+      finally { setQuoteLoading(false) }
     }, 400)
     return () => clearTimeout(t)
   }, [amountIn, env])
 
-  // ── Execute swap ───────────────────────────────────────────
   async function handleSwap() {
-    setSwapping(true)
-    setSwapError(null)
-    setSwapDone(false)
+    setSwapping(true); setSwapError(null); setSwapDone(false)
     try {
       const result = await swapEthForUsdc(Number(amountIn), env)
-      setSwapDone(true)
-      setSwapOut(result.amountOut ?? null)
-      setAmountIn('')
-      setQuote(null)
+      setSwapDone(true); setSwapOut(result.amountOut ?? null)
+      setAmountIn(''); setQuote(null)
       await loadBalances()
     } catch (err) {
       const msg = err?.message ?? ''
       setSwapError(msg.startsWith('USDC_FAUCET:') ? msg.replace('USDC_FAUCET:', '') : msg)
-    } finally {
-      setSwapping(false)
-    }
+    } finally { setSwapping(false) }
   }
 
   function setMax() {
     if (!balances?.eth) return
-    const maxEth = Math.max(0, balances.eth - 0.005).toFixed(6) // keep 0.005 ETH for gas
-    setAmountIn(maxEth)
+    setAmountIn(Math.max(0, balances.eth - 0.005).toFixed(6))
   }
 
-  const ethIn      = Number(amountIn) || 0
-  const hasEnoughEth = balances?.eth != null && ethIn > 0 && ethIn <= balances.eth - 0.003
-  const canSwap    = hasEnoughEth && !swapping && env === 'live'
-
-  if (!wallet) {
-    return (
-      <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        <p className="text-5xl mb-4">👛</p>
-        <h2 className="text-xl font-bold dark:text-white text-slate-900 mb-2">No wallet connected</h2>
-        <p className="text-sm dark:text-brand-muted text-slate-500 mb-6">Connect MetaMask or Xaman to see your balances.</p>
-        <Button onClick={() => navigate('/app')}>← Back to Dashboard</Button>
-      </div>
-    )
-  }
+  const ethIn          = Number(amountIn) || 0
+  const hasEnoughEth   = balances?.eth != null && ethIn > 0 && ethIn <= balances.eth - 0.003
+  const canSwap        = hasEnoughEth && !swapping && env === 'live'
 
   return (
     <div className="max-w-lg mx-auto px-4 py-8">
-      {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <motion.button onClick={() => navigate('/app')} whileHover={{ x: -3 }}
-          className="text-sm dark:text-brand-muted text-slate-400 hover:text-brand-cyan">
-          ←
-        </motion.button>
         <div className="flex-1">
           <h1 className="text-2xl font-extrabold dark:text-white text-slate-900">Wallet</h1>
           <p className="text-xs font-mono dark:text-brand-muted text-slate-400 mt-0.5">
@@ -153,27 +207,13 @@ export default function WalletPage() {
         </button>
       </div>
 
-      {/* Balance cards */}
       <div className="flex gap-3 mb-6">
-        <BalanceCard
-          symbol="ETH" icon="🔷"
-          balance={balances?.eth}
-          usdRate={quote?.rate ?? null}
-          loading={balLoading}
-        />
-        <BalanceCard
-          symbol="USDC" icon="💵"
-          balance={balances?.usdc}
-          usdRate={1}
-          loading={balLoading}
-        />
+        <BalanceCard symbol="ETH"  icon="🔷" balance={balances?.eth}  usdRate={quote?.rate ?? null} loading={balLoading} decimals={5} />
+        <BalanceCard symbol="USDC" icon="💵" balance={balances?.usdc} usdRate={1}                  loading={balLoading} decimals={2} />
       </div>
 
-      {balError && (
-        <p className="text-xs text-red-400 text-center mb-4">{balError}</p>
-      )}
+      {balError && <p className="text-xs text-red-400 text-center mb-4">{balError}</p>}
 
-      {/* Swap card */}
       <Card hover={false} className="p-6 mb-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-bold dark:text-white text-slate-900">Swap ETH → USDC</h2>
@@ -184,69 +224,46 @@ export default function WalletPage() {
           )}
         </div>
 
-        {/* From */}
         <div className="dark:bg-brand-dark bg-slate-50 rounded-2xl p-4 mb-2">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs dark:text-brand-muted text-slate-400 font-semibold">You send</span>
-            <button onClick={setMax}
-              className="text-xs text-brand-blue hover:underline font-semibold">
+            <button onClick={setMax} className="text-xs text-brand-blue hover:underline font-semibold">
               Max {balances?.eth != null ? `${Math.max(0, balances.eth - 0.005).toFixed(4)} ETH` : ''}
             </button>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-2xl">🔷</span>
-            <input
-              type="number"
-              min="0"
-              step="0.001"
-              placeholder="0.00"
-              value={amountIn}
+            <input type="number" min="0" step="0.001" placeholder="0.00" value={amountIn}
               onChange={e => setAmountIn(e.target.value)}
-              className="flex-1 bg-transparent text-xl font-bold dark:text-white text-slate-900 outline-none placeholder:dark:text-brand-muted placeholder:text-slate-300 min-w-0"
-            />
+              className="flex-1 bg-transparent text-xl font-bold dark:text-white text-slate-900 outline-none placeholder:dark:text-brand-muted placeholder:text-slate-300 min-w-0" />
             <span className="text-sm font-bold dark:text-brand-muted text-slate-500">ETH</span>
           </div>
         </div>
 
-        {/* Arrow */}
         <div className="flex justify-center my-1">
-          <div className="w-8 h-8 rounded-full dark:bg-brand-mid bg-slate-100 flex items-center justify-center text-sm dark:text-brand-muted text-slate-400">
-            ↓
-          </div>
+          <div className="w-8 h-8 rounded-full dark:bg-brand-mid bg-slate-100 flex items-center justify-center text-sm dark:text-brand-muted text-slate-400">↓</div>
         </div>
 
-        {/* To */}
         <div className="dark:bg-brand-dark bg-slate-50 rounded-2xl p-4 mb-4">
           <span className="text-xs dark:text-brand-muted text-slate-400 font-semibold block mb-1.5">You receive</span>
           <div className="flex items-center gap-3">
             <span className="text-2xl">💵</span>
             <div className="flex-1 text-xl font-bold dark:text-white text-slate-900">
-              {quoteLoading ? (
-                <span className="dark:text-brand-muted text-slate-300 animate-pulse">…</span>
-              ) : quote ? (
-                <>
-                  {quote.usdcOut.toFixed(2)}
-                  {quote.isEstimate && <span className="text-xs text-amber-400 ml-1">~est</span>}
-                </>
-              ) : (
-                <span className="dark:text-brand-muted text-slate-300">0.00</span>
-              )}
+              {quoteLoading ? <span className="dark:text-brand-muted text-slate-300 animate-pulse">…</span>
+                : quote ? <>{quote.usdcOut.toFixed(2)}{quote.isEstimate && <span className="text-xs text-amber-400 ml-1">~est</span>}</>
+                : <span className="dark:text-brand-muted text-slate-300">0.00</span>}
             </div>
             <span className="text-sm font-bold dark:text-brand-muted text-slate-500">USDC</span>
           </div>
         </div>
 
-        {/* Rate */}
         {quote && (
           <div className="flex justify-between text-xs dark:text-brand-muted text-slate-400 mb-4 px-1">
             <span>Rate</span>
-            <span>1 ETH ≈ ${quote.rate.toLocaleString(undefined, { maximumFractionDigits: 0 })} USDC
-              {quote.isEstimate && ' (estimated)'}
-            </span>
+            <span>1 ETH ≈ ${quote.rate.toLocaleString(undefined, { maximumFractionDigits: 0 })} USDC{quote.isEstimate && ' (estimated)'}</span>
           </div>
         )}
 
-        {/* Swap button */}
         <AnimatePresence mode="wait">
           {swapDone ? (
             <motion.div key="done" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
@@ -260,11 +277,7 @@ export default function WalletPage() {
                   Swap disabled on testnet — use the faucets below
                 </div>
               ) : (
-                <Button
-                  className="w-full"
-                  disabled={!canSwap || swapping}
-                  onClick={handleSwap}
-                >
+                <Button className="w-full" disabled={!canSwap || swapping} onClick={handleSwap}>
                   {swapping ? 'Swapping…' : !ethIn ? 'Enter amount' : !hasEnoughEth ? 'Insufficient ETH' : 'Swap ETH → USDC'}
                 </Button>
               )}
@@ -273,28 +286,22 @@ export default function WalletPage() {
         </AnimatePresence>
 
         {swapError && (
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="text-xs text-red-400 mt-3 text-center">
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-xs text-red-400 mt-3 text-center">
             {swapError}
           </motion.p>
         )}
       </Card>
 
-      {/* Dev faucets */}
       {env === 'dev' && (
         <Card hover={false} className="p-5">
           <h3 className="font-bold dark:text-white text-slate-900 mb-1 text-sm">Sepolia Testnet Faucets</h3>
-          <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">
-            Free test tokens — wallet funded in ~1 minute.
-          </p>
+          <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">Free test tokens — wallet funded in ~1 minute.</p>
           <div className="space-y-2">
-            {FAUCETS.map(f => (
+            {ETH_FAUCETS.map(f => (
               <a key={f.url} href={f.url} target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-between p-3 rounded-2xl dark:bg-brand-dark bg-slate-50 border dark:border-brand-border border-slate-200 hover:border-brand-blue/40 transition-colors group">
                 <div>
-                  <p className="text-sm font-semibold dark:text-white text-slate-900 group-hover:text-brand-blue transition-colors">
-                    Get {f.label}
-                  </p>
+                  <p className="text-sm font-semibold dark:text-white text-slate-900 group-hover:text-brand-blue transition-colors">Get {f.label}</p>
                   <p className="text-xs dark:text-brand-muted text-slate-400">{f.note}</p>
                 </div>
                 <span className="text-brand-blue text-sm">→</span>
@@ -305,4 +312,28 @@ export default function WalletPage() {
       )}
     </div>
   )
+}
+
+// ── Root ──────────────────────────────────────────────────────
+
+export default function WalletPage() {
+  const navigate        = useNavigate()
+  const { env, wallet } = useAppStore()
+
+  if (!wallet) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16 text-center">
+        <p className="text-5xl mb-4">👛</p>
+        <h2 className="text-xl font-bold dark:text-white text-slate-900 mb-2">No wallet connected</h2>
+        <p className="text-sm dark:text-brand-muted text-slate-500 mb-6">Connect MetaMask or Xaman to see your balances.</p>
+        <Button onClick={() => navigate('/app')}>← Back to Dashboard</Button>
+      </div>
+    )
+  }
+
+  if (wallet.chain === 'XRPL') {
+    return <XrplWalletView wallet={wallet} env={env} />
+  }
+
+  return <EthWalletView wallet={wallet} env={env} />
 }
