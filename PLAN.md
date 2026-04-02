@@ -577,3 +577,278 @@ Environment:
 
 *Version 2.1 — March 2026 (risk audit + fixes)*
 *DeFi Tanda — Chicago, IL*
+
+---
+
+## 17. Yield Tanda Feature Plan
+
+> Added April 2026. XRPL-only. Minimum 1-year lock. Collateral earns yield while the tanda runs.
+
+### 17.1 Overview
+
+Add a second tanda type at pod creation:
+
+| Type | Cycles | Min Duration | Chain | Collateral |
+|---|---|---|---|---|
+| **Standard** | Weekly / Biweekly / Monthly | Any | XRPL + ETH | Sits idle in escrow |
+| **Yield** | Monthly only | 12 months | XRPL only | Deployed into yield strategy |
+
+At tanda completion, collateral is returned plus proportional yield share distributed to all members (minus a 10% protocol cut).
+
+### 17.2 Yield Strategies
+
+| Strategy | Protocol | Risk | Est. APY | Phase |
+|---|---|---|---|---|
+| **Vault (XLS-66d)** | XRPL Lending Protocol v3.1 | Low — Capital Protected | ~4–8% | Phase 2 |
+| **AMM (XLS-30)** | XRPL Native AMM | Medium — Impermanent Loss | ~5–15% | Phase 3 |
+| **Smart Escrow + Hooks** | XRPL Hooks (L1) | Very Low | TBD | Phase 5 |
+
+### 17.3 Database Changes
+
+**Migration 017 — add to `pods` table:**
+```sql
+create type tanda_type     as enum ('standard', 'yield');
+create type yield_strategy as enum ('vault', 'amm', 'smart_escrow');
+
+alter table public.pods
+  add column tanda_type          tanda_type      not null default 'standard',
+  add column yield_strategy      yield_strategy,
+  add column lock_period_months  integer,
+  add column yield_earned        numeric(18,6)   not null default 0,
+  add column yield_deposited_at  timestamptz,
+  add column yield_withdrawn_at  timestamptz,
+  add column yield_position_id   text;
+
+-- Constraints: yield tandas must be monthly and at least 12 members
+alter table public.pods
+  add constraint yield_requires_monthly
+    check (tanda_type = 'standard' or (tanda_type = 'yield' and cycle_frequency_days = 30));
+alter table public.pods
+  add constraint yield_min_duration
+    check (tanda_type = 'standard' or (tanda_type = 'yield' and size >= 12));
+```
+
+**Migration 018 — `pod_yield_snapshots`** (daily yield balance time-series for charts + audit)
+```sql
+create table pod_yield_snapshots (
+  id               uuid primary key default uuid_generate_v4(),
+  pod_id           uuid not null references pods(id) on delete cascade,
+  snapshot_at      timestamptz not null default now(),
+  balance_xrp      numeric(18,6) not null,
+  yield_accrued    numeric(18,6) not null,
+  yield_cumulative numeric(18,6) not null,
+  apy_estimate     numeric(8,4),
+  strategy         yield_strategy not null,
+  raw_response     jsonb
+);
+```
+
+**Migration 019 — `pod_yield_distributions`** (per-member payout record at completion)
+```sql
+create table pod_yield_distributions (
+  id             uuid primary key default uuid_generate_v4(),
+  pod_id         uuid not null references pods(id) on delete cascade,
+  user_id        uuid not null references users(id),
+  amount         numeric(18,6) not null,
+  token          token_type not null,
+  tx_hash        text,
+  distributed_at timestamptz not null default now()
+);
+```
+
+**Migration 020 — `platform_settings` config rows:**
+```
+vault_id_xrp_dev / vault_id_xrp_live       XLS-66d vault object IDs
+vault_id_rlusd_dev / vault_id_rlusd_live    XLS-66d RLUSD vault IDs
+amm_pool_account_dev / amm_pool_account_live XRPL AMM pool accounts
+yield_poll_interval_h = 24
+yield_protocol_fee_pct = 10
+yield_feature_enabled = false               Feature flag
+```
+
+### 17.4 UI Changes
+
+**CreatePod wizard — new Step 0 (Tanda Type):**
+- Two cards: Standard (existing behavior) vs Yield (XRPL only, 12 mo min)
+- Selecting Yield forces: `chain = XRPL`, `frequencyDays = 30`, `size min = 12`
+
+**CreatePod wizard — new Step 2 (Yield Strategy, yield type only):**
+- Three cards: Vault / AMM / Smart Escrow (Coming Soon)
+- AMM card shows persistent impermanent loss warning
+- APY shown as ranges, never fixed numbers
+
+**CreatePod Review step (yield):**
+- Shows lock period, collateral destination, estimated yield range
+- Risk disclosure checkbox required before Deploy button enables
+- AMM requires a second IL acknowledgement checkbox
+
+**PodView — Yield Progress panel** (after cycle timeline, yield pods only):
+```
+YIELD STRATEGY  [badge]
+Collateral Pool:      120 XRP
+Yield Earned (est.):  3.47 XRP  (+2.9% APY)
+Your Share:           0.58 XRP
+Month 6 of 12
+[Sparkline from pod_yield_snapshots]
+```
+AMM pods show: "⚠ Impermanent Loss Active" banner with Learn More.
+
+**Dashboard:** Yield pods show extra line "Est. yield: 1.2 XRP · 3.1% APY".
+
+**BrowsePods:** Type filter toggle "All | Standard | Yield".
+
+### 17.5 Netlify Function Changes
+
+| Function | Change |
+|---|---|
+| `create-xrpl-escrow.js` | After escrow created, call `yield-deposit` if `tandaType = 'yield'` |
+| `yield-deposit.js` | **NEW** — dispatch to vault or AMM deposit. Keep slash reserve (2× contribution) in escrow before depositing. |
+| `yield-poll.js` | **NEW scheduled** (daily 08:00 UTC) — snapshot yield balance for all active yield pods |
+| `yield-withdraw.js` | **NEW** — close vault/AMM position, return funds to escrow wallet |
+| `distribute-yield.js` | **NEW** — split `yield_earned` among active members (10% to protocol treasury) |
+| `release-xrpl-collateral.js` | Pre-flight: call withdraw + distribute before existing collateral return logic |
+| `check-overdue.js` | After slash logic, trigger yield poll for yield pods |
+
+**Slash reserve:** Before depositing collateral into yield, keep `contribution_amount × 2` in the escrow wallet to fund slash payments. Only the remainder goes to yield. If reserve is exhausted by defaults, emergency-withdraw from yield position.
+
+### 17.6 XRPL Integration
+
+**XLS-66d Vault deposit/withdraw:**
+```js
+// Deposit
+{ TransactionType: 'VaultDeposit', Account: escrow.address, VaultID, Amount: xrpToDrops(amount) }
+// Balance query (new RPC)
+client.request({ command: 'vault_info', vault_id: VaultID, account: escrow.address })
+// Withdraw all
+{ TransactionType: 'VaultWithdraw', Account: escrow.address, VaultID, Amount: MAX_UINT256 }
+```
+
+**XLS-30 AMM single-sided deposit/withdraw:**
+```js
+// Deposit XRP single-sided (tfSingleAsset flag)
+{ TransactionType: 'AMMDeposit', ..., Amount: xrpToDrops(amount), Flags: 0x00080000 }
+// Balance: amm_info → shareRatio × pool.amount
+// Withdraw all LP tokens (tfLPToken flag)
+{ TransactionType: 'AMMWithdraw', ..., LPTokenIn: { value: fullLpBalance }, Flags: 0x00010000 }
+```
+
+Store LP token currency + issuer in `pods.yield_position_id` (JSON string).
+
+**Impermanent loss formula for display:**
+```
+IL% = (2 × sqrt(priceRatio) / (1 + priceRatio)) − 1
+```
+Entry price ratio stored in `raw_response` of first snapshot.
+
+### 17.7 Risk Disclosures Required
+
+| Touchpoint | Disclosure |
+|---|---|
+| Type selection card | "Early exit not available once active" |
+| Strategy selection (AMM) | Impermanent loss warning (always visible) |
+| Review step | Lock period + completion date; risk checkbox |
+| Review step (AMM) | Second IL acknowledgement checkbox |
+| PodView header | "Yield Tanda · Unlocks {date}" |
+| PodView panel (AMM) | Live IL estimate; "Learn More" modal |
+| Join modal | Explicit checkbox for lock period |
+
+**Yield disclaimer (all touchpoints):** "APY estimates are not guaranteed. Past performance does not predict future yield."
+
+**Capital protection labels:**
+- Vault → "Capital Protected" (green)
+- AMM → "Capital at Risk" (amber)
+
+### 17.8 db.js Changes
+
+```js
+// Extend createPod with new fields
+createPod({ ..., tanda_type = 'standard', yield_strategy = null, lock_period_months = null })
+
+// New helpers
+getYieldSnapshots(podId, limit = 30)    // → pod_yield_snapshots ordered desc
+getYieldDistributions(podId)             // → pod_yield_distributions with user join
+updatePodYieldPosition(podId, fields)    // → update yield_position_id + yield_deposited_at
+```
+
+### 17.9 i18n — New `yield` section
+
+Add to `en.json` and `es.json`:
+```json
+"yield": {
+  "typeStepTitle": "Choose Tanda Type",
+  "standard": "Standard Tanda",
+  "standardSub": "Short-term · Weekly or monthly cycles",
+  "yieldTanda": "Yield Tanda",
+  "yieldSub": "Long-term · Monthly cycles · Minimum 12 months",
+  "strategyTitle": "Choose Yield Strategy",
+  "vault": "XRPL Vault (XLS-66d)",
+  "vaultSub": "Institutional lending vault. Low risk, predictable yield.",
+  "vaultRisk": "Low Risk",
+  "amm": "AMM Liquidity (XLS-30)",
+  "ammSub": "Single-sided AMM liquidity. Earn trading fees.",
+  "ammRisk": "Medium Risk",
+  "smartEscrow": "Smart Escrow + Hooks",
+  "lockPeriod": "Lock period: {{n}} months",
+  "minDuration": "Minimum 12 months required for yield tandas.",
+  "ammWarning": "AMM pools carry impermanent loss risk.",
+  "capitalProtected": "Capital Protected",
+  "capitalAtRisk": "Capital at Risk",
+  "earnedSoFar": "Yield earned so far",
+  "yourShare": "Your estimated share",
+  "apy": "Est. APY",
+  "disclaimer": "APY estimates are not guaranteed.",
+  "ilWarning": "Impermanent Loss Active",
+  "ilExplainer": "Your collateral is in an AMM pool. Final value depends on price movements.",
+  "riskAck": "I understand this is a {{n}}-month commitment and I accept the yield strategy risks.",
+  "completionDate": "Unlocks {{date}}",
+  "comingSoon": "Coming Soon"
+}
+```
+
+### 17.10 Phased Build Order
+
+```
+Phase 1 — Foundation (Weeks 1–4)        ← Start here
+  Apply migrations 017–020
+  Extend createPod in db.js
+  Add Step 0 (type) + Step 2 (strategy) to CreatePod wizard
+  Add i18n keys
+  Feature flag OFF — standard users unaffected
+
+Phase 2 — Vault Strategy (Weeks 5–8)    ← Requires XLS-66d devnet
+  yield-deposit.js (vault branch)
+  yield-poll.js (scheduled)
+  yield-withdraw.js (vault branch)
+  distribute-yield.js
+  Modify create-xrpl-escrow + release-xrpl-collateral
+  PodView yield progress panel + sparkline
+  Devnet end-to-end: 12-member vault tanda full lifecycle
+
+Phase 3 — AMM Strategy (Weeks 9–12)     ← XLS-30 already live
+  yield-deposit.js (AMM branch)
+  yield-withdraw.js (AMM branch)
+  IL calculation in yield-poll.js
+  PodView IL banner + info modal
+  Slash reserve logic
+  Devnet: AMM tanda with simulated member default
+
+Phase 4 — Mainnet Readiness (Weeks 13–16)
+  Escrow seed KMS encryption (replace plaintext in DB)
+  Populate vault IDs + AMM accounts for mainnet
+  Admin yield health dashboard
+  Security audit of deposit/withdraw/distribute functions
+  Feature flag ON for beta users
+
+Phase 5 — Smart Escrow + Hooks (Future)
+  Blocked on XRPL Hooks mainnet availability
+```
+
+### 17.11 Key Risks
+
+| Risk | Likelihood | Mitigation |
+|---|---|---|
+| XLS-66d vault RPC not finalized | Medium | Abstract behind `vaultClient` interface; one-file swap |
+| AMM withdrawal yields RLUSD, member has no trust line | High | Phase 3: swap RLUSD→XRP on withdrawal, or require trust line to join AMM pod |
+| Slash reserve exhausted by multiple defaults | Medium | Keep 2× contribution in escrow before depositing; emergency withdraw if reserve runs out |
+| Impermanent loss erodes collateral principal | Low short-term | AMM labeled "Capital at Risk"; explicit checkbox; consider capping AMM allocation at 80% of collateral |
+| `yield-poll` timeout with many pods | Low | Process one pod per invocation; add queue in Phase 3 |
