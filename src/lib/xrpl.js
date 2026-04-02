@@ -18,8 +18,11 @@ let _xumm = null
 
 export function getXumm() {
   if (!_xumm) {
-    const apiKey = import.meta.env.VITE_XUMM_API_KEY
-    if (!apiKey) throw new Error('VITE_XUMM_API_KEY is not set. Get a free API key at apps.xumm.dev')
+    const apiKey = (import.meta.env.VITE_XUMM_API_KEY ?? '').trim()
+    if (!apiKey) throw new Error('VITE_XUMM_API_KEY is not set. Add it to Netlify environment variables.')
+    // UUID format check: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRe.test(apiKey)) throw new Error(`VITE_XUMM_API_KEY looks invalid (got: "${apiKey.slice(0,8)}…"). Check for extra spaces or quotes in Netlify env vars.`)
     _xumm = new Xumm(apiKey)
   }
   return _xumm
