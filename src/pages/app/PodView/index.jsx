@@ -197,6 +197,11 @@ export default function PodView() {
               <Button onClick={handleJoin} disabled={joining || joinDone}>
                 {joining ? 'Joining…' : joinDone ? '✓ Joined!' : `Join Pod →`}
               </Button>
+              {joining && pod.chain === 'XRPL' && (
+                <p className="text-xs text-amber-400 max-w-[200px] text-right">
+                  Check Xaman — approve the collateral payment
+                </p>
+              )}
               {joinError && <p className="text-xs text-red-400 max-w-[200px] text-right">{joinError}</p>}
             </>
           )}

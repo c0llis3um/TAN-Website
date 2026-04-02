@@ -153,13 +153,19 @@ export async function sendXrplContribution(toAddress, amount, token, env) {
     throw new Error(`Token ${token} not supported on XRPL.`)
   }
 
-  // Submit to Xumm SDK — handles QR code on desktop, deep link on mobile
-  const { resolved } = await xumm.payload.createAndSubscribe(
+  // Create payload and open sign URL in a popup so the user always sees it
+  const { created, resolved } = await xumm.payload.createAndSubscribe(
     { txjson: payment },
     (event) => {
       if ('signed' in event.data) return event.data
     }
   )
+
+  // Open the Xaman sign page — works on mobile (deep link) and desktop (web)
+  const signUrl = created?.next?.always
+  if (signUrl) {
+    window.open(signUrl, '_blank', 'width=480,height=720,noopener')
+  }
 
   const result = await resolved
   if (!result?.signed) throw new Error('Transaction rejected in Xaman.')
