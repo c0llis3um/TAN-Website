@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
-import { adminGetAllPods } from '@/lib/db'
+import { adminGetAllPods, updatePodStatus } from '@/lib/db'
 import { releaseCollateral } from '@/lib/contracts'
 import useAppStore from '@/store/useAppStore'
 
@@ -120,13 +120,29 @@ function PodDetail({ pod, onClose }) {
   const organizer = pod.organizer?.alias ?? pod.organizer?.wallet_address ?? '—'
   const env       = useAppStore(s => s.env)
 
-  const [releasing, setReleasing] = useState(false)
-  const [releaseTx, setReleaseTx] = useState(null)
-  const [releaseErr, setReleaseErr] = useState(null)
+  const [releasing,       setReleasing]       = useState(false)
+  const [releaseTx,       setReleaseTx]       = useState(null)
+  const [releaseErr,      setReleaseErr]      = useState(null)
+  const [completing,      setCompleting]      = useState(false)
+  const [currentStatus,   setCurrentStatus]   = useState(pod.status)
 
-  const canReleaseEVM  = pod.chain === 'Ethereum' && pod.status === 'COMPLETED' && pod.contract_address
-  const canReleaseXRPL = pod.chain === 'XRPL'     && pod.status === 'COMPLETED' && pod.contract_address
-  const canRelease     = canReleaseEVM || canReleaseXRPL
+  const canForceComplete = pod.chain === 'XRPL' && currentStatus === 'ACTIVE' && pod.contract_address
+  const canReleaseEVM    = pod.chain === 'Ethereum' && currentStatus === 'COMPLETED' && pod.contract_address
+  const canReleaseXRPL   = pod.chain === 'XRPL'    && currentStatus === 'COMPLETED' && pod.contract_address
+  const canRelease       = canReleaseEVM || canReleaseXRPL
+
+  async function handleForceComplete() {
+    if (!window.confirm('Mark pod as COMPLETED? This will enable collateral release.')) return
+    setCompleting(true)
+    try {
+      await updatePodStatus(pod.id, 'COMPLETED')
+      setCurrentStatus('COMPLETED')
+    } catch (e) {
+      alert(e?.message ?? 'Failed to complete pod')
+    } finally {
+      setCompleting(false)
+    }
+  }
 
   async function handleRelease() {
     if (!window.confirm('Release collateral back to all members? This cannot be undone.')) return
@@ -180,7 +196,7 @@ function PodDetail({ pod, onClose }) {
           {[
             ['Chain',       pod.chain],
             ['Token',       pod.token],
-            ['Status',      pod.status],
+            ['Status',      currentStatus],
             ['Members',     `${members} / ${pod.size}`],
             ['Total Pot',   `${pod.contribution_amount * pod.size} ${pod.token}`],
             ['Contribution',`${pod.contribution_amount} ${pod.token}/wk`],
@@ -199,6 +215,19 @@ function PodDetail({ pod, onClose }) {
           <div className="mb-4 p-3 rounded-xl dark:bg-brand-dark bg-slate-50">
             <p className="text-xs dark:text-brand-muted text-slate-400 mb-1">Contract Address</p>
             <p className="font-mono text-xs dark:text-brand-cyan text-brand-blue break-all">{pod.contract_address}</p>
+          </div>
+        )}
+
+        {canForceComplete && (
+          <div className="mt-4 p-4 rounded-xl border dark:border-blue-500/30 border-blue-300 dark:bg-blue-500/10 bg-blue-50">
+            <p className="text-xs dark:text-blue-300 text-blue-700 font-semibold mb-1">Force Complete (XRPL)</p>
+            <p className="text-xs dark:text-blue-200/70 text-blue-600 mb-3">
+              Mark this pod as completed so you can release collateral back to members.
+            </p>
+            <button onClick={handleForceComplete} disabled={completing}
+              className="w-full py-2 rounded-xl bg-blue-500 hover:bg-blue-400 disabled:opacity-50 text-white font-bold text-sm transition-colors">
+              {completing ? 'Completing…' : 'Mark as Completed →'}
+            </button>
           </div>
         )}
 
