@@ -233,23 +233,47 @@ function PodDetail({ pod, onClose }) {
 
         {canRelease && !releaseTx && (
           <div className="mt-4 p-4 rounded-xl border dark:border-amber-500/30 border-amber-300 dark:bg-amber-500/10 bg-amber-50">
-            <p className="text-xs dark:text-amber-300 text-amber-700 font-semibold mb-1">Collateral Release</p>
-            <p className="text-xs dark:text-amber-200/70 text-amber-600 mb-3">
-              All cycles complete. Connect MetaMask as the factory owner, then release collateral back to members on-chain.
+            <p className="text-xs dark:text-amber-300 text-amber-700 font-semibold mb-1">
+              Collateral Release · {pod.chain}
             </p>
-            {releaseErr && <p className="text-xs text-red-400 mb-2">{releaseErr}</p>}
+            <p className="text-xs dark:text-amber-200/70 text-amber-600 mb-3">
+              {canReleaseXRPL
+                ? 'All cycles complete. The escrow wallet will send each member\'s collateral directly on XRPL.'
+                : 'All cycles complete. Connect MetaMask as the factory owner, then release collateral back to members on-chain.'}
+            </p>
+            {releaseErr && (
+              <div className="mb-3 p-2 rounded-lg bg-red-500/10 border border-red-500/30">
+                <p className="text-xs font-bold text-red-400 mb-1">Error</p>
+                <pre className="text-xs text-red-300 whitespace-pre-wrap break-all select-all">{releaseErr}</pre>
+              </div>
+            )}
             <button onClick={handleRelease} disabled={releasing}
               className="w-full py-2 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-white font-bold text-sm transition-colors">
-              {releasing ? 'Releasing…' : 'Release Collateral On-Chain'}
+              {releasing ? 'Releasing…' : `Release Collateral · ${pod.chain}`}
             </button>
           </div>
         )}
 
         {releaseTx && (
           <div className="mt-4 p-4 rounded-xl dark:bg-emerald-500/10 bg-emerald-50 border dark:border-emerald-500/30 border-emerald-300">
-            <p className="text-xs font-bold dark:text-emerald-300 text-emerald-700 mb-1">Collateral Released</p>
-            <a href={`https://sepolia.etherscan.io/tx/${releaseTx}`} target="_blank" rel="noopener noreferrer"
-              className="font-mono text-xs dark:text-brand-cyan text-brand-blue underline break-all">{releaseTx}</a>
+            <p className="text-xs font-bold dark:text-emerald-300 text-emerald-700 mb-2">Collateral Released ✓</p>
+            {pod.chain === 'XRPL'
+              ? releaseTx.split(',').map(h => h.trim()).filter(Boolean).map(hash => {
+                  const base = (pod.env ?? 'dev') === 'live'
+                    ? 'https://xrpl.org/transactions/'
+                    : 'https://devnet.xrpl.org/transactions/'
+                  return (
+                    <a key={hash} href={`${base}${hash}`} target="_blank" rel="noopener noreferrer"
+                      className="block font-mono text-xs dark:text-brand-cyan text-brand-blue underline break-all mb-1">
+                      {hash}
+                    </a>
+                  )
+                })
+              : (
+                <a href={`https://sepolia.etherscan.io/tx/${releaseTx}`} target="_blank" rel="noopener noreferrer"
+                  className="font-mono text-xs dark:text-brand-cyan text-brand-blue underline break-all">{releaseTx}</a>
+              )
+            }
           </div>
         )}
       </motion.div>
