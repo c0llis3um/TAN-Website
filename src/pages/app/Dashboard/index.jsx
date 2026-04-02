@@ -9,23 +9,27 @@ import Badge from '@/components/ui/Badge'
 import useAppStore from '@/store/useAppStore'
 import { getUser, getOrganizerPods, getMemberPods } from '@/lib/db'
 
-const QUICK = [
-  { label: 'Create Tanda', icon: '➕', to: '/app/create',  highlight: true,  disabled: false },
-  { label: 'Browse Pods',  icon: '🔍', to: '/app/pods',    highlight: false, disabled: false },
-  { label: 'Wallet',       icon: '👛', to: '/app/wallet',  highlight: false, disabled: false },
-  { label: 'Buy USDC',     icon: '🍎', to: null,           highlight: false, disabled: true  },
-]
-
 const stagger = { visible: { transition: { staggerChildren: 0.08 } } }
 const item    = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }
 
-const STATUS_LABEL   = { OPEN: 'Open', LOCKED: 'Locked', ACTIVE: 'Active', COMPLETED: 'Completed', CANCELLED: 'Cancelled' }
 const STATUS_VARIANT = { OPEN: 'blue', LOCKED: 'yellow', ACTIVE: 'green',  COMPLETED: 'muted',     CANCELLED: 'red' }
 
 export default function Dashboard() {
   const { t }             = useTranslation()
   const navigate          = useNavigate()
   const { wallet, env }   = useAppStore()
+
+  const STATUS_LABEL = {
+    OPEN: t('dashboard.statusOpen'), LOCKED: t('dashboard.statusLocked'),
+    ACTIVE: t('dashboard.statusActive'), COMPLETED: t('dashboard.statusCompleted'),
+    CANCELLED: t('dashboard.statusCancelled'),
+  }
+  const QUICK = [
+    { label: t('dashboard.createPod'), icon: '➕', to: '/app/create', highlight: true,  disabled: false },
+    { label: t('dashboard.browsePods'), icon: '🔍', to: '/app/pods',  highlight: false, disabled: false },
+    { label: t('walletPage.title'),     icon: '👛', to: '/app/wallet',highlight: false, disabled: false },
+    { label: t('dashboard.buyUsdc'),    icon: '🍎', to: null,         highlight: false, disabled: true  },
+  ]
 
   const [user,        setUser]        = useState(null)
   const [pods,        setPods]        = useState([])
@@ -67,7 +71,7 @@ export default function Dashboard() {
             {' · '}<span className="text-brand-cyan">{wallet.chainName ?? wallet.chain}{env === 'dev' ? ' Testnet' : ''}</span>
           </p>
         ) : (
-          <p className="text-sm text-amber-400 mt-1">No wallet connected</p>
+          <p className="text-sm text-amber-400 mt-1">{t('dashboard.noWallet')}</p>
         )}
       </motion.div>
 
@@ -78,13 +82,13 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <span className="text-2xl animate-pulse">⚡</span>
             <div>
-              <p className="font-bold dark:text-white text-slate-900 text-sm">Active — {duePod.name}</p>
+              <p className="font-bold dark:text-white text-slate-900 text-sm">{t('dashboard.activePod', { name: duePod.name })}</p>
               <p className="text-xs dark:text-brand-muted text-slate-500">
-                {duePod.contribution_amount} {duePod.token} · Cycle {duePod.current_cycle} of {duePod.total_cycles}
+                {duePod.contribution_amount} {duePod.token} · {t('dashboard.cycle', { n: duePod.current_cycle, total: duePod.total_cycles })}
               </p>
             </div>
           </div>
-          <Button size="sm" onClick={() => navigate(`/app/pod/${duePod.id}/pay`)}>Pay Now</Button>
+          <Button size="sm" onClick={() => navigate(`/app/pod/${duePod.id}/pay`)}>{t('dashboard.payNow')}</Button>
         </motion.div>
       )}
 
@@ -106,11 +110,11 @@ export default function Dashboard() {
             ) : activePods.length === 0 ? (
               <Card hover={false} className="p-8 text-center">
                 <p className="text-3xl mb-3">🤝</p>
-                <p className="font-bold dark:text-white text-slate-900 mb-1">No active tandas</p>
-                <p className="text-sm dark:text-brand-muted text-slate-400 mb-4">Create your first tanda or browse open ones to join.</p>
+                <p className="font-bold dark:text-white text-slate-900 mb-1">{t('dashboard.noActivePods')}</p>
+                <p className="text-sm dark:text-brand-muted text-slate-400 mb-4">{t('dashboard.noActiveDesc')}</p>
                 <div className="flex gap-3 justify-center">
-                  <Button size="sm" onClick={() => navigate('/app/create')}>Create Tanda</Button>
-                  <Button size="sm" variant="outline" onClick={() => navigate('/app/pods')}>Browse Pods</Button>
+                  <Button size="sm" onClick={() => navigate('/app/create')}>{t('dashboard.createPod')}</Button>
+                  <Button size="sm" variant="outline" onClick={() => navigate('/app/pods')}>{t('dashboard.browsePods')}</Button>
                 </div>
               </Card>
             ) : (
@@ -127,8 +131,8 @@ export default function Dashboard() {
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
                               <span className="text-xs dark:text-brand-muted text-slate-400">{pod.chain} · {pod.token}</span>
                               <span className="text-xs dark:text-brand-muted text-slate-400">·</span>
-                              <span className="text-xs dark:text-brand-muted text-slate-400">{pod.contribution_amount} {pod.token}/cycle</span>
-                              <span className="text-xs dark:text-brand-muted text-slate-400">· {members}/{pod.size} members</span>
+                              <span className="text-xs dark:text-brand-muted text-slate-400">{pod.contribution_amount} {pod.token}{t('dashboard.perCycle')}</span>
+                              <span className="text-xs dark:text-brand-muted text-slate-400">· {t('dashboard.memberCount', { n: members, total: pod.size })}</span>
                             </div>
                           </div>
                           <Badge variant={STATUS_VARIANT[pod.status] ?? 'muted'}>
@@ -137,7 +141,7 @@ export default function Dashboard() {
                         </div>
                         <div className="mb-1">
                           <div className="flex justify-between text-xs dark:text-brand-muted text-slate-400 mb-1">
-                            <span>Cycle {pod.current_cycle} of {pod.total_cycles}</span>
+                            <span>{t('dashboard.cycle', { n: pod.current_cycle, total: pod.total_cycles })}</span>
                             <span>{pct}%</span>
                           </div>
                           <div className="h-2 dark:bg-brand-border/50 bg-slate-200 rounded-full overflow-hidden">
@@ -159,7 +163,7 @@ export default function Dashboard() {
           {/* Joined tandas */}
           {!loading && joinedPods.length > 0 && (
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-3">Joined Tandas</h2>
+              <h2 className="text-sm font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-3">{t('dashboard.joined')}</h2>
               <Card hover={false} className="divide-y dark:divide-brand-border divide-slate-100">
                 {joinedPods.map(pod => (
                   <div key={pod.id}
@@ -167,7 +171,7 @@ export default function Dashboard() {
                     onClick={() => navigate(`/app/pod/${pod.id}`)}>
                     <div>
                       <p className="text-sm font-semibold dark:text-white text-slate-900">{pod.name}</p>
-                      <p className="text-xs dark:text-brand-muted text-slate-400">{pod.chain} · {pod.token} · {pod.contribution_amount} {pod.token}/cycle</p>
+                      <p className="text-xs dark:text-brand-muted text-slate-400">{pod.chain} · {pod.token} · {pod.contribution_amount} {pod.token}{t('dashboard.perCycle')}</p>
                     </div>
                     <Badge variant={STATUS_VARIANT[pod.status] ?? 'muted'}>{STATUS_LABEL[pod.status] ?? pod.status}</Badge>
                   </div>
@@ -179,7 +183,7 @@ export default function Dashboard() {
           {/* Past tandas */}
           {!loading && pods.filter(p => !['OPEN','LOCKED','ACTIVE'].includes(p.status)).length > 0 && (
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-3">Past Tandas</h2>
+              <h2 className="text-sm font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-3">{t('dashboard.past')}</h2>
               <Card hover={false} className="divide-y dark:divide-brand-border divide-slate-100">
                 {pods.filter(p => !['OPEN','LOCKED','ACTIVE'].includes(p.status)).map(pod => (
                   <div key={pod.id}
@@ -202,17 +206,17 @@ export default function Dashboard() {
 
           {/* Pod Status Donut */}
           <Card hover={false} className="p-5">
-            <p className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-4">My Pods</p>
+            <p className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-4">{t('dashboard.myPodsTitle')}</p>
             {pods.length > 0 ? (() => {
               const openCount      = pods.filter(p => p.status === 'OPEN').length
               const activeCount    = pods.filter(p => p.status === 'ACTIVE').length
               const completedCount = pods.filter(p => ['COMPLETED','DEFAULTED','CANCELLED'].includes(p.status)).length
               const slices = [
-                { name: 'Open',      value: openCount,      color: '#f59e0b' },
-                { name: 'Active',    value: activeCount,    color: '#006aff' },
-                { name: 'Completed', value: completedCount, color: '#22c55e' },
+                { name: t('dashboard.statusOpen'),      value: openCount,      color: '#f59e0b' },
+                { name: t('dashboard.statusActive'),    value: activeCount,    color: '#006aff' },
+                { name: t('dashboard.statusCompleted'), value: completedCount, color: '#22c55e' },
               ].filter(s => s.value > 0)
-              const display = slices.length > 0 ? slices : [{ name: 'None', value: 1, color: '#1a3d52' }]
+              const display = slices.length > 0 ? slices : [{ name: '—', value: 1, color: '#1a3d52' }]
               return (
                 <>
                   <div className="flex items-center gap-4">
@@ -228,9 +232,9 @@ export default function Dashboard() {
                     </PieChart>
                     <div className="space-y-2 flex-1">
                       {[
-                        { label: 'Open',      value: openCount,      color: '#f59e0b' },
-                        { label: 'Active',    value: activeCount,    color: '#006aff' },
-                        { label: 'Completed', value: completedCount, color: '#22c55e' },
+                        { label: t('dashboard.statusOpen'),      value: openCount,      color: '#f59e0b' },
+                        { label: t('dashboard.statusActive'),    value: activeCount,    color: '#006aff' },
+                        { label: t('dashboard.statusCompleted'), value: completedCount, color: '#22c55e' },
                       ].map(s => (
                         <div key={s.label} className="flex items-center justify-between">
                           <div className="flex items-center gap-2 text-xs">
@@ -241,7 +245,7 @@ export default function Dashboard() {
                         </div>
                       ))}
                       <div className="pt-1.5 border-t dark:border-brand-border/40 border-slate-100 flex justify-between text-xs dark:text-brand-muted text-slate-400">
-                        <span>Total</span>
+                        <span>{t('dashboard.total')}</span>
                         <span className="font-bold dark:text-white text-slate-700">{pods.length}</span>
                       </div>
                     </div>
@@ -249,13 +253,13 @@ export default function Dashboard() {
                 </>
               )
             })() : (
-              <p className="text-sm dark:text-brand-muted text-slate-400 text-center py-4">No pods yet.</p>
+              <p className="text-sm dark:text-brand-muted text-slate-400 text-center py-4">{t('dashboard.noPods')}</p>
             )}
           </Card>
 
           {/* Quick actions */}
           <Card hover={false} className="p-4">
-            <p className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-3">Quick Actions</p>
+            <p className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-3">{t('dashboard.quickActions')}</p>
             <div className="grid grid-cols-2 gap-2">
               {QUICK.map(({ label, icon, to, highlight, disabled }) => (
                 <motion.button key={label}
@@ -273,7 +277,7 @@ export default function Dashboard() {
                 >
                   <span className="text-xl">{icon}</span>
                   {label}
-                  {disabled && <span className="text-[9px] uppercase tracking-wider opacity-70">Soon</span>}
+                  {disabled && <span className="text-[9px] uppercase tracking-wider opacity-70">{t('common.soon')}</span>}
                 </motion.button>
               ))}
             </div>

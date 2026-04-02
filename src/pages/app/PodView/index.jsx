@@ -157,7 +157,7 @@ export default function PodView() {
     return (
       <div className="max-w-5xl mx-auto px-4 py-16 text-center">
         <div className="w-10 h-10 rounded-full border-2 border-brand-blue border-t-transparent animate-spin mx-auto mb-4" />
-        <p className="text-sm dark:text-brand-muted text-slate-400">Loading pod…</p>
+        <p className="text-sm dark:text-brand-muted text-slate-400">{t('pod.loading')}</p>
       </div>
     )
   }
@@ -166,9 +166,9 @@ export default function PodView() {
     return (
       <div className="max-w-5xl mx-auto px-4 py-16 text-center">
         <p className="text-4xl mb-4">⚠</p>
-        <h2 className="text-xl font-bold dark:text-white text-slate-900 mb-2">Pod not found</h2>
+        <h2 className="text-xl font-bold dark:text-white text-slate-900 mb-2">{t('pod.notFound')}</h2>
         <p className="text-sm text-red-400 mb-6">{error}</p>
-        <Button onClick={() => navigate('/app')}>← Back to Dashboard</Button>
+        <Button onClick={() => navigate('/app')}>{t('pod.back')}</Button>
       </div>
     )
   }
@@ -206,35 +206,35 @@ export default function PodView() {
         <div>
           <button onClick={() => navigate('/app')}
             className="text-sm dark:text-brand-muted text-slate-400 hover:text-brand-cyan mb-2 flex items-center gap-1">
-            ← Back
+            {t('common.back')}
           </button>
           <h1 className="text-3xl font-extrabold dark:text-white text-slate-900">{pod.name}</h1>
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             <Badge variant={STATUS_VARIANT[pod.status] ?? 'muted'}>● {pod.status}</Badge>
             <span className="text-sm dark:text-brand-muted text-slate-500">{pod.chain} · {pod.token}</span>
             <span className="text-sm dark:text-brand-muted text-slate-500">{pod.contribution_amount} {pod.token}/cycle</span>
-            {env === 'dev' && <Badge variant="yellow">Testnet</Badge>}
+            {env === 'dev' && <Badge variant="yellow">{t('common.testnet')}</Badge>}
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
           {pod.status === 'ACTIVE' && myMember && (
             hasPaidThisCycle
-              ? <span className="text-sm font-semibold text-emerald-400 px-4 py-2 rounded-xl bg-emerald-500/10">✓ Paid cycle {currentCycle}</span>
-              : <Button onClick={() => navigate(`/app/pod/${id}/pay`)}>Pay {pod.contribution_amount} {pod.token} →</Button>
+              ? <span className="text-sm font-semibold text-emerald-400 px-4 py-2 rounded-xl bg-emerald-500/10">{t('pod.paidBadge', { n: currentCycle })}</span>
+              : <Button onClick={() => navigate(`/app/pod/${id}/pay`)}>{t('pod.payNow', { amount: pod.contribution_amount })} {pod.token} →</Button>
           )}
           {(pod.status === 'OPEN' || (pod.status === 'ACTIVE' && !pod.current_cycle)) && !myMember && wallet?.address && (
             <>
               {pod.organizer?.wallet_address === wallet.address && (
                 <p className="text-xs text-amber-400 font-semibold text-right max-w-[200px]">
-                  You created this pod — join it to deposit your collateral
+                  {t('pod.creatorNote')}
                 </p>
               )}
               <Button onClick={handleJoin} disabled={joining || joinDone}>
-                {joining ? 'Joining…' : joinDone ? '✓ Joined!' : `Join Pod →`}
+                {joining ? t('pod.joining') : joinDone ? t('pod.joinedDone') : t('pod.joinBtn')}
               </Button>
               {joining && pod.chain === 'XRPL' && (
                 <p className="text-xs text-amber-400 max-w-[200px] text-right">
-                  Check Xaman — approve the collateral payment
+                  {t('pod.xamanHint')}
                 </p>
               )}
               {joinError && <p className="text-xs text-red-400 max-w-[200px] text-right">{joinError}</p>}
@@ -242,13 +242,13 @@ export default function PodView() {
           )}
           {pod.status === 'OPEN' && !wallet?.address && (
             <div className="flex flex-col items-end gap-2">
-              <p className="text-xs dark:text-brand-muted text-slate-400">Connect wallet to join</p>
+              <p className="text-xs dark:text-brand-muted text-slate-400">{t('pod.connectToJoin')}</p>
               {pod.chain === 'XRPL' && (
                 <MoonPayButton
                   token={pod.token === 'XRP' ? 'XRP' : pod.token}
                   amount={pod.contribution_amount * 3}
                   env={env}
-                  label="Buy XRP with Apple/Google Pay"
+                  label={t('pod.buyAppleGoog')}
                   className="!w-auto !py-2 !px-4 !text-xs"
                 />
               )}
@@ -258,7 +258,7 @@ export default function PodView() {
             <div className="flex flex-col items-end gap-1">
               <button onClick={handleCancel} disabled={cancelling}
                 className="text-xs px-3 py-1.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors">
-                {cancelling ? 'Cancelling…' : 'Cancel Pod'}
+                {cancelling ? t('pod.cancelling') : t('pod.cancelBtn')}
               </button>
               {cancelErr && <p className="text-xs text-red-400 text-right max-w-[180px]">{cancelErr}</p>}
             </div>
@@ -277,11 +277,11 @@ export default function PodView() {
                 : 'dark:bg-brand-blue/5 bg-blue-50 dark:border-brand-blue/20 border-blue-200 dark:text-brand-text text-slate-700'}`}>
           <span className="text-lg">{isOverdue ? '🔴' : daysLeft <= 2 ? '⚠️' : '📅'}</span>
           <div>
-            <span className="font-bold">Cycle {currentCycle} payment due: </span>
-            {dueDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+            <span className="font-bold">{t('pod.cycleDue', { n: currentCycle })} </span>
+            {dueDate.toLocaleDateString(i18n.language, { weekday: 'short', month: 'short', day: 'numeric' })}
             {isOverdue
-              ? <span className="ml-2 font-bold">· OVERDUE by {Math.abs(daysLeft)} day{Math.abs(daysLeft) !== 1 ? 's' : ''}</span>
-              : <span className="ml-2 dark:text-brand-muted text-slate-500">· {daysLeft} day{daysLeft !== 1 ? 's' : ''} left</span>
+              ? <span className="ml-2 font-bold">· {t('pod.overdueBy', { n: Math.abs(daysLeft) })}</span>
+              : <span className="ml-2 dark:text-brand-muted text-slate-500">· {t('pod.daysLeft', { n: daysLeft })}</span>
             }
           </div>
         </motion.div>
@@ -293,7 +293,7 @@ export default function PodView() {
           {/* Cycle timeline */}
           <Card hover={false} className="p-6">
             <h3 className="font-bold dark:text-white text-slate-900 mb-5 text-sm uppercase tracking-wider">
-              Cycle Progress
+              {t('pod.cycleProgress')}
             </h3>
             {totalCycles > 0 ? (
               <>
@@ -325,8 +325,7 @@ export default function PodView() {
                 </div>
                 {mySlot && (
                   <p className="text-xs dark:text-brand-muted text-slate-400 mt-4">
-                    Your payout: <span className="gradient-text font-bold">Week {mySlot}</span> —{' '}
-                    {pod.contribution_amount * totalCycles} {pod.token}
+                    {t('pod.yourPayoutSlot', { slot: mySlot, amount: pod.contribution_amount * totalCycles, token: pod.token })}
                   </p>
                 )}
               </>
@@ -342,13 +341,13 @@ export default function PodView() {
                 {t('pod.membersTitle', 'Members')}
               </h3>
               <span className="text-xs dark:text-brand-muted text-slate-400">
-                {members.length}/{pod.size} filled
+                {t('pod.filled', { n: members.length, total: pod.size })}
               </span>
             </div>
 
             {members.length === 0 ? (
               <div className="px-6 py-8 text-center">
-                <p className="text-sm dark:text-brand-muted text-slate-400">No members yet. Share the link to invite people.</p>
+                <p className="text-sm dark:text-brand-muted text-slate-400">{t('pod.noMembersShare')}</p>
               </div>
             ) : (
               members.map((m, i) => {
@@ -371,13 +370,13 @@ export default function PodView() {
                         <span className="text-sm font-semibold dark:text-white text-slate-900">
                           {m.user?.alias ?? shortAddr}
                         </span>
-                        {isMe && <Badge variant="blue">You</Badge>}
+                        {isMe && <Badge variant="blue">{t('pod.you')}</Badge>}
                       </div>
                       <span className="text-xs font-mono dark:text-brand-muted text-slate-400">{shortAddr}</span>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <div className="text-xs dark:text-brand-muted text-slate-400 mb-1">
-                        Score: {m.user?.reputation_score ?? '—'}
+                        {t('pod.score')}: {m.user?.reputation_score ?? '—'}
                       </div>
                       <Badge variant={m.status === 'ACTIVE' ? 'green' : 'yellow'}>{m.status}</Badge>
                     </div>
@@ -390,7 +389,7 @@ export default function PodView() {
           {payments.length > 0 && (
             <Card hover={false} className="overflow-hidden">
               <div className="px-6 py-4 border-b dark:border-brand-border border-slate-200">
-                <h3 className="font-bold dark:text-white text-slate-900 text-sm uppercase tracking-wider">Payment History</h3>
+                <h3 className="font-bold dark:text-white text-slate-900 text-sm uppercase tracking-wider">{t('pod.paymentHistory')}</h3>
               </div>
               <div className="divide-y dark:divide-brand-border/40 divide-slate-100">
                 {Array.from({ length: pod.total_cycles ?? pod.size }, (_, i) => {
@@ -414,10 +413,10 @@ export default function PodView() {
                           ${isComplete ? 'bg-emerald-500/20 text-emerald-400' : 'dark:bg-brand-dark bg-slate-100 dark:text-brand-muted text-slate-400'}`}>
                           {isComplete ? '✓' : cycle}
                         </span>
-                        <span className="font-bold dark:text-white text-slate-900">Cycle {cycle}</span>
+                        <span className="font-bold dark:text-white text-slate-900">{t('pod.cycle')} {cycle}</span>
                         {isComplete
-                          ? <span className="text-xs text-emerald-400 font-semibold">Completed</span>
-                          : <span className="text-xs dark:text-brand-muted text-slate-400">In progress</span>}
+                          ? <span className="text-xs text-emerald-400 font-semibold">{t('pod.cycleCompleted')}</span>
+                          : <span className="text-xs dark:text-brand-muted text-slate-400">{t('pod.inProgress')}</span>}
                       </div>
 
                       {/* Payout box */}
@@ -425,8 +424,8 @@ export default function PodView() {
                         ? 'dark:bg-emerald-500/5 bg-emerald-50 dark:border-emerald-500/20 border-emerald-200'
                         : 'dark:bg-brand-dark bg-slate-50 dark:border-brand-border border-slate-200'}`}>
                         <div className="flex items-center justify-between mb-1">
-                          <p className="text-xs dark:text-brand-muted text-slate-500 font-semibold uppercase tracking-wider">Pot Recipient</p>
-                          {isComplete && <span className="text-xs text-emerald-400">💰 Paid out</span>}
+                          <p className="text-xs dark:text-brand-muted text-slate-500 font-semibold uppercase tracking-wider">{t('pod.potRecipient')}</p>
+                          {isComplete && <span className="text-xs text-emerald-400">💰 {t('pod.paidOut')}</span>}
                         </div>
                         <div className="flex items-center justify-between">
                           <div>
@@ -440,7 +439,7 @@ export default function PodView() {
                       </div>
 
                       {/* Individual payments */}
-                      <p className="text-xs font-bold dark:text-brand-muted text-slate-400 uppercase tracking-wider mb-2">Contributions</p>
+                      <p className="text-xs font-bold dark:text-brand-muted text-slate-400 uppercase tracking-wider mb-2">{t('pod.contributions')}</p>
                       <div className="space-y-1.5">
                         {cyclePays.map(p => {
                           const addr  = p.user?.wallet_address ?? ''
@@ -466,7 +465,7 @@ export default function PodView() {
                           )
                         })}
                         {cyclePays.length === 0 && (
-                          <p className="text-xs dark:text-brand-muted text-slate-400 italic px-1">No payments recorded yet</p>
+                          <p className="text-xs dark:text-brand-muted text-slate-400 italic px-1">{t('pod.noPayments')}</p>
                         )}
                       </div>
                     </div>
@@ -483,14 +482,14 @@ export default function PodView() {
 
           {/* Pod info */}
           <Card hover={false} className="p-5">
-            <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-4">Pod Info</h3>
+            <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-4">{t('pod.podInfo')}</h3>
             {[
-              ['Total pot',    `${pod.contribution_amount * totalCycles} ${pod.token}`],
-              ['Contribution', `${pod.contribution_amount} ${pod.token}/week`],
-              ['Members',      `${pod.size} people`],
-              ['Duration',     `${totalCycles} weeks`],
-              ['Payout order', pod.payout_method],
-              ['Organizer',    pod.organizer?.alias ?? (pod.organizer?.wallet_address?.slice(0,8) ?? '—')],
+              [t('pod.totalPot'),    `${pod.contribution_amount * totalCycles} ${pod.token}`],
+              [t('pod.contribution'), `${pod.contribution_amount} ${pod.token}${t('pod.perWeek')}`],
+              [t('pod.members'),      `${pod.size} ${t('pod.people')}`],
+              [t('pod.duration'),     `${totalCycles} ${t('pod.weeks')}`],
+              [t('pod.payoutOrder'), pod.payout_method],
+              [t('pod.organizer'),    pod.organizer?.alias ?? (pod.organizer?.wallet_address?.slice(0,8) ?? '—')],
             ].map(([label, val]) => (
               <div key={label} className="flex justify-between py-2 border-b dark:border-brand-border/40 border-slate-100 last:border-0">
                 <span className="text-xs dark:text-brand-muted text-slate-500">{label}</span>
@@ -499,7 +498,7 @@ export default function PodView() {
             ))}
             {pod.contract_address && (
               <div className="mt-3 pt-3 border-t dark:border-brand-border/40 border-slate-100">
-                <p className="text-xs dark:text-brand-muted text-slate-400 mb-1">Contract</p>
+                <p className="text-xs dark:text-brand-muted text-slate-400 mb-1">{t('pod.contract')}</p>
                 <div className="flex items-center gap-2">
                   <p className="text-xs font-mono dark:text-brand-cyan text-brand-blue truncate flex-1">{pod.contract_address.slice(0,10)}…{pod.contract_address.slice(-6)}</p>
                   {pod.chain === 'Ethereum' && (
@@ -520,7 +519,7 @@ export default function PodView() {
           {/* My Payout */}
           {mySlot && pod.status === 'ACTIVE' && pod.cycle_started_at && (
             <Card hover={false} className="p-5">
-              <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-4">Your Payout</h3>
+              <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-4">{t('pod.yourPayout')}</h3>
               {(() => {
                 const msPerCycle = cycleMs(pod, env)
                 const payoutDate = new Date(new Date(pod.cycle_started_at).getTime() + mySlot * msPerCycle)
@@ -531,18 +530,18 @@ export default function PodView() {
                   <div className="space-y-3">
                     <div className="text-center py-3 rounded-2xl dark:bg-brand-blue/5 bg-blue-50 border dark:border-brand-blue/20 border-blue-100">
                       <p className="text-2xl font-extrabold gradient-text">{pod.contribution_amount * totalCycles} {pod.token}</p>
-                      <p className="text-xs dark:text-brand-muted text-slate-400 mt-1">Total pot — Cycle {mySlot} of {totalCycles}</p>
+                      <p className="text-xs dark:text-brand-muted text-slate-400 mt-1">{t('pod.totalPotCycle', { slot: mySlot, total: totalCycles })}</p>
                     </div>
                     <div className="flex justify-between text-xs">
-                      <span className="dark:text-brand-muted text-slate-400">Payout date</span>
+                      <span className="dark:text-brand-muted text-slate-400">{t('pod.payoutDate')}</span>
                       <span className="font-bold dark:text-white text-slate-900">
                         {payoutDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </span>
                     </div>
                     <div className="flex justify-between text-xs">
-                      <span className="dark:text-brand-muted text-slate-400">Status</span>
+                      <span className="dark:text-brand-muted text-slate-400">{t('pod.statusLabel')}</span>
                       <span className={`font-bold ${alreadyPaid ? 'text-emerald-400' : thisCycle ? 'text-brand-cyan' : 'dark:text-white text-slate-900'}`}>
-                        {alreadyPaid ? '✓ Paid out' : thisCycle ? '⚡ This cycle!' : `${daysUntil} days away`}
+                        {alreadyPaid ? `✓ ${t('pod.paidOut')}` : thisCycle ? `⚡ ${t('pod.thisCycle')}` : t('pod.daysAway', { n: daysUntil })}
                       </span>
                     </div>
                   </div>
@@ -554,14 +553,14 @@ export default function PodView() {
           {/* Claim Collateral */}
           {pod.status === 'COMPLETED' && myMember && pod.contract_address && (
             <Card hover={false} className="p-5">
-              <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-1">Collateral Return</h3>
+              <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-1">{t('pod.collateralReturn')}</h3>
               <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">
-                The tanda is complete! Claim your <span className="font-bold dark:text-white text-slate-900">{pod.contribution_amount * 2} {pod.token}</span> collateral back.
+                {t('pod.claimBody')} <span className="font-bold dark:text-white text-slate-900">{pod.contribution_amount * 2} {pod.token}</span>
               </p>
 
               {claimTx ? (
                 <div className="p-3 rounded-xl dark:bg-emerald-500/10 bg-emerald-50 border dark:border-emerald-500/30 border-emerald-200">
-                  <p className="text-xs font-bold dark:text-emerald-300 text-emerald-700 mb-1">✓ Collateral received!</p>
+                  <p className="text-xs font-bold dark:text-emerald-300 text-emerald-700 mb-1">✓ {t('pod.claimed')}</p>
                   <a href={pod.chain === 'Ethereum'
                       ? `https://${env === 'dev' ? 'sepolia.' : ''}etherscan.io/tx/${claimTx}`
                       : `https://${env === 'dev' ? 'devnet.' : ''}xrpl.org/transactions/${claimTx}`}
@@ -575,7 +574,7 @@ export default function PodView() {
                   {claimErr && <p className="text-xs text-red-400 mb-2">{claimErr}</p>}
                   <button onClick={handleClaim} disabled={claiming}
                     className="w-full py-2.5 rounded-xl bg-gradient-brand text-white font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-all">
-                    {claiming ? 'Sending to your wallet…' : `Claim ${pod.contribution_amount * 2} ${pod.token} →`}
+                    {claiming ? t('pod.claiming') : t('pod.claimBtn', { amount: pod.contribution_amount * 2, token: pod.token })}
                   </button>
                 </>
               )}
@@ -585,13 +584,13 @@ export default function PodView() {
           {/* Buy XRP — onramp for XRPL pods */}
           {pod.chain === 'XRPL' && !myMember && (
             <Card hover={false} className="p-5">
-              <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-1">Don't have XRP?</h3>
+              <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-1">{t('pod.dontHaveXRP')}</h3>
               <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">
-                Buy XRP with Apple Pay, Google Pay, or a credit card — no crypto experience needed.
+                {t('pod.buyXrpHint')}
               </p>
               <p className="text-xs dark:text-brand-muted text-slate-400 mb-3">
-                You'll need ~<span className="font-bold dark:text-white text-slate-900">{pod.contribution_amount * 3} {pod.token}</span> to join
-                <span className="block opacity-70">(2× collateral + 1st payment)</span>
+                {t('pod.toJoinHint', { amount: pod.contribution_amount * 3, token: pod.token })}
+                <span className="block opacity-70">{t('pod.collateralHint')}</span>
               </p>
               <MoonPayButton
                 walletAddress={wallet?.address}
@@ -604,21 +603,21 @@ export default function PodView() {
 
           {/* Share */}
           <Card hover={false} className="p-5">
-            <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-1">Invite Members</h3>
+            <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-1">{t('pod.inviteTitle')}</h3>
             <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">
-              {Math.max(0, pod.size - members.length)} spots left.
+              {t('pod.spotsLeft', { n: Math.max(0, pod.size - members.length) })}
             </p>
             <div className="space-y-2">
               <Button size="sm" className="w-full justify-center gap-2"
                 disabled={env === 'dev'} onClick={() => shareWa(shareMsg)}>
-                <WaIcon /> {t('pod.shareWa', 'Share on WhatsApp')}
+                <WaIcon /> {t('pod.shareWa')}
               </Button>
               <Button size="sm" variant="outline" className="w-full justify-center gap-2"
                 disabled={env === 'dev'} onClick={() => shareTg(podUrl, shareMsg)}>
-                <TgIcon /> {t('pod.shareTg', 'Share on Telegram')}
+                <TgIcon /> {t('pod.shareTg')}
               </Button>
               {env === 'dev' && (
-                <p className="text-xs text-amber-500 text-center mt-1">Sharing disabled on testnet</p>
+                <p className="text-xs text-amber-500 text-center mt-1">{t('pay.sharingDisabled')}</p>
               )}
             </div>
             <div className="mt-3 flex items-center gap-2">
