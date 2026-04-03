@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import useAppStore from '@/store/useAppStore'
-import { getPod, recordPayment, maybeAdvanceCycle, getUser } from '@/lib/db'
+import { getPod, getPodPayments, recordPayment, maybeAdvanceCycle, getUser } from '@/lib/db'
 import { sendContribution, tandaPodContribute } from '@/lib/contracts'
 
 function shareWa(text) { window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank') }
@@ -19,7 +19,7 @@ export default function Pay() {
 
   const [pod,     setPod]     = useState(null)
   const [loading, setLoading] = useState(true)
-  const [step,      setStep]      = useState('select')  // select | confirming | done
+  const [step,      setStep]      = useState('select')  // select | confirming | done | already-paid
   const [method,    setMethod]    = useState(null)
   const [payError,  setPayError]  = useState(null)
   const [txHash,    setTxHash]    = useState(null)
@@ -27,11 +27,20 @@ export default function Pay() {
 
   useEffect(() => {
     if (!id) return
-    getPod(id).then(({ data }) => {
+    Promise.all([getPod(id), getPodPayments(id)]).then(([{ data }, { data: pays }]) => {
       setPod(data ?? null)
+      // If the current wallet has already paid this cycle, skip straight to already-paid screen
+      if (data && wallet?.address && pays?.length) {
+        const alreadyPaid = pays.some(p =>
+          p.user?.wallet_address?.toLowerCase() === wallet.address.toLowerCase() &&
+          p.cycle === data.current_cycle &&
+          ['CONFIRMED', 'PENDING'].includes(p.status)
+        )
+        if (alreadyPaid) setStep('already-paid')
+      }
       setLoading(false)
     })
-  }, [id])
+  }, [id, wallet?.address])
 
   const podUrl  = `${window.location.origin}/app/pod/${id}`
   const podName = pod?.name ?? '…'
@@ -150,6 +159,24 @@ export default function Pay() {
       </motion.button>
 
       <AnimatePresence mode="wait">
+
+        {/* ── ALREADY PAID ── */}
+        {step === 'already-paid' && (
+          <motion.div key="already-paid" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}>
+            <Card hover={false} className="p-8 text-center">
+              <div className="w-20 h-20 rounded-full bg-emerald-500/15 border border-emerald-500/30 mx-auto flex items-center justify-center mb-5">
+                <span className="text-4xl">✓</span>
+              </div>
+              <h2 className="text-2xl font-extrabold dark:text-white text-slate-900 mb-2">
+                {t('pay.alreadyPaid')}
+              </h2>
+              <p className="text-sm dark:text-brand-muted text-slate-500 mb-6">
+                {t('pay.alreadyPaidDesc', { cycle: pod.current_cycle })}
+              </p>
+              <Button onClick={() => navigate(`/app/pod/${id}`)}>{t('pay.back')}</Button>
+            </Card>
+          </motion.div>
+        )}
 
         {/* ── SELECT PAYMENT METHOD ── */}
         {step === 'select' && (

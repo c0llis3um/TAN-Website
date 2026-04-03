@@ -93,7 +93,9 @@
     "shareYourWin": "Share your win",
     "sharingDisabled": "Sharing disabled on testnet",
     "back": "← Back to pod",
-    "notFound": "Pod not found"
+    "notFound": "Pod not found",
+    "alreadyPaid": "Already paid this cycle",
+    "alreadyPaidDesc": "You already submitted your contribution for cycle {{cycle}}. No action needed."
   },
   "chains": {
     "title": "Built on XRP Ledger",

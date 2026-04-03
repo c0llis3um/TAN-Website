@@ -93,7 +93,9 @@
     "shareYourWin": "Comparte tu logro",
     "sharingDisabled": "Compartir desactivado en testnet",
     "back": "← Volver a la tanda",
-    "notFound": "Tanda no encontrada"
+    "notFound": "Tanda no encontrada",
+    "alreadyPaid": "Ya pagaste este ciclo",
+    "alreadyPaidDesc": "Ya enviaste tu contribución para el ciclo {{cycle}}. No necesitas hacer nada más."
   },
   "chains": {
     "title": "Construido en XRP Ledger",
