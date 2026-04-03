@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
-import { adminGetAllPods, updatePodStatus } from '@/lib/db'
+import { adminGetAllPods, updatePodStatus, adminForceAdvanceCycle } from '@/lib/db'
 import { releaseCollateral } from '@/lib/contracts'
 import useAppStore from '@/store/useAppStore'
 
@@ -125,6 +125,9 @@ function PodDetail({ pod, onClose }) {
   const [releaseErr,    setReleaseErr]    = useState(null)
   const [completing,    setCompleting]    = useState(false)
   const [currentStatus, setCurrentStatus] = useState(pod.status)
+  const [advancing,     setAdvancing]     = useState(false)
+  const [advanceResult, setAdvanceResult] = useState(null)
+  const [advanceErr,    setAdvanceErr]    = useState(null)
 
   // Full member detail (payout_slot, payments for current cycle)
   const [members,      setMembers]      = useState([])
@@ -235,6 +238,29 @@ function PodDetail({ pod, onClose }) {
     } finally {
       setSlashingId(null)
     }
+  }
+
+  async function handleForceAdvance() {
+    if (!window.confirm(`Force-advance cycle ${pod.current_cycle}? Any unpaid members will be marked DEFAULTED.`)) return
+    setAdvancing(true)
+    setAdvanceErr(null)
+    setAdvanceResult(null)
+    const { data, error } = await adminForceAdvanceCycle(pod.id)
+    if (error) {
+      setAdvanceErr(typeof error === 'string' ? error : error.message)
+    } else {
+      setAdvanceResult(data)
+      setCurrentStatus(data.status)
+      // Refresh member/payment detail
+      const supabase = (await import('@/lib/supabase')).default
+      const [{ data: mems }, { data: pays }] = await Promise.all([
+        supabase.from('pod_members').select('id, user_id, payout_slot, status, user:users(id, alias, wallet_address)').eq('pod_id', pod.id).order('payout_slot'),
+        supabase.from('payments').select('user_id, method, status, tx_hash').eq('pod_id', pod.id).eq('cycle', pod.current_cycle ?? 0),
+      ])
+      setMembers(mems ?? [])
+      setCyclePayments(pays ?? [])
+    }
+    setAdvancing(false)
   }
 
   // Per-member payment status helpers
@@ -366,6 +392,28 @@ function PodDetail({ pod, onClose }) {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Force Advance Cycle */}
+        {currentStatus === 'ACTIVE' && isOverdue && (
+          <div className="mt-4 p-4 rounded-xl border dark:border-orange-500/30 border-orange-300 dark:bg-orange-500/10 bg-orange-50">
+            <p className="text-xs dark:text-orange-300 text-orange-700 font-semibold mb-1">Force Advance Cycle (any chain)</p>
+            <p className="text-xs dark:text-orange-200/70 text-orange-600 mb-3">
+              Mark all unpaid members as DEFAULTED and advance to the next cycle. Use when a member forgot to pay and the tanda is stuck.
+            </p>
+            {advanceErr && (
+              <p className="text-xs text-red-400 mb-2 break-all">{advanceErr}</p>
+            )}
+            {advanceResult && (
+              <p className="text-xs text-emerald-400 mb-2 font-semibold">
+                {advanceResult.status === 'COMPLETED' ? 'Pod completed!' : `Advanced to cycle ${advanceResult.current_cycle}`}
+              </p>
+            )}
+            <button onClick={handleForceAdvance} disabled={advancing}
+              className="w-full py-2 rounded-xl bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white font-bold text-sm transition-colors">
+              {advancing ? 'Advancing…' : `Force Advance → Cycle ${(pod.current_cycle ?? 0) + 1}`}
+            </button>
           </div>
         )}
 

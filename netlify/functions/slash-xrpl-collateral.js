@@ -175,6 +175,30 @@ export const handler = async (event) => {
 
     console.log(`[slash-xrpl-collateral] Member ${memberUserId} defaulted on cycle ${pod.current_cycle}. Sent ${amount} ${pod.token} → ${recipient.user.wallet_address} | tx: ${txHash}`)
 
+    // ── 10. Advance cycle if everyone is now accounted for ────
+    const { count: confirmedCount } = await supabase
+      .from('payments')
+      .select('id', { count: 'exact', head: true })
+      .eq('pod_id', podId)
+      .eq('cycle', pod.current_cycle)
+      .eq('status', 'CONFIRMED')
+
+    let cycleAdvanced = false
+    if (confirmedCount >= pod.pod_members.length) {
+      const nextCycle = pod.current_cycle + 1
+      const totalCycles = pod.pod_members.length  // total_cycles === size
+      const done = nextCycle > totalCycles
+      await supabase
+        .from('pods')
+        .update(done
+          ? { status: 'COMPLETED', completed_at: new Date().toISOString() }
+          : { current_cycle: nextCycle, cycle_started_at: new Date().toISOString() }
+        )
+        .eq('id', podId)
+      cycleAdvanced = true
+      console.log(`[slash-xrpl-collateral] Cycle advanced to ${done ? 'COMPLETED' : nextCycle}`)
+    }
+
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -185,6 +209,7 @@ export const handler = async (event) => {
         sentTo:        recipient.user.wallet_address,
         slashedMember: memberUserId,
         cycle:         pod.current_cycle,
+        cycleAdvanced,
       }),
     }
 

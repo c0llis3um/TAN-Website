@@ -213,6 +213,61 @@ export async function maybeActivatePod(podId) {
     .single()
 }
 
+// Admin: mark all unpaid members as DEFAULTED for current cycle, then advance
+export async function adminForceAdvanceCycle(podId) {
+  const { data: pod } = await supabase
+    .from('pods')
+    .select(`id, size, current_cycle, total_cycles, status, token, chain,
+      pod_members ( id, user_id, status )`)
+    .eq('id', podId)
+    .single()
+
+  if (!pod || pod.status !== 'ACTIVE') return { error: 'Pod is not active' }
+
+  // Find members who haven't paid this cycle
+  const { data: paid } = await supabase
+    .from('payments')
+    .select('user_id')
+    .eq('pod_id', podId)
+    .eq('cycle', pod.current_cycle)
+    .eq('status', 'CONFIRMED')
+
+  const paidIds = new Set((paid ?? []).map(p => p.user_id))
+  const unpaid  = (pod.pod_members ?? []).filter(m => !paidIds.has(m.user_id))
+
+  // Insert DEFAULTED payment + mark member DEFAULTED for each unpaid member
+  if (unpaid.length > 0) {
+    await Promise.all(unpaid.flatMap(m => [
+      supabase.from('payments').upsert({
+        pod_id:  podId,
+        user_id: m.user_id,
+        cycle:   pod.current_cycle,
+        amount:  0,
+        token:   pod.token,
+        chain:   pod.chain,
+        method:  'admin_skip',
+        status:  'CONFIRMED',
+        paid_at: new Date().toISOString(),
+      }, { onConflict: 'pod_id,user_id,cycle' }),
+      supabase.from('pod_members').update({ status: 'DEFAULTED' }).eq('id', m.id),
+    ]))
+  }
+
+  // Advance cycle
+  const nextCycle = pod.current_cycle + 1
+  const done      = nextCycle > pod.total_cycles
+
+  return supabase
+    .from('pods')
+    .update(done
+      ? { status: 'COMPLETED', completed_at: new Date().toISOString() }
+      : { current_cycle: nextCycle, cycle_started_at: new Date().toISOString() }
+    )
+    .eq('id', podId)
+    .select('id, status, current_cycle')
+    .single()
+}
+
 // After all members pay for a cycle, advance to next or complete the pod
 export async function maybeAdvanceCycle(podId) {
   const { data: pod } = await supabase
