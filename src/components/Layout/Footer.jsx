@@ -5,7 +5,6 @@ const links = [
   { label: 'Home', to: '/' },
   { label: 'Docs', href: 'https://whoosh.gitbook.io/defi-tanda', external: true },
   { label: 'Telegram', href: 'https://t.me/tandasolana', external: true },
-  { label: 'GitHub', href: 'https://github.com/c0llis3um/TAN-Website', external: true },
 ]
 
 export default function Footer() {

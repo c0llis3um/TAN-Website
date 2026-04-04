@@ -157,6 +157,28 @@ export const handler = async () => {
         results.push({ podId: pod.id, memberUserId: member.user_id, error: e.message })
       }
     }
+
+    // Advance cycle if all members are now accounted for
+    const { count: confirmedCount } = await supabase
+      .from('payments')
+      .select('id', { count: 'exact', head: true })
+      .eq('pod_id', pod.id)
+      .eq('cycle', pod.current_cycle)
+      .eq('status', 'CONFIRMED')
+
+    if (confirmedCount >= pod.pod_members.length) {
+      const nextCycle   = pod.current_cycle + 1
+      const totalCycles = pod.pod_members.length
+      const done        = nextCycle > totalCycles
+      await supabase
+        .from('pods')
+        .update(done
+          ? { status: 'COMPLETED', completed_at: new Date().toISOString() }
+          : { current_cycle: nextCycle, cycle_started_at: new Date().toISOString() }
+        )
+        .eq('id', pod.id)
+      console.log(`[check-overdue] Pod ${pod.id} cycle advanced to ${done ? 'COMPLETED' : nextCycle}`)
+    }
   }
 
   const slashed = results.filter(r => r.slashed).length
