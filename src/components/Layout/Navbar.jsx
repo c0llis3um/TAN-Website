@@ -8,7 +8,7 @@ import WalletModal from '@/components/WalletModal'
 import useAppStore from '@/store/useAppStore'
 import { onAccountChanged, onChainChanged, removeWalletListeners, disconnectWallet as disconnectProvider } from '@/lib/wallets'
 
-const LANGS = ['es', 'en']
+const LANGS = ['es', 'en', 'zh']
 
 export default function Navbar() {
   const { t, i18n } = useTranslation()
@@ -62,7 +62,8 @@ export default function Navbar() {
   }, [wallet])
 
   const toggleLang = () => {
-    const next = lang === 'es' ? 'en' : 'es'
+    const idx = LANGS.indexOf(lang)
+    const next = LANGS[(idx + 1) % LANGS.length]
     setLang(next)
     i18n.changeLanguage(next)
   }
@@ -126,7 +127,7 @@ export default function Navbar() {
               whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               className="text-xs font-bold dark:text-brand-muted text-slate-500 hover:text-brand-blue transition-colors px-2 py-1 rounded-lg dark:hover:bg-brand-mid hover:bg-slate-100"
             >
-              {lang === 'es' ? '🇲🇽 ES' : '🇺🇸 EN'}
+              {lang === 'es' ? '🇲🇽 ES' : lang === 'zh' ? '🇨🇳 中文' : '🇺🇸 EN'}
             </motion.button>
 
             <ThemeToggle />
@@ -175,19 +176,19 @@ export default function Navbar() {
                           onClick={() => { navigate('/app/wallet'); setDropdownOpen(false) }}
                           className="w-full text-left px-4 py-3 text-sm dark:text-brand-text text-slate-700 dark:hover:bg-brand-mid hover:bg-slate-50 transition-colors flex items-center gap-2"
                         >
-                          <span>👛</span> Wallet & Swap
+                          <span>👛</span> {t('nav.wallet')}
                         </button>
                         <button
                           onClick={() => { navigator.clipboard.writeText(wallet.address); setDropdownOpen(false) }}
                           className="w-full text-left px-4 py-3 text-sm dark:text-brand-text text-slate-700 dark:hover:bg-brand-mid hover:bg-slate-50 transition-colors"
                         >
-                          Copy address
+                          {t('common.copy')}
                         </button>
                         <button
                           onClick={handleDisconnect}
                           className="w-full text-left px-4 py-3 text-sm text-red-400 dark:hover:bg-red-500/8 hover:bg-red-50 transition-colors"
                         >
-                          Disconnect
+                          {t('common.disconnect')}
                         </button>
                       </motion.div>
                     )}
