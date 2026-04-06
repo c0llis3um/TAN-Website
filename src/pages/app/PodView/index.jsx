@@ -185,8 +185,10 @@ export default function PodView() {
     ['CONFIRMED', 'PENDING'].includes(p.status)
   )
 
-  const dueDate = pod.cycle_started_at
-    ? new Date(new Date(pod.cycle_started_at).getTime() + cycleMs(pod, env))
+  const ms = cycleMs(pod, env)
+  const cycleForDate = hasPaidThisCycle ? currentCycle + 1 : currentCycle
+  const dueDate = pod.cycle_started_at && cycleForDate <= totalCycles
+    ? new Date(new Date(pod.cycle_started_at).getTime() + cycleForDate * ms)
     : null
   const daysLeft = dueDate ? Math.ceil((dueDate - Date.now()) / 864e5) : null
   const isOverdue = daysLeft !== null && daysLeft < 0
@@ -265,7 +267,7 @@ export default function PodView() {
                 : 'dark:bg-brand-blue/5 bg-blue-50 dark:border-brand-blue/20 border-blue-200 dark:text-brand-text text-slate-700'}`}>
           <span className="text-lg">{isOverdue ? '🔴' : daysLeft <= 2 ? '⚠️' : '📅'}</span>
           <div>
-            <span className="font-bold">{t('pod.cycleDue', { n: currentCycle })} </span>
+            <span className="font-bold">{t('pod.cycleDue', { n: cycleForDate })} </span>
             {dueDate.toLocaleDateString(i18n.language, { weekday: 'short', month: 'short', day: 'numeric' })}
             {isOverdue
               ? <span className="ml-2 font-bold">· {t('pod.overdueBy', { n: Math.abs(daysLeft) })}</span>
