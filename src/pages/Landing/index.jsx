@@ -5,6 +5,7 @@ import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import Timeline from '@/components/Timeline'
 
 const WORDS = ['Tanda','Osusu','Hui','Juntas','Arisan','Stokvel','Pandeiros','Pollas']
 
@@ -346,6 +347,11 @@ export default function Landing() {
             </Card>
           </FadeUp>
         </div>
+      </Section>
+
+      {/* ══ TIMELINE ══ */}
+      <Section className="dark:bg-brand-darker bg-slate-50">
+        <Timeline />
       </Section>
 
       {/* ══ WAITLIST ══ */}

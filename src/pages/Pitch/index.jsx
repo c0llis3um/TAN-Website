@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
+import Timeline from '@/components/Timeline'
 
 /* ── animation helpers ── */
 const fadeUp = (delay = 0) => ({
@@ -444,72 +445,9 @@ export default function Pitch() {
         </div>
       </Section>
 
-      {/* ══ ROADMAP ══ */}
+      {/* ══ TIMELINE ══ */}
       <Section dark>
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-16">
-            <FadeUp><Pill>Roadmap</Pill></FadeUp>
-            <FadeUp delay={0.1}>
-              <h2 className="text-4xl font-black dark:text-white text-slate-900">Where we are going</h2>
-            </FadeUp>
-          </div>
-
-          <RoadmapItem
-            phase="1" done
-            title="Foundation — Q4 2025"
-            items={[
-              'XRPL smart contract architecture designed',
-              'Xaman wallet integration complete',
-              'Core tanda lifecycle (create → join → pay → payout) built',
-              'Web app deployed on testnet',
-            ]}
-            delay={0.1}
-          />
-          <RoadmapItem
-            phase="2" active
-            title="Testnet & Community — Q1–Q2 2026"
-            items={[
-              'RLUSD stablecoin support added',
-              'Spanish + Mandarin full localization',
-              'Collateral enforcement system live',
-              'Waitlist opened, Chicago community outreach begun',
-            ]}
-            delay={0.15}
-          />
-          <RoadmapItem
-            phase="3"
-            title="Mainnet Launch — Q3 2026"
-            items={[
-              'XRPL mainnet deployment with real funds',
-              'First 50 tanda groups onboarded (Chicago pilot)',
-              'Ambassador program launched in Latino + Chinese communities',
-              'Moonpay / Transak on-ramp for card → XRP',
-            ]}
-            delay={0.2}
-          />
-          <RoadmapItem
-            phase="4"
-            title="Scale — Q4 2026"
-            items={[
-              'Expand to Singapore, Mexico City, Los Angeles',
-              'Yield Tanda — idle funds earning yield via XRPL AMM',
-              'Mobile app (iOS + Android)',
-              'B2B: white-label for credit unions and community banks',
-            ]}
-            delay={0.25}
-          />
-          <RoadmapItem
-            phase="5"
-            title="Protocol — 2027"
-            items={[
-              'Solana and Ethereum deployments',
-              'Cross-chain payout routing',
-              'Reputation passport — portable on-chain credit score',
-              'DeFi Tanda DAO governance',
-            ]}
-            delay={0.3}
-          />
-        </div>
+        <Timeline />
       </Section>
 
       {/* ══ THE ASK BREAKDOWN ══ */}
