@@ -22,6 +22,11 @@ const NODES = {
   live: 'wss://xrplcluster.com',
 }
 
+const RLUSD_ISSUER = {
+  dev:  'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh',
+  live: '',
+}
+
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method not allowed' }
@@ -34,7 +39,7 @@ export const handler = async (event) => {
 
   try {
     // ── 1. Parse body ──────────────────────────────────────────
-    const { podId, env = 'dev' } = JSON.parse(event.body ?? '{}')
+    const { podId, env = 'dev', token = 'XRP' } = JSON.parse(event.body ?? '{}')
     if (!podId) {
       return { statusCode: 400, body: JSON.stringify({ error: 'podId required' }) }
     }
@@ -84,6 +89,26 @@ export const handler = async (event) => {
     } else {
       // Mainnet: generate only — organizer funds externally
       wallet = Wallet.generate()
+    }
+
+    // ── 4b. Set RLUSD trust line on escrow wallet if needed ────
+    if (token === 'RLUSD') {
+      const issuer = RLUSD_ISSUER[env]
+      if (!issuer) throw new Error('RLUSD issuer not configured for this environment.')
+
+      const trustSet = {
+        TransactionType: 'TrustSet',
+        Account: wallet.address,
+        LimitAmount: {
+          currency: 'RLUSD',
+          issuer,
+          value:    '1000000000',
+        },
+      }
+      const prepared = await client.autofill(trustSet)
+      const signed   = wallet.sign(prepared)
+      const result   = await client.submitAndWait(signed.tx_blob)
+      console.log(`[create-xrpl-escrow] RLUSD trust line set on ${wallet.address}: ${result.result.meta.TransactionResult}`)
     }
 
     await client.disconnect()

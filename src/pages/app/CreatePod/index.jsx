@@ -141,7 +141,7 @@ export default function CreatePod() {
           const escrowRes = await fetch('/.netlify/functions/create-xrpl-escrow', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ podId, env }),
+            body: JSON.stringify({ podId, env, token: form.token }),
           })
           const escrowJson = await escrowRes.json()
           if (!escrowRes.ok) throw new Error(escrowJson.error ?? 'Escrow creation failed')
