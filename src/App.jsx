@@ -5,6 +5,7 @@ import Footer from '@/components/Layout/Footer'
 import DevBanner from '@/components/DevBanner'
 
 import Landing      from '@/pages/Landing'
+import Pitch        from '@/pages/Pitch'
 import Dashboard    from '@/pages/app/Dashboard'
 import PodView      from '@/pages/app/PodView'
 import Pay          from '@/pages/app/Pay'
@@ -55,6 +56,7 @@ export default function App() {
           <Routes location={location} key={location.pathname}>
             {/* ── Public ── */}
             <Route path="/" element={<PageWrapper><Landing /></PageWrapper>} />
+            <Route path="/pitch" element={<PageWrapper><Pitch /></PageWrapper>} />
 
             {/* ── User App ── */}
             <Route path="/app"              element={<PageWrapper><Dashboard /></PageWrapper>} />
