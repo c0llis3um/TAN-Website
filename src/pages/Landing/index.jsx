@@ -93,7 +93,7 @@ export default function Landing() {
             className="text-lg sm:text-xl dark:text-brand-text text-slate-600 max-w-xl mx-auto mb-10 leading-relaxed"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
           >
-            {t('hero.sub', { word: '' }).split('{{word}}')[0]}
+            {t('hero.sub', { word: '\x00' }).split('\x00')[0]}
             <AnimatePresence mode="wait">
               <motion.span
                 key={wordIdx}
@@ -106,7 +106,7 @@ export default function Landing() {
                 {WORDS[wordIdx]}
               </motion.span>
             </AnimatePresence>
-            {t('hero.sub', { word: '' }).split('{{word}}')[1]}
+            {t('hero.sub', { word: '\x00' }).split('\x00')[1]}
           </motion.p>
 
           <motion.div
