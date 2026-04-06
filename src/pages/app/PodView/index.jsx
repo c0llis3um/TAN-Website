@@ -78,6 +78,22 @@ export default function PodView() {
         setJoining(false)
         return
       }
+      // Ensure escrow has RLUSD trust line before sending collateral
+      if (pod.token === 'RLUSD') {
+        try {
+          const res = await fetch('/.netlify/functions/ensure-rlusd-trustline', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ podId: id, env }),
+          })
+          const json = await res.json()
+          if (!res.ok) throw new Error(json.error ?? 'Could not set up RLUSD trust line on escrow.')
+        } catch (err) {
+          setJoinError(err?.message ?? 'RLUSD escrow setup failed.')
+          setJoining(false)
+          return
+        }
+      }
       try {
         const { sendContribution } = await import('@/lib/contracts')
         await sendContribution(
