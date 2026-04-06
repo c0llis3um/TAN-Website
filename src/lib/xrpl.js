@@ -39,6 +39,10 @@ const RLUSD_ISSUER = {
   live: '',  // fill in when Ripple publishes mainnet RLUSD issuer
 }
 
+// XRPL requires non-3-char currency codes as 40-char hex
+// "RLUSD" = 52 4C 55 53 44, padded to 20 bytes
+const RLUSD_HEX = '524C555344000000000000000000000000000000'
+
 // ── Wallet detection ──────────────────────────────────────────
 
 /** Always true — SDK works on mobile and desktop without browser extension */
@@ -98,7 +102,7 @@ export async function getXrplBalances(walletAddress, env) {
         account: walletAddress,
         peer: issuer,
       })
-      const rlusdLine = lines.result.lines?.find(l => l.currency === 'RLUSD')
+      const rlusdLine = lines.result.lines?.find(l => l.currency === RLUSD_HEX || l.currency === 'RLUSD')
       rlusd = rlusdLine ? parseFloat(rlusdLine.balance) : 0
     }
   } catch {
@@ -144,7 +148,7 @@ export async function sendXrplContribution(toAddress, amount, token, env) {
       Account:         fromAddress,
       Destination:     toAddress,
       Amount: {
-        currency: 'RLUSD',
+        currency: RLUSD_HEX,
         issuer,
         value:    String(amount),
       },
@@ -243,7 +247,7 @@ export async function releaseXrplPayout(escrowSeed, recipientAddress, amount, to
       token === 'XRP'
         ? xrpToDrops(String(amount))
         : {
-            currency: 'RLUSD',
+            currency: RLUSD_HEX,
             issuer:   RLUSD_ISSUER[env] ?? RLUSD_ISSUER.dev,
             value:    String(amount),
           },

@@ -22,6 +22,8 @@ const RLUSD_ISSUER = {
   live: '',
 }
 
+const RLUSD_HEX = '524C555344000000000000000000000000000000'
+
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method not allowed' }
@@ -62,7 +64,7 @@ export const handler = async (event) => {
         account: wallet.address,
         peer:    issuer,
       })
-      alreadySet = lines.result.lines?.some(l => l.currency === 'RLUSD')
+      alreadySet = lines.result.lines?.some(l => l.currency === RLUSD_HEX || l.currency === 'RLUSD')
     } catch {
       // account_lines failed — proceed to set trust line
     }
@@ -78,7 +80,7 @@ export const handler = async (event) => {
       TransactionType: 'TrustSet',
       Account: wallet.address,
       LimitAmount: {
-        currency: 'RLUSD',
+        currency: RLUSD_HEX,
         issuer,
         value:    '1000000000',
       },
