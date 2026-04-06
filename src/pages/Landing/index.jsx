@@ -14,12 +14,13 @@ const fadeUp = (delay = 0) => ({
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, delay, ease: 'easeOut' } },
 })
 
-function Section({ children, className = '' }) {
+function Section({ children, className = '', id }) {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-80px' })
   return (
     <motion.section
       ref={ref}
+      id={id}
       variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1 } } }}
       initial="hidden"
       animate={inView ? 'visible' : 'hidden'}
