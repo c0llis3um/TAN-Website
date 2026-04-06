@@ -16,7 +16,7 @@
   "hero": {
     "headline1": "Ahorra juntos.",
     "headline2": "Gana juntos.",
-    "sub": "Una {{word}} es un círculo de ahorro que tu comunidad ha llevado por generaciones. Lo hicimos inquebrantable — seguro, automático, sin necesidad de banco.",
+    "sub": "Una {{word}} es un círculo de ahorro que tu comunidad ha llevado por generaciones. Lo hicimos inquebrantable — seguro, transparente y completamente en cadena.",
     "cta1": "Únete a la Lista",
     "cta2": "Ver cómo funciona",
     "testnetBadge": "TESTNET — Sin dinero real"
@@ -24,13 +24,13 @@
   "tanda": {
     "title": "¿Qué es una Tanda?",
     "p1": "Una Tanda es un círculo comunitario de ahorro. Un grupo de personas acuerda poner la misma cantidad cada semana — y cada semana, una persona se lleva todo el pozo. Rota hasta que todos hayan recibido su pago.",
-    "p2": "Sin intereses. Sin banco. Sin ánimo de lucro. Solo un grupo de personas ayudándose mutuamente a ahorrar y salir adelante — como las comunidades lo han hecho por siglos.",
+    "p2": "Sin intereses. Sin intermediarios. Sin ánimo de lucro. Solo un grupo de personas ayudándose mutuamente a ahorrar y salir adelante — como las comunidades lo han hecho por siglos.",
     "p3": "Quizás la conozcas como Osusu, Hui, Stokvel, Chit Fund o Arisan — misma idea, cada cultura la tiene.",
     "p4": "¿El problema? Cuando el organizador desaparece con el dinero, o alguien deja de pagar después de recibir su pago. DeFi Tanda lo soluciona con un contrato inteligente — código que nadie puede anular, ni siquiera nosotros."
   },
   "how": {
     "title": "Cómo funciona",
-    "sub": "Tres pasos. Sin cuenta bancaria.",
+    "sub": "Tres pasos. Con tu billetera o tarjeta.",
     "step1Title": "Crea o únete a una tanda",
     "step1": "El organizador configura la tanda — tamaño del grupo, cantidad semanal y duración. Los miembros se unen con un depósito de seguridad reembolsable que te devolvemos cuando la tanda termina.",
     "step2Title": "Contribuye cada ciclo",
@@ -54,8 +54,8 @@
       "body": "Un contrato inteligente guarda cada centavo. El organizador maneja el grupo — pero nunca toca los fondos. Los pagos van directo de billetera a billetera."
     },
     "bank": {
-      "title": "Sin cuenta bancaria",
-      "body": "Solo necesitas un teléfono. Paga con Apple Pay o Google Pay — o conecta una billetera cripto. Tu dinero, tu control."
+      "title": "Paga a tu manera",
+      "body": "Paga con tarjeta de débito, transferencia bancaria o conecta tu billetera cripto directamente. Tu dinero, tu control."
     },
     "remit": {
       "title": "Envía tu pago a cualquier lugar",
@@ -179,7 +179,7 @@
     "payNow": "Pagar {{amount}}",
     "shareWa": "Compartir en WhatsApp",
     "shareTg": "Compartir en Telegram",
-    "shareInvite": "¡Únete a mi Tanda DeFi! 💰\n{{amount}} {{token}}/semana durante {{members}} semanas. Seguro, automático, sin banco.\n👉 {{url}}\nLugares disponibles: {{spots}}",
+    "shareInvite": "¡Únete a mi Tanda DeFi! 💰\n{{amount}} {{token}}/semana durante {{members}} semanas. Seguro, automático, en cadena.\n👉 {{url}}\nLugares disponibles: {{spots}}",
     "loading": "Cargando tanda…",
     "notFound": "Tanda no encontrada",
     "back": "← Volver al Inicio",

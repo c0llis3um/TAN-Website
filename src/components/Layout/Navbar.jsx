@@ -8,8 +8,6 @@ import WalletModal from '@/components/WalletModal'
 import useAppStore from '@/store/useAppStore'
 import { onAccountChanged, onChainChanged, removeWalletListeners, disconnectWallet as disconnectProvider } from '@/lib/wallets'
 
-const LANGS = ['es', 'en', 'zh']
-
 export default function Navbar() {
   const { t, i18n } = useTranslation()
   const location    = useLocation()
@@ -61,14 +59,7 @@ export default function Navbar() {
     return () => removeWalletListeners()
   }, [wallet])
 
-  const toggleLang = () => {
-    const idx = LANGS.indexOf(lang)
-    const next = LANGS[(idx + 1) % LANGS.length]
-    setLang(next)
-    i18n.changeLanguage(next)
-  }
-
-  const handleDisconnect = async () => {
+const handleDisconnect = async () => {
     await disconnectProvider(wallet?.provider)
     disconnectWallet()
     setDropdownOpen(false)
@@ -122,13 +113,15 @@ export default function Navbar() {
 
           {/* Right side */}
           <div className="flex items-center gap-3">
-            <motion.button
-              onClick={toggleLang}
-              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-              className="text-xs font-bold dark:text-brand-muted text-slate-500 hover:text-brand-blue transition-colors px-2 py-1 rounded-lg dark:hover:bg-brand-mid hover:bg-slate-100"
+            <select
+              value={lang}
+              onChange={e => { setLang(e.target.value); i18n.changeLanguage(e.target.value) }}
+              className="text-xs font-bold dark:text-brand-muted text-slate-500 dark:bg-transparent bg-transparent hover:text-brand-blue transition-colors px-2 py-1 rounded-lg dark:hover:bg-brand-mid hover:bg-slate-100 cursor-pointer border-none outline-none"
             >
-              {lang === 'es' ? '🇲🇽 ES' : lang === 'zh' ? '🇨🇳 中文' : '🇺🇸 EN'}
-            </motion.button>
+              <option value="es" className="dark:bg-brand-darker bg-white">🇲🇽 ES</option>
+              <option value="en" className="dark:bg-brand-darker bg-white">🇺🇸 EN</option>
+              <option value="zh" className="dark:bg-brand-darker bg-white">🇨🇳 中文</option>
+            </select>
 
             <ThemeToggle />
 

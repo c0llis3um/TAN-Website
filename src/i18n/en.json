@@ -16,7 +16,7 @@
   "hero": {
     "headline1": "Save together.",
     "headline2": "Win together.",
-    "sub": "A {{word}} is a savings circle your community has run for generations. We made it unbreakable — secure, automatic, no bank required.",
+    "sub": "A {{word}} is a savings circle your community has run for generations. We made it unbreakable — secure, transparent, and fully on-chain.",
     "cta1": "Join the Waitlist",
     "cta2": "See how it works",
     "testnetBadge": "TESTNET — No real money"
@@ -24,13 +24,13 @@
   "tanda": {
     "title": "What is a Tanda?",
     "p1": "A Tanda is a community savings circle. A group of people agree to each put in the same amount every week — and every week, one person takes home the whole pot. It rotates until everyone has received their payout.",
-    "p2": "No interest. No bank. No profit. Just a group of people helping each other save and get ahead — the way communities have done it for centuries.",
+    "p2": "No interest. No middleman. No profit. Just a group of people helping each other save and get ahead — the way communities have done it for centuries.",
     "p3": "You might know it as an Osusu, Hui, Stokvel, Chit Fund, or Arisan — same idea, every culture has one.",
     "p4": "The problem? When the organizer disappears, or someone stops paying after getting their payout. DeFi Tanda fixes that with a smart contract — code nobody can override, not even us."
   },
   "how": {
     "title": "How it works",
-    "sub": "Three steps. No bank account required.",
+    "sub": "Three steps. Works with your wallet or card.",
     "step1Title": "Create or join a tanda",
     "step1": "The organizer sets up a tanda — group size, weekly amount, and duration. Members join with a refundable security deposit that is returned to you when the tanda completes.",
     "step2Title": "Contribute every cycle",
@@ -54,8 +54,8 @@
       "body": "A smart contract holds every dollar. The organizer manages the group — but never touches the funds. Payouts happen directly wallet to wallet."
     },
     "bank": {
-      "title": "No bank account needed",
-      "body": "All you need is a phone. Pay with Apple Pay or Google Pay — or connect a crypto wallet. Your money, your control."
+      "title": "Pay your way",
+      "body": "Pay with a debit card, bank transfer, or connect a crypto wallet directly. Your money, your control."
     },
     "remit": {
       "title": "Send your payout anywhere",
@@ -179,7 +179,7 @@
     "payNow": "Pay {{amount}}",
     "shareWa": "Share on WhatsApp",
     "shareTg": "Share on Telegram",
-    "shareInvite": "Join my DeFi Tanda! 💰\n{{amount}} {{token}}/week for {{members}} weeks. Safe, automatic, no bank needed.\n👉 {{url}}\nSpots left: {{spots}}",
+    "shareInvite": "Join my DeFi Tanda! 💰\n{{amount}} {{token}}/week for {{members}} weeks. Safe, automatic, on-chain.\n👉 {{url}}\nSpots left: {{spots}}",
     "loading": "Loading pod…",
     "notFound": "Pod not found",
     "back": "← Back to Dashboard",
