@@ -285,9 +285,9 @@ export default function Landing() {
           <FadeUp delay={0.05}><div className="w-14 h-1 bg-gradient-brand rounded-full mx-auto mb-4" /></FadeUp>
           <FadeUp delay={0.1}><p className="dark:text-brand-muted text-slate-500 text-lg mb-14">{t('chains.sub')}</p></FadeUp>
 
-          <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+          {/* Ethereum card hidden for now — no contracts deployed to mainnet yet. */}
+          <div className="grid gap-6 max-w-sm mx-auto">
             {[
-              { key: 'eth',  logo: null,                 name: 'Ethereum',   star: false },
               { key: 'xrpl', logo: '/media/logou.webp', name: 'XRP Ledger', star: true  },
             ].map(({ key, logo, name, star }, i) => (
               <FadeUp key={key} delay={0.1 * i}>

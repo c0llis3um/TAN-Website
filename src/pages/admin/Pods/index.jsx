@@ -4,6 +4,7 @@ import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import { adminGetAllPods, updatePodStatus, adminForceAdvanceCycle } from '@/lib/db'
 import { releaseCollateral } from '@/lib/contracts'
+import { safeJson } from '@/lib/http'
 import useAppStore from '@/store/useAppStore'
 
 const STATUS_COLORS = { ACTIVE: 'green', COMPLETED: 'blue', DEFAULTED: 'red', OPEN: 'yellow', LOCKED: 'yellow', CANCELLED: 'muted' }
@@ -200,7 +201,7 @@ function PodDetail({ pod, onClose }) {
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token ?? ''}` },
           body:    JSON.stringify({ podId: pod.id }),
         })
-        const json = await res.json()
+        const json = await safeJson(res)
         if (!res.ok) throw new Error(json.error ?? 'Release failed')
         setReleaseTx(json.results?.filter(r => r.status === 'ok').map(r => r.txHash).join(',') || 'done')
       }
@@ -222,7 +223,7 @@ function PodDetail({ pod, onClose }) {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token ?? ''}` },
         body:    JSON.stringify({ podId: pod.id, memberUserId: member.user_id }),
       })
-      const json = await res.json()
+      const json = await safeJson(res)
       if (!res.ok) throw new Error(json.error ?? 'Slash failed')
       setSlashResults(prev => ({ ...prev, [member.user_id]: { txHash: json.txHash } }))
       // Refresh cycle payments

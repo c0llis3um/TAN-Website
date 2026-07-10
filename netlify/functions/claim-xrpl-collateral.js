@@ -20,6 +20,18 @@ const NODES = {
   live: 'wss://xrplcluster.com',
 }
 
+const RLUSD_ISSUER = {
+  dev:  'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh',
+  live: '',
+}
+
+const RLUSD_HEX = '524C555344000000000000000000000000000000'
+
+// Postgres unique_violation — the (pod_id, user_id, cycle) constraint on `payments`
+// is the real idempotency guard; the pre-check below just avoids a redundant chain
+// submission in the common case (e.g. a concurrent release-xrpl-collateral.js run).
+const PG_UNIQUE_VIOLATION = '23505'
+
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method not allowed' }
@@ -56,12 +68,13 @@ export const handler = async (event) => {
       return { statusCode: 403, body: JSON.stringify({ error: 'Wallet is not a member of this pod' }) }
     }
 
-    // ── 3. Check not already claimed ───────────────────────────
+    // ── 3. Check not already claimed (or already released by an admin) ─────
     const { data: existing } = await supabase
       .from('payments')
       .select('id')
       .eq('pod_id', podId)
       .eq('user_id', member.user.id)
+      .eq('cycle', 0)
       .eq('method', 'collateral_return')
       .maybeSingle()
 
@@ -81,29 +94,49 @@ export const handler = async (event) => {
     }
 
     // ── 5. Send collateral ─────────────────────────────────────
-    const env    = pod.env ?? 'dev'
+    const isRlusd = pod.token === 'RLUSD'
+    const env     = pod.env ?? 'dev'
+    const issuer  = RLUSD_ISSUER[env]
+
+    if (isRlusd && !issuer) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'RLUSD issuer not configured for this environment' }) }
+    }
+
     const client = new Client(NODES[env] ?? NODES.dev)
     await client.connect()
 
     const escrowWallet = Wallet.fromSeed(escrowRow.escrow_seed)
-    const amount       = pod.contribution_amount * 2
+    const amount        = pod.contribution_amount * 2
+    let txHash
 
-    const payment = {
-      TransactionType: 'Payment',
-      Account:         escrowWallet.address,
-      Destination:     walletAddress,
-      Amount:          xrpToDrops(String(amount)),
+    try {
+      const payment = {
+        TransactionType: 'Payment',
+        Account:         escrowWallet.address,
+        Destination:     walletAddress,
+        Amount: isRlusd
+          ? { currency: RLUSD_HEX, issuer, value: String(amount) }
+          : xrpToDrops(String(amount)),
+      }
+
+      const prepared = await client.autofill(payment)
+      const signed   = escrowWallet.sign(prepared)
+      const result    = await client.submitAndWait(signed.tx_blob)
+      const txResult  = result.result.meta?.TransactionResult ?? ''
+
+      if (txResult !== 'tesSUCCESS') {
+        throw new Error(`Payment failed: ${txResult}`)
+      }
+
+      txHash = result.result.hash
+    } finally {
+      if (client.isConnected()) {
+        await client.disconnect()
+      }
     }
 
-    const prepared = await client.autofill(payment)
-    const signed   = escrowWallet.sign(prepared)
-    const result   = await client.submitAndWait(signed.tx_blob)
-    await client.disconnect()
-
-    const txHash = result.result.hash
-
     // ── 6. Record claim ────────────────────────────────────────
-    await supabase.from('payments').insert({
+    const { error: insertErr } = await supabase.from('payments').insert({
       pod_id:  podId,
       user_id: member.user.id,
       cycle:   0,
@@ -115,6 +148,22 @@ export const handler = async (event) => {
       status:  'CONFIRMED',
       paid_at: new Date().toISOString(),
     })
+
+    if (insertErr && insertErr.code !== PG_UNIQUE_VIOLATION) {
+      console.error(
+        `[claim-xrpl-collateral] RECONCILIATION NEEDED — payment sent (tx: ${txHash}) but payments ` +
+        `insert failed for pod ${podId} / user ${member.user.id}: ${insertErr.message}`,
+      )
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          success: true, txHash, amount,
+          reconciliationNeeded: true,
+          warning: `Payment sent on-chain but recording it failed (${insertErr.message}). Manual reconciliation required.`,
+        }),
+      }
+    }
 
     console.log(`[claim-xrpl-collateral] ${walletAddress} claimed ${amount} ${pod.token} | tx: ${txHash}`)
 

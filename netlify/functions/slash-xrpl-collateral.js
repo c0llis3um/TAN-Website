@@ -22,9 +22,62 @@ const NODES = {
   live: 'wss://xrplcluster.com',
 }
 
+const RLUSD_ISSUER = {
+  dev:  'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh',
+  live: '',
+}
+
+const RLUSD_HEX = '524C555344000000000000000000000000000000'
+
 function cycleMs(pod) {
   const n = pod.cycle_frequency_days ?? 7
   return pod.env === 'dev' ? n * 36e5 : n * 864e5
+}
+
+// Withdraw `amount` RLUSD from the vault back to the escrow wallet.
+// Returns true on success; throws on non-recoverable errors.
+async function withdrawFromVault(client, escrowWallet, escrowRow, amount, env, supabase, podId) {
+  const vaultId     = escrowRow.vault_id
+  const totalShares = escrowRow.vault_shares
+
+  // Simulation path — vault_id === 'SIMULATED' when XLS-66d not enabled on devnet
+  if (vaultId === 'SIMULATED') {
+    const remaining = (parseFloat(totalShares) - parseFloat(amount)).toFixed(6)
+    await supabase
+      .from('pod_escrows')
+      .update({ vault_shares: remaining })
+      .eq('pod_id', podId)
+    console.log(`[slash] SIMULATED vault: deducted ${amount} RLUSD from shares (${totalShares} → ${remaining})`)
+    return
+  }
+
+  const issuer = RLUSD_ISSUER[env]
+  const vaultWithdrawTx = {
+    TransactionType: 'VaultWithdraw',
+    Account:         escrowWallet.address,
+    VaultID:         vaultId,
+    Amount: {
+      mpt_issuance_id: vaultId,
+      value:           String(parseFloat(totalShares) >= parseFloat(amount) ? amount : totalShares),
+    },
+  }
+
+  const prepared = await client.autofill(vaultWithdrawTx)
+  const signed   = escrowWallet.sign(prepared)
+  const result   = await client.submitAndWait(signed.tx_blob)
+  const txResult = result.result.meta?.TransactionResult ?? ''
+
+  if (txResult !== 'tesSUCCESS') {
+    throw new Error(`VaultWithdraw failed: ${txResult}`)
+  }
+
+  const remaining = (parseFloat(totalShares) - parseFloat(amount)).toFixed(6)
+  await supabase
+    .from('pod_escrows')
+    .update({ vault_shares: Math.max(0, parseFloat(remaining)).toFixed(6) })
+    .eq('pod_id', podId)
+
+  console.log(`[slash] VaultWithdraw OK — withdrew ${amount} RLUSD for slash | vault: ${vaultId} | tx: ${result.result.hash}`)
 }
 
 export const handler = async (event) => {
@@ -42,10 +95,12 @@ export const handler = async (event) => {
   const { data: { user }, error: authErr } = await supabase.auth.getUser(token)
   if (authErr || !user) return { statusCode: 401, body: JSON.stringify({ error: 'Invalid session' }) }
 
+  // admin_users has no user_id column (only email) — match on email, same as
+  // release-xrpl-collateral.js / vault-deposit.js / vault-withdraw.js.
   const { data: admin } = await supabase
     .from('admin_users')
     .select('id')
-    .eq('user_id', user.id)
+    .eq('email', user.email)
     .maybeSingle()
 
   if (!admin) return { statusCode: 403, body: JSON.stringify({ error: 'Not an admin' }) }
@@ -62,6 +117,7 @@ export const handler = async (event) => {
       .select(`
         id, chain, token, contribution_amount, status, env,
         current_cycle, cycle_started_at, cycle_frequency_days,
+        tanda_type, yield_strategy,
         pod_members (
           id, user_id, payout_slot, status,
           user:users ( id, wallet_address )
@@ -121,10 +177,10 @@ export const handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: `No payout recipient found for cycle ${pod.current_cycle}` }) }
     }
 
-    // ── 7. Get escrow seed ────────────────────────────────────
+    // ── 7. Get escrow seed + vault state ─────────────────────
     const { data: escrowRow } = await supabase
       .from('pod_escrows')
-      .select('escrow_seed')
+      .select('escrow_seed, vault_id, vault_shares, vault_status')
       .eq('pod_id', podId)
       .single()
 
@@ -132,19 +188,35 @@ export const handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'No escrow found for this pod' }) }
     }
 
+    const isVaultPod = pod.tanda_type === 'yield' && pod.yield_strategy === 'vault'
+    if (isVaultPod && escrowRow.vault_status !== 'deposited') {
+      return { statusCode: 400, body: JSON.stringify({ error: `Vault is not in deposited state (current: ${escrowRow.vault_status})` }) }
+    }
+
     // ── 8. Send slashed collateral to payout recipient ────────
-    const env    = pod.env ?? 'dev'
-    const client = new Client(NODES[env] ?? NODES.dev)
+    const env          = pod.env ?? 'dev'
+    const client       = new Client(NODES[env] ?? NODES.dev)
     await client.connect()
 
     const escrowWallet = Wallet.fromSeed(escrowRow.escrow_seed)
     const amount       = pod.contribution_amount   // 1× covers the missed payment
 
+    // For vault pods: withdraw from vault first so RLUSD lands in escrow wallet
+    if (isVaultPod) {
+      await withdrawFromVault(client, escrowWallet, escrowRow, String(amount), env, supabase, podId)
+    }
+
+    // Build payment — RLUSD IOU for vault/RLUSD pods, XRP drops otherwise
+    const issuer = RLUSD_ISSUER[env]
+    const paymentAmount = (pod.token === 'RLUSD' && issuer)
+      ? { currency: RLUSD_HEX, issuer, value: String(amount) }
+      : xrpToDrops(String(amount))
+
     const payment = {
       TransactionType: 'Payment',
       Account:         escrowWallet.address,
       Destination:     recipient.user.wallet_address,
-      Amount:          xrpToDrops(String(amount)),
+      Amount:          paymentAmount,
     }
 
     const prepared = await client.autofill(payment)

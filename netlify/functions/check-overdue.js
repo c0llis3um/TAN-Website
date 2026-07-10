@@ -10,15 +10,41 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { Client, Wallet, xrpToDrops } from 'xrpl'
+import { paymentReminderEmail, overdueSlashEmail, sendEmail } from './lib/email.js'
 
 const NODES = {
   dev:  'wss://s.devnet.rippletest.net:51233',
   live: 'wss://xrplcluster.com',
 }
 
+// How long before a cycle's due date to send the "payment due soon" reminder.
+const REMINDER_WINDOW_MS = 2 * 864e5 // 2 days
+
 function cycleMs(pod) {
   const n = pod.cycle_frequency_days ?? 7
   return pod.env === 'dev' ? n * 36e5 : n * 864e5
+}
+
+async function sendDueSoonReminders({ supabase, pod, cycleDue }) {
+  const cycle = pod.current_cycle
+
+  for (const member of pod.pod_members ?? []) {
+    if (member.status === 'DEFAULTED' || !member.user?.email) continue
+
+    const { data: paid } = await supabase
+      .from('payments')
+      .select('id')
+      .eq('pod_id', pod.id)
+      .eq('user_id', member.user_id)
+      .eq('cycle', cycle)
+      .in('status', ['CONFIRMED', 'PENDING'])
+      .maybeSingle()
+
+    if (paid) continue
+
+    const { subject, html } = paymentReminderEmail(pod, { cycle, dueDate: cycleDue })
+    await sendEmail({ to: member.user.email, subject, html })
+  }
 }
 
 async function slashMember({ supabase, pod, member, escrowWallet, env }) {
@@ -92,6 +118,11 @@ async function slashMember({ supabase, pod, member, escrowWallet, env }) {
       .eq('id', member.id),
   ])
 
+  if (member.user?.email) {
+    const { subject, html } = overdueSlashEmail(pod, { cycle, amount, token: pod.token })
+    await sendEmail({ to: member.user.email, subject, html })
+  }
+
   return { slashed: true, txHash, sentTo: recipient.user.wallet_address, amount }
 }
 
@@ -111,7 +142,7 @@ export const handler = async () => {
       current_cycle, cycle_started_at, cycle_frequency_days,
       pod_members (
         id, user_id, payout_slot, status,
-        user:users ( id, wallet_address )
+        user:users ( id, wallet_address, email )
       )
     `)
     .eq('chain', 'XRPL')
@@ -126,7 +157,13 @@ export const handler = async () => {
 
   for (const pod of pods ?? []) {
     const cycleDue = new Date(pod.cycle_started_at).getTime() + cycleMs(pod)
+
     if (Date.now() < cycleDue) {
+      // Not yet overdue — send a "payment due soon" reminder to unpaid members
+      // once the due date falls inside the reminder window.
+      if (cycleDue - Date.now() <= REMINDER_WINDOW_MS) {
+        await sendDueSoonReminders({ supabase, pod, cycleDue })
+      }
       results.push({ podId: pod.id, skipped: true, reason: 'cycle not yet overdue' })
       continue
     }

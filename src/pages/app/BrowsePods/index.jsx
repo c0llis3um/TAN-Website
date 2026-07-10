@@ -27,7 +27,10 @@ export default function BrowsePods() {
 
   useEffect(() => {
     setLoading(true)
-    getOpenPods().then(({ data, error: err }) => {
+    // Ethereum hidden for now (no contracts deployed to mainnet yet) — filter at the
+    // query level so no Ethereum pod (existing or future) ever reaches the client,
+    // regardless of chainFilter state. Drop the { chain: 'XRPL' } arg to re-enable.
+    getOpenPods({ chain: 'XRPL' }).then(({ data, error: err }) => {
       if (err) setError(err.message)
       else setPods(data ?? [])
       setLoading(false)
@@ -62,7 +65,8 @@ export default function BrowsePods() {
           className="flex-1 min-w-[180px] px-4 py-2 rounded-xl text-sm dark:bg-brand-mid bg-white dark:border-brand-border border border-slate-200 dark:text-white text-slate-900 dark:placeholder-brand-muted placeholder-slate-400 outline-none focus:border-brand-blue/60"
         />
         <div className="flex gap-1.5">
-          {['ALL','XRPL','Ethereum'].map(opt => (
+          {/* Ethereum filter hidden for now — no pods can be created on it (see CreatePod). */}
+          {['ALL','XRPL'].map(opt => (
             <button key={opt} onClick={() => setChainFilter(opt)}
               className={`text-xs px-3 py-2 rounded-xl font-semibold transition-all ${
                 chainFilter === opt

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import useAppStore from '@/store/useAppStore'
+import { getPlatformSetting, setPlatformSetting } from '@/lib/db'
 
 const ADMINS = [
   { email: 'alice@defitanda.app', role: 'super_admin', name: 'Alice V.',  added: '2025-11-01', active: true  },
@@ -19,11 +20,21 @@ const item = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, trans
 
 export default function AdminSettings() {
   const { adminUser } = useAppStore()
-  const [pilotFee, setPilotFee]     = useState('2')
-  const [minPool, setMinPool]       = useState('25000')
+  const [pilotFee, setPilotFee]       = useState('2')
+  const [minPool, setMinPool]         = useState('25000')
   const [gracePeriod, setGracePeriod] = useState('72')
-  const [maxPodSize, setMaxPodSize] = useState('20')
-  const [saved, setSaved]           = useState(false)
+  const [maxPodSize, setMaxPodSize]   = useState('20')
+  const [saved, setSaved]             = useState(false)
+  const [kycRequired, setKycRequired] = useState(false)
+
+  useEffect(() => {
+    getPlatformSetting('kyc_required').then(v => setKycRequired(v === 'true'))
+  }, [])
+
+  async function handleKycToggle(val) {
+    setKycRequired(val)
+    await setPlatformSetting('kyc_required', String(val))
+  }
 
   const handleSave = () => {
     setSaved(true)
@@ -76,6 +87,17 @@ export default function AdminSettings() {
         <Card hover={false} className="p-6">
           <h2 className="font-bold dark:text-white text-slate-900 mb-5">Feature Flags</h2>
           <div className="space-y-4">
+            {/* KYC — live, DB-backed */}
+            <div className="flex items-center justify-between py-3 border-b dark:border-brand-border/40 border-slate-100">
+              <div>
+                <p className="text-sm font-semibold dark:text-white text-slate-900">Require KYC to create / join</p>
+                <p className="text-xs dark:text-brand-muted text-slate-400">
+                  {kycRequired ? 'Users must be KYC-approved before creating or joining a tanda.' : 'KYC off — anyone with a wallet can create or join.'}
+                </p>
+              </div>
+              <ToggleSwitch on={kycRequired} onChange={handleKycToggle} />
+            </div>
+
             {[
               { label: 'Bid-Order Payout',       on: false, locked: true,  note: 'Disabled pending legal review' },
               { label: 'Stripe Onramp',           on: true,  locked: false, note: 'Apple Pay / Google Pay → USDC'  },
@@ -176,11 +198,21 @@ export default function AdminSettings() {
   )
 }
 
-function ToggleSwitch({ on, disabled }) {
+function ToggleSwitch({ on, disabled, onChange }) {
   const [enabled, setEnabled] = useState(on)
+
+  useEffect(() => { setEnabled(on) }, [on])
+
+  function handleClick() {
+    if (disabled) return
+    const next = !enabled
+    setEnabled(next)
+    onChange?.(next)
+  }
+
   return (
     <button
-      onClick={() => !disabled && setEnabled(!enabled)}
+      onClick={handleClick}
       disabled={disabled}
       className={`relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'} ${enabled ? 'bg-gradient-brand' : 'dark:bg-brand-border bg-slate-300'}`}
     >

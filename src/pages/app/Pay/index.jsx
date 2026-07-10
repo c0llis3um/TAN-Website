@@ -127,6 +127,19 @@ export default function Pay() {
     // If everyone has paid this cycle, advance to next cycle (or complete the pod)
     await maybeAdvanceCycle(id)
 
+    fetch('/.netlify/functions/notify', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        event:  'payment_received',
+        podId:  id,
+        userId: user.id,
+        cycle:  pod.current_cycle,
+        amount: pod.contribution_amount,
+        token:  pod.token,
+      }),
+    }).catch(() => {}) // best-effort — never block payment confirmation on the notification
+
     setStep('done')
   }
 

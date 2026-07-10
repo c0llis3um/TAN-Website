@@ -1,23 +1,15 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  isMetaMaskInstalled, connectMetaMask,
   isPhantomInstalled,  connectPhantom,
   isXamanInstalled,    connectXaman,
   disconnectWallet as disconnectProvider,
 } from '@/lib/wallets'
 import useAppStore from '@/store/useAppStore'
 
+// MetaMask/Ethereum hidden for now — no TandaFactory/TandaPod contracts deployed to
+// mainnet yet. Re-add once contracts are audited and deployed.
 const WALLETS = [
-  {
-    id:         'metamask',
-    name:       'MetaMask',
-    chains:     'Ethereum · EVM',
-    icon:       MetaMaskIcon,
-    connect:    connectMetaMask,
-    installed:  isMetaMaskInstalled,
-    installUrl: 'https://metamask.io/download/',
-  },
   {
     id:         'xaman',
     name:       'Xaman',

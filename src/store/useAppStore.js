@@ -36,7 +36,7 @@ const useAppStore = create(
     }),
     {
       name: 'defi-tanda-store',
-      partialState: (s) => ({
+      partialize: (s) => ({
         theme:     s.theme,
         lang:      s.lang,
         env:       s.env,

@@ -8,6 +8,18 @@
  * Validates admin session, fetches escrow seed (service_role only),
  * and sends collateral back to every pod member via XRPL.
  *
+ * Idempotent per member — each release is recorded as a `payments` row with
+ * method 'collateral_return' and cycle 0, which shares a real DB unique
+ * constraint (pod_id, user_id, cycle) with claim-xrpl-collateral.js's own
+ * 'collateral_return' rows. That means: calling this twice, or a member
+ * self-claiming via claim-xrpl-collateral.js either before or after an admin
+ * runs this, can never result in that member being paid twice — whichever
+ * write lands first wins, the second is rejected by the DB and skipped here.
+ *
+ * Pays in RLUSD (IOU) when pod.token === 'RLUSD', otherwise XRP drops —
+ * previously this always sent XRP drops regardless of token, which would
+ * have paid the wrong currency (and likely failed outright) for RLUSD pods.
+ *
  * Required env vars (set in Netlify dashboard, NOT prefixed with VITE_):
  *   SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
@@ -20,6 +32,18 @@ const NODES = {
   dev:  'wss://s.devnet.rippletest.net:51233',
   live: 'wss://xrplcluster.com',
 }
+
+const RLUSD_ISSUER = {
+  dev:  'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh',
+  live: '',
+}
+
+const RLUSD_HEX = '524C555344000000000000000000000000000000'
+
+// Postgres unique_violation error code — used to detect a race where two
+// concurrent calls (or a concurrent self-claim via claim-xrpl-collateral.js)
+// both tried to record the same member's collateral_return at once.
+const PG_UNIQUE_VIOLATION = '23505'
 
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -62,7 +86,7 @@ export const handler = async (event) => {
       .from('pods')
       .select(`
         id, chain, token, contribution_amount, status, env,
-        pod_members ( id, user:users ( wallet_address ) )
+        pod_members ( id, user:users ( id, wallet_address ) )
       `)
       .eq('id', podId)
       .single()
@@ -81,48 +105,114 @@ export const handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'No escrow configured for this pod' }) }
     }
 
-    // ── 3. Release collateral to each member ───────────────────
-    const env   = pod.env ?? 'dev'
-    const node  = NODES[env] ?? NODES.dev
+    const isRlusd = pod.token === 'RLUSD'
+    const env     = pod.env ?? 'dev'
+    const node    = NODES[env] ?? NODES.dev
+    const issuer  = RLUSD_ISSUER[env]
 
+    if (isRlusd && !issuer) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'RLUSD issuer not configured for this environment' }) }
+    }
+
+    // ── 3. Release collateral to each member ───────────────────
     const client = new Client(node)
     await client.connect()
 
-    const escrowWallet      = Wallet.fromSeed(escrowRow.escrow_seed)
+    const escrowWallet        = Wallet.fromSeed(escrowRow.escrow_seed)
     const collateralPerMember = pod.contribution_amount * 2
-    const results           = []
+    const results             = []
 
-    for (const member of pod.pod_members) {
-      const recipientAddress = member.user?.wallet_address
-      if (!recipientAddress) {
-        results.push({ status: 'skipped', reason: 'No wallet address' })
-        continue
-      }
+    try {
+      for (const member of pod.pod_members) {
+        const recipientAddress = member.user?.wallet_address
+        const recipientUserId  = member.user?.id
 
-      try {
-        const payment = {
-          TransactionType: 'Payment',
-          Account:         escrowWallet.address,
-          Destination:     recipientAddress,
-          Amount:          xrpToDrops(String(collateralPerMember)),
+        if (!recipientAddress || !recipientUserId) {
+          results.push({ status: 'skipped', reason: 'No wallet address / user record' })
+          continue
         }
 
-        const prepared = await client.autofill(payment)
-        const signed   = escrowWallet.sign(prepared)
-        const result   = await client.submitAndWait(signed.tx_blob)
+        // ── Idempotency pre-check ──────────────────────────────
+        const { data: existing } = await supabase
+          .from('payments')
+          .select('id')
+          .eq('pod_id', podId)
+          .eq('user_id', recipientUserId)
+          .eq('cycle', 0)
+          .eq('method', 'collateral_return')
+          .maybeSingle()
 
-        results.push({
-          member:  recipientAddress,
-          txHash:  result.result.hash,
-          amount:  collateralPerMember,
-          status:  'ok',
-        })
-      } catch (e) {
-        results.push({ member: recipientAddress, error: e.message, status: 'failed' })
+        if (existing) {
+          results.push({ member: recipientAddress, status: 'skipped', reason: 'already released/claimed' })
+          continue
+        }
+
+        try {
+          const payment = {
+            TransactionType: 'Payment',
+            Account:         escrowWallet.address,
+            Destination:     recipientAddress,
+            Amount: isRlusd
+              ? { currency: RLUSD_HEX, issuer, value: String(collateralPerMember) }
+              : xrpToDrops(String(collateralPerMember)),
+          }
+
+          const prepared = await client.autofill(payment)
+          const signed   = escrowWallet.sign(prepared)
+          const result   = await client.submitAndWait(signed.tx_blob)
+          const txResult = result.result.meta?.TransactionResult ?? ''
+
+          if (txResult !== 'tesSUCCESS') {
+            throw new Error(`Payment failed: ${txResult}`)
+          }
+
+          const txHash = result.result.hash
+
+          // Record the release — the (pod_id, user_id, cycle) unique constraint is the
+          // real idempotency guard; the pre-check above just avoids a redundant chain
+          // submission in the common case.
+          const { error: insertErr } = await supabase.from('payments').insert({
+            pod_id:  podId,
+            user_id: recipientUserId,
+            cycle:   0,
+            amount:  collateralPerMember,
+            token:   pod.token,
+            chain:   pod.chain,
+            method:  'collateral_return',
+            tx_hash: txHash,
+            status:  'CONFIRMED',
+            paid_at: new Date().toISOString(),
+          })
+
+          if (insertErr && insertErr.code !== PG_UNIQUE_VIOLATION) {
+            // Funds already sent on-chain — flag for reconciliation rather than
+            // pretending nothing happened.
+            console.error(
+              `[release-xrpl-collateral] RECONCILIATION NEEDED — payment sent (tx: ${txHash}) ` +
+              `but payments insert failed for pod ${podId} / user ${recipientUserId}: ${insertErr.message}`,
+            )
+            results.push({
+              member: recipientAddress, txHash, amount: collateralPerMember,
+              status: 'reconciliationNeeded', warning: insertErr.message,
+            })
+            continue
+          }
+
+          results.push({
+            member:  recipientAddress,
+            txHash,
+            amount:  collateralPerMember,
+            status:  'ok',
+          })
+        } catch (e) {
+          results.push({ member: recipientAddress, error: e.message, status: 'failed' })
+        }
+      }
+    } finally {
+      if (client.isConnected()) {
+        await client.disconnect()
       }
     }
-
-    await client.disconnect()
 
     return {
       statusCode: 200,

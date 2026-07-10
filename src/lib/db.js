@@ -33,12 +33,45 @@ export async function getUser(walletAddress) {
     .single()
 }
 
-export async function upsertUser({ wallet_address, chain, alias, lang }) {
+export async function upsertUser({ wallet_address, chain, alias, lang, email }) {
   return supabase
     .from('users')
-    .upsert({ wallet_address, chain, alias, lang }, { onConflict: 'wallet_address' })
+    .upsert({ wallet_address, chain, alias, lang, email }, { onConflict: 'wallet_address' })
     .select('*')
     .single()
+}
+
+export async function getVaultInfo(podId) {
+  const { data } = await supabase
+    .from('pod_escrows')
+    .select('vault_id, vault_shares, vault_deposited_at, vault_status')
+    .eq('pod_id', podId)
+    .maybeSingle()
+  return data ?? null
+}
+
+export async function getPlatformSetting(key) {
+  const { data } = await supabase
+    .from('platform_settings')
+    .select('value')
+    .eq('key', key)
+    .maybeSingle()
+  return data?.value ?? null
+}
+
+export async function setPlatformSetting(key, value) {
+  return supabase
+    .from('platform_settings')
+    .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+}
+
+export async function getUserKycStatus(walletAddress) {
+  const { data } = await supabase
+    .from('users')
+    .select('kyc_status')
+    .eq('wallet_address', walletAddress)
+    .maybeSingle()
+  return data?.kyc_status ?? 'none'
 }
 
 export async function updateUserProfile(walletAddress, { alias, email, lang }) {
@@ -144,15 +177,18 @@ export async function createPod({
   chain, token, name, organizer_id,
   contribution_amount, size, payout_method,
   cycle_frequency_days = 7, env,
+  tanda_type = 'standard', yield_strategy = null,
 }) {
   return supabase
     .from('pods')
     .insert({
       chain, token, name, organizer_id,
       contribution_amount, size,
-      total_cycles: size,       // 1 cycle per member
+      total_cycles: size,
       payout_method, cycle_frequency_days, env,
       status: 'OPEN',
+      tanda_type,
+      ...(yield_strategy ? { yield_strategy } : {}),
     })
     .select('id')
     .single()
@@ -409,6 +445,18 @@ export async function adminGetDisputes() {
       respondent:users!respondent_id ( alias, wallet_address )
     `)
     .order('created_at', { ascending: false })
+}
+
+export async function adminUpdateUserKyc(userId, approved) {
+  return supabase
+    .from('users')
+    .update({
+      kyc_status:      approved ? 'approved' : 'none',
+      kyc_verified_at: approved ? new Date().toISOString() : null,
+    })
+    .eq('id', userId)
+    .select('id')
+    .single()
 }
 
 export async function adminUpdateUserStatus(userId, status) {

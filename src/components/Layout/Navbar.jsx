@@ -27,18 +27,21 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handler)
   }, [])
 
-  // Auto-restore MetaMask session on page load (if already connected)
-  useEffect(() => {
-    if (wallet || !window.ethereum) return
-    window.ethereum.request({ method: 'eth_accounts' }).then(accounts => {
-      if (!accounts?.length) return
-      window.ethereum.request({ method: 'eth_chainId' }).then(chainIdHex => {
-        const chainId   = parseInt(chainIdHex, 16)
-        const chainName = { 1: 'Ethereum Mainnet', 11155111: 'Sepolia Testnet', 137: 'Polygon', 8453: 'Base', 31337: 'Hardhat Local' }[chainId] ?? `Chain ${chainId}`
-        setWallet({ address: accounts[0], chain: 'Ethereum', chainId, chainName, provider: 'metamask' })
-      })
-    }).catch(() => {})
-  }, [])
+  // Ethereum hidden for now (no contracts deployed to mainnet yet) — auto-restoring a
+  // MetaMask session here would silently set wallet.chain = 'Ethereum' even though
+  // WalletModal no longer offers connecting one. Re-enable alongside CreatePod's
+  // CHAINS / WalletModal's WALLETS once Ethereum is unhidden.
+  // useEffect(() => {
+  //   if (wallet || !window.ethereum) return
+  //   window.ethereum.request({ method: 'eth_accounts' }).then(accounts => {
+  //     if (!accounts?.length) return
+  //     window.ethereum.request({ method: 'eth_chainId' }).then(chainIdHex => {
+  //       const chainId   = parseInt(chainIdHex, 16)
+  //       const chainName = { 1: 'Ethereum Mainnet', 11155111: 'Sepolia Testnet', 137: 'Polygon', 8453: 'Base', 31337: 'Hardhat Local' }[chainId] ?? `Chain ${chainId}`
+  //       setWallet({ address: accounts[0], chain: 'Ethereum', chainId, chainName, provider: 'metamask' })
+  //     })
+  //   }).catch(() => {})
+  // }, [])
 
   // Keep app state in sync if user switches account or chain in MetaMask
   useEffect(() => {

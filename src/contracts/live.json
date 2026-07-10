@@ -1,11 +1,12 @@
 {
   "_note": "LIVE — mainnet. Real funds. 2-of-3 super_admin required to activate.",
+  "_rlusdIssuerNote": "Verified via public XRPL ledger data + Ripple docs as of 2026-07-10. Reconfirm through an official Ripple channel before this is ever used to move real funds — do not copy into RLUSD_ISSUER.live in the Netlify functions without that reconfirmation.",
   "xrpl": {
     "networkUrl": "wss://xrplcluster.com",
     "networkName": "XRPL Mainnet",
     "fulfillmentAccount": "",
     "insuranceAccount": "",
-    "rlusdIssuer": "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh"
+    "rlusdIssuer": "rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De"
   },
   "ethereum": {
     "chainId": 1,

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import useAppStore from '@/store/useAppStore'
-import { getPod, joinPod, getUser, upsertUser, maybeActivatePod, cycleMs, updatePodStatus, getPodPayments } from '@/lib/db'
+import { getPod, joinPod, getUser, upsertUser, maybeActivatePod, cycleMs, updatePodStatus, getPodPayments, getVaultInfo } from '@/lib/db'
 import { tandaPodJoin, cancelTandaPod, claimCollateral } from '@/lib/contracts'
+import { safeJson } from '@/lib/http'
 
 function shareWa(text) { window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank') }
 function shareTg(url, text) { window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank') }
@@ -32,13 +33,20 @@ export default function PodView() {
   const [claiming,    setClaiming]    = useState(false)
   const [claimTx,     setClaimTx]     = useState(null)
   const [claimErr,    setClaimErr]    = useState(null)
+  const [vaultInfo,   setVaultInfo]   = useState(null)
+  const [joinEmail,   setJoinEmail]   = useState('')
 
   useEffect(() => {
     if (!id) return
     setLoading(true)
     Promise.all([getPod(id), getPodPayments(id)]).then(([{ data, error: err }, { data: pays }]) => {
       if (err || !data) setError(err?.message ?? 'Pod not found.')
-      else setPod(data)
+      else {
+        setPod(data)
+        if (data?.tanda_type === 'yield') {
+          getVaultInfo(id).then(setVaultInfo)
+        }
+      }
       setPayments(pays ?? [])
       setLoading(false)
     })
@@ -52,6 +60,7 @@ export default function PodView() {
       wallet_address: wallet.address,
       chain: wallet.chain ?? 'Ethereum',
       lang: 'es',
+      email: joinEmail.trim() || undefined,
     })
     if (userErr || !user) {
       setJoinError(userErr?.message ?? 'Could not create user profile.')
@@ -86,7 +95,7 @@ export default function PodView() {
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ podId: id, env }),
           })
-          const json = await res.json()
+          const json = await safeJson(res)
           if (!res.ok) throw new Error(json.error ?? 'Could not set up RLUSD trust line on escrow.')
         } catch (err) {
           setJoinError(err?.message ?? 'RLUSD escrow setup failed.')
@@ -122,6 +131,13 @@ export default function PodView() {
     // Refresh pod data to show new member + updated status
     const { data: fresh } = await getPod(id)
     if (fresh) setPod(fresh)
+
+    fetch('/.netlify/functions/notify', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ event: 'pod_joined', podId: id, userId: user.id }),
+    }).catch(() => {}) // best-effort — never block joining on the notification
+
     setJoinDone(true)
     setJoining(false)
   }
@@ -157,7 +173,7 @@ export default function PodView() {
           headers: { 'Content-Type': 'application/json' },
           body:    JSON.stringify({ podId: pod.id, walletAddress: wallet.address }),
         })
-        const json = await res.json()
+        const json = await safeJson(res)
         if (!res.ok) throw new Error(json.error ?? 'Claim failed')
         setClaimTx(json.txHash)
       }
@@ -183,6 +199,20 @@ export default function PodView() {
         <p className="text-4xl mb-4">⚠</p>
         <h2 className="text-xl font-bold dark:text-white text-slate-900 mb-2">{t('pod.notFound')}</h2>
         <p className="text-sm text-red-400 mb-6">{error}</p>
+        <Button onClick={() => navigate('/app')}>{t('pod.back')}</Button>
+      </div>
+    )
+  }
+
+  // Ethereum hidden for now (no contracts deployed to mainnet yet) — BrowsePods no
+  // longer lists Ethereum pods, but this page is still reachable by direct URL for
+  // any pod that was created before the hide. Block interaction here too.
+  if (pod.chain === 'Ethereum') {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-16 text-center">
+        <p className="text-4xl mb-4">🚧</p>
+        <h2 className="text-xl font-bold dark:text-white text-slate-900 mb-2">Ethereum pods are temporarily unavailable</h2>
+        <p className="text-sm dark:text-brand-muted text-slate-500 mb-6">This pod runs on Ethereum, which is paused for now. Check back soon.</p>
         <Button onClick={() => navigate('/app')}>{t('pod.back')}</Button>
       </div>
     )
@@ -245,6 +275,11 @@ export default function PodView() {
                 <p className="text-xs text-amber-400 font-semibold text-right max-w-[200px]">
                   {t('pod.creatorNote')}
                 </p>
+              )}
+              {!joining && !joinDone && (
+                <input type="email" value={joinEmail} onChange={e => setJoinEmail(e.target.value)}
+                  placeholder={t('pod.emailPlaceholder')}
+                  className="w-[200px] px-3 py-2 rounded-xl text-xs text-right dark:bg-brand-dark bg-slate-50 dark:border-brand-border border border-slate-200 dark:text-white text-slate-900 dark:placeholder-brand-muted placeholder-slate-400 outline-none focus:border-brand-blue/60" />
               )}
               <Button onClick={handleJoin} disabled={joining || joinDone}>
                 {joining ? t('pod.joining') : joinDone ? t('pod.joinedDone') : t('pod.joinBtn')}
@@ -522,6 +557,11 @@ export default function PodView() {
             )}
           </Card>
 
+          {/* Yield Vault Growth Card */}
+          {pod.tanda_type === 'yield' && myMember && (
+            <YieldVaultCard pod={pod} vaultInfo={vaultInfo} t={t} />
+          )}
+
           {/* My Payout */}
           {mySlot && pod.status === 'ACTIVE' && pod.cycle_started_at && (
             <Card hover={false} className="p-5">
@@ -588,6 +628,9 @@ export default function PodView() {
           )}
 
 
+          {/* How it works */}
+          <HowItWorksCard pod={pod} t={t} />
+
           {/* Share */}
           <Card hover={false} className="p-5">
             <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-1">{t('pod.inviteTitle')}</h3>
@@ -619,6 +662,219 @@ export default function PodView() {
         </div>
       </div>
     </div>
+  )
+}
+
+function HowItWorksCard({ pod, t }) {
+  const [open, setOpen] = useState(false)
+
+  const status = pod.status
+  const isYield = pod.tanda_type === 'yield'
+
+  const stepsKey = status === 'COMPLETED' ? 'howCompleted'
+    : status === 'ACTIVE' ? 'howActive'
+    : 'howOpen'
+
+  const rawSteps = t(stepsKey, { returnObjects: true, size: pod.size })
+  const steps = Array.isArray(rawSteps) ? rawSteps : []
+
+  const icons = status === 'COMPLETED'
+    ? ['🎉', '💰', '🏅', '🔄']
+    : status === 'ACTIVE'
+    ? ['⏰', '🔒', '💸', '✅']
+    : ['🔑', '👥', '🔄', '🏁']
+
+  return (
+    <Card hover={false} className="overflow-hidden">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left group">
+        <div className="flex items-center gap-2">
+          <span className="text-base">❓</span>
+          <span className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 group-hover:text-brand-cyan transition-colors">
+            {t('pod.howToggle')}
+          </span>
+        </div>
+        <motion.span
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+          className="text-xs dark:text-brand-muted text-slate-400">
+          ▾
+        </motion.span>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            key="how-body"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}>
+            <div className="px-5 pb-5 border-t dark:border-brand-border/40 border-slate-100 pt-4 space-y-3">
+
+              {steps.map((step, i) => (
+                <div key={i} className="flex gap-3">
+                  <div className="w-7 h-7 rounded-xl dark:bg-brand-dark bg-slate-100 flex items-center justify-center text-sm flex-shrink-0 mt-0.5">
+                    {icons[i] ?? '•'}
+                  </div>
+                  <p className="text-xs dark:text-brand-text text-slate-600 leading-relaxed pt-1">{step}</p>
+                </div>
+              ))}
+
+              {/* Slash warning — always shown for active/open pods */}
+              {status !== 'COMPLETED' && (
+                <div className="mt-2 p-3 rounded-xl dark:bg-red-500/10 bg-red-50 border dark:border-red-500/20 border-red-100 flex gap-2">
+                  <span className="text-sm flex-shrink-0">⚡</span>
+                  <p className="text-xs text-red-400 leading-relaxed">{t('pod.howSlashWarning')}</p>
+                </div>
+              )}
+
+              {/* Yield extra note */}
+              {isYield && (
+                <div className="p-3 rounded-xl dark:bg-emerald-500/10 bg-emerald-50 border dark:border-emerald-500/20 border-emerald-100 flex gap-2">
+                  <span className="text-sm flex-shrink-0">🌱</span>
+                  <p className="text-xs text-emerald-500 leading-relaxed">{t('pod.howYieldExtra')}</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Card>
+  )
+}
+
+const APY = { vault: 0.06, amm: 0.10 }
+
+function YieldVaultCard({ pod, vaultInfo, t }) {
+  const principal  = pod.contribution_amount * 2
+  const apy        = APY[pod.yield_strategy] ?? 0.06
+  const isDeposited = vaultInfo?.vault_status === 'deposited'
+  const isSimulated = vaultInfo?.vault_id === 'SIMULATED'
+
+  let currentValue = principal
+  let earned       = 0
+  let daysLocked   = 0
+
+  if (isDeposited && vaultInfo?.vault_deposited_at) {
+    const elapsed  = Date.now() - new Date(vaultInfo.vault_deposited_at).getTime()
+    const years    = elapsed / (365.25 * 24 * 60 * 60 * 1000)
+    earned         = principal * apy * years
+    currentValue   = principal + earned
+    daysLocked     = Math.max(1, Math.floor(elapsed / 864e5))
+  }
+
+  const growthPct     = earned > 0 ? ((earned / principal) * 100) : 0
+  const barWidth      = Math.min(growthPct * 50, 100)   // scale so even tiny growth is visible
+  const formattedVal  = currentValue.toFixed(currentValue < 100 ? 4 : 2)
+  const formattedEarn = earned > 0 ? `+${earned.toFixed(4)}` : '+0.0000'
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+      <div className="relative rounded-3xl overflow-hidden border dark:border-emerald-500/20 border-emerald-200 shadow-lg">
+
+        {/* Background glow */}
+        <div className="absolute inset-0 bg-gradient-to-br dark:from-emerald-950/60 dark:to-brand-darker from-emerald-50 to-white pointer-events-none" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-400/10 rounded-full -translate-y-8 translate-x-8 blur-2xl pointer-events-none" />
+
+        <div className="relative p-5">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🌱</span>
+              <h3 className="text-xs font-bold uppercase tracking-widest dark:text-emerald-400 text-emerald-600">
+                {t('pod.vaultCardTitle')}
+              </h3>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {isSimulated && <span className="text-[10px] px-2 py-0.5 rounded-full dark:bg-brand-border bg-slate-200 dark:text-brand-muted text-slate-500">Sim</span>}
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 font-bold">
+                ~{(apy * 100).toFixed(0)}% APY
+              </span>
+            </div>
+          </div>
+
+          {isDeposited ? (
+            <>
+              {/* Main value */}
+              <div className="text-center py-3 mb-4">
+                <motion.p
+                  className="text-3xl font-extrabold"
+                  style={{ background: 'linear-gradient(135deg, #34d399, #22d3ee)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
+                  {formattedVal}
+                  <span className="text-lg ml-1.5">{pod.token}</span>
+                </motion.p>
+                <p className="text-xs dark:text-brand-muted text-slate-400 mt-1">{t('pod.vaultCurrentValue')}</p>
+              </div>
+
+              {/* Principal / Earned */}
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                <div className="dark:bg-black/20 bg-white/60 rounded-2xl p-3 text-center border dark:border-brand-border/30 border-slate-100">
+                  <p className="text-[10px] dark:text-brand-muted text-slate-400 uppercase tracking-wide">{t('pod.vaultPrincipal')}</p>
+                  <p className="font-bold dark:text-white text-slate-900 text-sm mt-0.5">{principal} <span className="text-xs font-normal dark:text-brand-muted text-slate-400">{pod.token}</span></p>
+                </div>
+                <div className="dark:bg-emerald-500/10 bg-emerald-50 rounded-2xl p-3 text-center border dark:border-emerald-500/20 border-emerald-100">
+                  <p className="text-[10px] text-emerald-500 uppercase tracking-wide">{t('pod.vaultEarned')}</p>
+                  <p className="font-bold text-emerald-400 text-sm mt-0.5">{formattedEarn} <span className="text-xs font-normal">{pod.token}</span></p>
+                </div>
+              </div>
+
+              {/* Growth bar */}
+              <div className="mb-4">
+                <div className="flex justify-between text-[10px] mb-1.5">
+                  <span className="dark:text-brand-muted text-slate-400 uppercase tracking-wide">{t('pod.vaultGrowth')}</span>
+                  <span className="font-bold text-emerald-400">+{growthPct.toFixed(4)}%</span>
+                </div>
+                <div className="h-2 dark:bg-black/30 bg-slate-200 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ background: 'linear-gradient(90deg, #34d399, #22d3ee)' }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.max(barWidth, 1)}%` }}
+                    transition={{ duration: 1.8, ease: 'easeOut', delay: 0.4 }}
+                  />
+                </div>
+              </div>
+
+              {/* Footer stats */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="dark:text-brand-muted text-slate-400">{t('pod.vaultStrategy')}</span>
+                  <span className="font-semibold dark:text-white text-slate-700">
+                    {pod.yield_strategy === 'vault' ? 'Vault (XLS-66d)' : 'AMM Pool (XLS-30)'}
+                  </span>
+                </div>
+                {daysLocked > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="dark:text-brand-muted text-slate-400">{t('pod.vaultDaysLocked')}</span>
+                    <span className="font-semibold text-emerald-400">{daysLocked} days</span>
+                  </div>
+                )}
+              </div>
+
+              {isSimulated && (
+                <p className="text-[10px] dark:text-brand-muted text-slate-400 text-center mt-3 italic">{t('pod.vaultSimulated')}</p>
+              )}
+            </>
+          ) : (
+            /* Not yet deposited */
+            <div className="text-center py-4">
+              <div className="text-4xl mb-3">🏦</div>
+              <p className="text-sm font-bold dark:text-white text-slate-900 mb-1">{principal} {pod.token}</p>
+              <p className="text-xs dark:text-brand-muted text-slate-400">{t('pod.vaultPending')}</p>
+              <div className="mt-3 flex items-center justify-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-xs text-emerald-400 font-semibold">~{(apy * 100).toFixed(0)}% APY waiting</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
   )
 }
 

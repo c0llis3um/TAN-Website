@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
-import { adminGetAllUsers, adminUpdateUserStatus } from '@/lib/db'
+import { adminGetAllUsers, adminUpdateUserStatus, adminUpdateUserKyc } from '@/lib/db'
 
 const STATUS_COLORS = { ACTIVE: 'green', FLAGGED: 'yellow', SUSPENDED: 'red' }
+const KYC_COLORS    = { approved: 'green', pending: 'amber', rejected: 'red', none: 'muted' }
 const stagger = { visible: { transition: { staggerChildren: 0.05 } } }
 const row     = { hidden: { opacity: 0, x: -8 }, visible: { opacity: 1, x: 0, transition: { duration: 0.3 } } }
 
@@ -13,6 +14,7 @@ export default function AdminUsers() {
   const [loading,      setLoading]      = useState(true)
   const [search,       setSearch]       = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
+  const [kycFilter,    setKycFilter]    = useState('ALL')
   const [selected,     setSelected]     = useState(null)
 
   useEffect(() => {
@@ -27,7 +29,8 @@ export default function AdminUsers() {
       (u.email ?? '').toLowerCase().includes(search.toLowerCase()) ||
       u.wallet_address.toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === 'ALL' || u.status === statusFilter
-    return matchSearch && matchStatus
+    const matchKyc    = kycFilter === 'ALL' || (u.kyc_status ?? 'none') === kycFilter
+    return matchSearch && matchStatus && matchKyc
   })
 
   async function handleStatusChange(user, status) {
@@ -36,22 +39,29 @@ export default function AdminUsers() {
     setSelected(prev => prev ? { ...prev, status } : null)
   }
 
+  async function handleKycToggle(user, approved) {
+    await adminUpdateUserKyc(user.id, approved)
+    const kyc_status = approved ? 'approved' : 'none'
+    setUsers(prev => prev.map(u => u.id === user.id ? { ...u, kyc_status } : u))
+    setSelected(prev => prev ? { ...prev, kyc_status } : null)
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-extrabold dark:text-white text-slate-900">Users</h1>
         <p className="text-sm dark:text-brand-muted text-slate-500 mt-0.5">
-          {loading ? '…' : `${users.length} registered · ${users.filter(u => u.status === 'ACTIVE').length} active`}
+          {loading ? '…' : `${users.length} registered · ${users.filter(u => u.kyc_status === 'approved').length} KYC approved`}
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Users',  value: users.length,                                     color: 'text-brand-cyan'   },
-          { label: 'KYC Verified', value: users.filter(u => u.kyc_verified).length,          color: 'text-emerald-400'  },
-          { label: 'Flagged',      value: users.filter(u => u.status === 'FLAGGED').length,  color: 'text-amber-400'    },
-          { label: 'Suspended',    value: users.filter(u => u.status === 'SUSPENDED').length,color: 'text-red-400'      },
+          { label: 'Total Users',    value: users.length,                                              color: 'text-brand-cyan'  },
+          { label: 'KYC Approved',   value: users.filter(u => u.kyc_status === 'approved').length,     color: 'text-emerald-400' },
+          { label: 'KYC Pending',    value: users.filter(u => u.kyc_status === 'pending').length,      color: 'text-amber-400'   },
+          { label: 'Suspended',      value: users.filter(u => u.status === 'SUSPENDED').length,        color: 'text-red-400'     },
         ].map(s => (
           <Card key={s.label} hover={false} className="p-4">
             <div className={`text-2xl font-extrabold mb-1 ${s.color}`}>{loading ? '…' : s.value}</div>
@@ -61,18 +71,28 @@ export default function AdminUsers() {
       </div>
 
       {/* Filters */}
-      <Card hover={false} className="p-4">
-        <div className="flex flex-wrap gap-3">
-          <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search by alias, email, or wallet…"
-            className="flex-1 min-w-[220px] px-4 py-2 rounded-xl text-sm dark:bg-brand-dark bg-slate-50 dark:border-brand-border border border-slate-200 dark:text-white text-slate-900 dark:placeholder-brand-muted placeholder-slate-400 outline-none focus:border-brand-blue/60"
-          />
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs dark:text-brand-muted text-slate-400 font-semibold mr-1">Status:</span>
+      <Card hover={false} className="p-4 space-y-3">
+        <input value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Search by alias, email, or wallet…"
+          className="w-full px-4 py-2 rounded-xl text-sm dark:bg-brand-dark bg-slate-50 dark:border-brand-border border border-slate-200 dark:text-white text-slate-900 dark:placeholder-brand-muted placeholder-slate-400 outline-none focus:border-brand-blue/60"
+        />
+        <div className="flex flex-wrap gap-4">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs dark:text-brand-muted text-slate-400 font-semibold">Status:</span>
             {['ALL','ACTIVE','FLAGGED','SUSPENDED'].map(opt => (
               <button key={opt} onClick={() => setStatusFilter(opt)}
                 className={`text-xs px-3 py-1.5 rounded-lg font-semibold transition-all ${
                   statusFilter === opt ? 'bg-gradient-brand text-white' : 'dark:bg-brand-dark bg-slate-100 dark:text-brand-muted text-slate-500 dark:hover:bg-brand-mid hover:bg-slate-200'}`}>
+                {opt}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs dark:text-brand-muted text-slate-400 font-semibold">KYC:</span>
+            {['ALL','approved','pending','none'].map(opt => (
+              <button key={opt} onClick={() => setKycFilter(opt)}
+                className={`text-xs px-3 py-1.5 rounded-lg font-semibold transition-all capitalize ${
+                  kycFilter === opt ? 'bg-gradient-brand text-white' : 'dark:bg-brand-dark bg-slate-100 dark:text-brand-muted text-slate-500 dark:hover:bg-brand-mid hover:bg-slate-200'}`}>
                 {opt}
               </button>
             ))}
@@ -95,8 +115,9 @@ export default function AdminUsers() {
               {loading ? (
                 <tr><td colSpan={8} className="px-5 py-12 text-center dark:text-brand-muted text-slate-400">Loading…</td></tr>
               ) : filtered.map(user => {
-                const initials = (user.alias ?? user.wallet_address ?? '?')[0].toUpperCase()
-                const short    = `${user.wallet_address.slice(0,6)}…${user.wallet_address.slice(-4)}`
+                const initials  = (user.alias ?? user.wallet_address ?? '?')[0].toUpperCase()
+                const short     = `${user.wallet_address.slice(0,6)}…${user.wallet_address.slice(-4)}`
+                const kycStatus = user.kyc_status ?? 'none'
                 return (
                   <motion.tr key={user.id} variants={row} onClick={() => setSelected(user)}
                     className="border-b dark:border-brand-border/40 border-slate-100 last:border-0 dark:hover:bg-brand-mid/40 hover:bg-slate-50 transition-colors cursor-pointer">
@@ -111,7 +132,7 @@ export default function AdminUsers() {
                     <td className="px-5 py-4 font-mono text-xs dark:text-brand-muted text-slate-400">{short}</td>
                     <td className="px-5 py-4"><Badge variant={user.chain === 'XRPL' ? 'blue' : 'muted'}>{user.chain}</Badge></td>
                     <td className="px-5 py-4"><ScorePill score={user.reputation_score} /></td>
-                    <td className="px-5 py-4 text-center">{user.kyc_verified ? <span className="text-emerald-400 font-bold">✓</span> : <span className="dark:text-brand-muted text-slate-300">—</span>}</td>
+                    <td className="px-5 py-4"><Badge variant={KYC_COLORS[kycStatus] ?? 'muted'} className="capitalize">{kycStatus}</Badge></td>
                     <td className="px-5 py-4"><Badge variant={STATUS_COLORS[user.status] ?? 'muted'}>{user.status}</Badge></td>
                     <td className="px-5 py-4 text-xs dark:text-brand-muted text-slate-400 whitespace-nowrap">{new Date(user.created_at).toLocaleDateString()}</td>
                     <td className="px-5 py-4"><button className="text-xs text-brand-cyan hover:underline font-semibold whitespace-nowrap">View →</button></td>
@@ -126,7 +147,14 @@ export default function AdminUsers() {
         </div>
       </Card>
 
-      {selected && <UserDetail user={selected} onClose={() => setSelected(null)} onStatusChange={handleStatusChange} />}
+      {selected && (
+        <UserDetail
+          user={selected}
+          onClose={() => setSelected(null)}
+          onStatusChange={handleStatusChange}
+          onKycToggle={handleKycToggle}
+        />
+      )}
     </div>
   )
 }
@@ -136,8 +164,32 @@ function ScorePill({ score }) {
   return <span className={`font-bold text-sm ${color}`}>{score}</span>
 }
 
-function UserDetail({ user, onClose, onStatusChange }) {
-  const initials = (user.alias ?? user.wallet_address ?? '?')[0].toUpperCase()
+function KycToggle({ kycStatus, onToggle }) {
+  const approved = kycStatus === 'approved'
+  return (
+    <div className="flex items-center justify-between p-4 rounded-2xl dark:bg-brand-dark bg-slate-50 border dark:border-brand-border border-slate-200">
+      <div>
+        <p className="text-sm font-bold dark:text-white text-slate-900 mb-0.5">KYC Verification</p>
+        <p className="text-xs dark:text-brand-muted text-slate-400 capitalize">
+          {kycStatus === 'approved' ? 'Approved — can create & join tandas'
+          : kycStatus === 'pending'  ? 'Pending review'
+          : 'Not verified'}
+        </p>
+      </div>
+      <button
+        onClick={() => onToggle(!approved)}
+        className={`relative w-12 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
+          approved ? 'bg-emerald-400' : 'dark:bg-brand-border bg-slate-300'}`}>
+        <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
+          approved ? 'translate-x-[26px]' : 'translate-x-0.5'}`} />
+      </button>
+    </div>
+  )
+}
+
+function UserDetail({ user, onClose, onStatusChange, onKycToggle }) {
+  const initials  = (user.alias ?? user.wallet_address ?? '?')[0].toUpperCase()
+  const kycStatus = user.kyc_status ?? 'none'
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
@@ -159,14 +211,14 @@ function UserDetail({ user, onClose, onStatusChange }) {
           <button onClick={onClose} className="text-2xl dark:text-brand-muted text-slate-400 hover:text-red-400 leading-none">×</button>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-2 gap-3 mb-4">
           {[
             ['Chain',  user.chain],
             ['Score',  user.reputation_score],
-            ['KYC',    user.kyc_verified ? 'Verified' : 'Pending'],
             ['Status', user.status],
             ['Lang',   user.lang?.toUpperCase() ?? '—'],
             ['Joined', new Date(user.created_at).toLocaleDateString()],
+            ['Email',  user.email ?? '—'],
           ].map(([label, val]) => (
             <div key={label} className="dark:bg-brand-dark bg-slate-50 rounded-xl p-3">
               <p className="text-xs dark:text-brand-muted text-slate-400 mb-0.5">{label}</p>
@@ -175,6 +227,12 @@ function UserDetail({ user, onClose, onStatusChange }) {
           ))}
         </div>
 
+        {/* KYC toggle */}
+        <div className="mb-4">
+          <KycToggle kycStatus={kycStatus} onToggle={approved => onKycToggle(user, approved)} />
+        </div>
+
+        {/* Account status */}
         <div className="flex gap-3">
           {user.status === 'ACTIVE' && (
             <button onClick={() => onStatusChange(user, 'FLAGGED')}
