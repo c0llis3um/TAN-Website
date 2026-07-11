@@ -5,6 +5,11 @@
  * Scans all ACTIVE XRPL pods for members who missed their payment.
  * Automatically slashes collateral and marks them DEFAULTED.
  *
+ * Also sweeps OPEN pods past their expires_at (default: 7 days after
+ * creation, see migration 024) that never filled up, and marks them
+ * EXPIRED so members can claim their collateral back instead of it
+ * sitting locked in an escrow that's never going to activate.
+ *
  * Safe to re-run — slash logic is idempotent (won't slash twice per cycle).
  */
 
@@ -126,6 +131,33 @@ async function slashMember({ supabase, pod, member, escrowWallet, env }) {
   return { slashed: true, txHash, sentTo: recipient.user.wallet_address, amount }
 }
 
+async function expireStalePods(supabase) {
+  const { data: stale, error } = await supabase
+    .from('pods')
+    .select('id, name')
+    .eq('status', 'OPEN')
+    .lt('expires_at', new Date().toISOString())
+
+  if (error) {
+    console.error('[check-overdue] Failed to fetch stale pods:', error.message)
+    return 0
+  }
+  if (!stale?.length) return 0
+
+  const { error: updateErr } = await supabase
+    .from('pods')
+    .update({ status: 'EXPIRED' })
+    .in('id', stale.map(p => p.id))
+
+  if (updateErr) {
+    console.error('[check-overdue] Failed to mark pods EXPIRED:', updateErr.message)
+    return 0
+  }
+
+  console.log(`[check-overdue] Expired ${stale.length} pod(s): ${stale.map(p => p.name).join(', ')}`)
+  return stale.length
+}
+
 export const handler = async () => {
   const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -133,6 +165,8 @@ export const handler = async () => {
   )
 
   console.log('[check-overdue] Starting scan…')
+
+  const expiredCount = await expireStalePods(supabase)
 
   // Fetch all active XRPL pods
   const { data: pods, error } = await supabase
@@ -222,8 +256,8 @@ export const handler = async () => {
   const skipped = results.filter(r => r.skipped).length
   const errors  = results.filter(r => r.error).length
 
-  console.log(`[check-overdue] Done — slashed: ${slashed}, skipped: ${skipped}, errors: ${errors}`)
+  console.log(`[check-overdue] Done — expired: ${expiredCount}, slashed: ${slashed}, skipped: ${skipped}, errors: ${errors}`)
   console.log('[check-overdue] Details:', JSON.stringify(results, null, 2))
 
-  return { statusCode: 200, body: JSON.stringify({ slashed, skipped, errors, results }) }
+  return { statusCode: 200, body: JSON.stringify({ expiredCount, slashed, skipped, errors, results }) }
 }

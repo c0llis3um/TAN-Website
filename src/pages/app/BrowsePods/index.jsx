@@ -97,6 +97,7 @@ export default function BrowsePods() {
             const pct       = pod.size > 0 ? Math.round((members / pod.size) * 100) : 0
             const organizer = pod.organizer?.alias ?? pod.organizer?.wallet_address?.slice(0, 8) ?? '—'
             const isActive  = pod.status === 'ACTIVE'
+            const daysLeft  = pod.expires_at ? Math.ceil((new Date(pod.expires_at) - Date.now()) / 864e5) : null
 
             return (
               <motion.div key={pod.id} variants={item}>
@@ -142,6 +143,12 @@ export default function BrowsePods() {
                   {!isActive && (
                     <p className="text-xs dark:text-brand-muted text-slate-400">
                       {t('browse.upfront', { n: pod.contribution_amount * 3, token: pod.token })}
+                    </p>
+                  )}
+
+                  {!isActive && daysLeft !== null && (
+                    <p className="text-xs text-amber-400">
+                      {daysLeft <= 0 ? t('pod.expiresToday') : t('pod.expiresIn', { n: daysLeft })}
                     </p>
                   )}
 

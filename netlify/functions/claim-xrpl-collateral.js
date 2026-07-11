@@ -58,9 +58,13 @@ export const handler = async (event) => {
       .eq('id', podId)
       .single()
 
-    if (!pod)                      return { statusCode: 404, body: JSON.stringify({ error: 'Pod not found' }) }
-    if (pod.chain !== 'XRPL')      return { statusCode: 400, body: JSON.stringify({ error: 'Not an XRPL pod' }) }
-    if (pod.status !== 'COMPLETED') return { statusCode: 400, body: JSON.stringify({ error: 'Pod not completed yet' }) }
+    // COMPLETED = normal payout cycle finished. CANCELLED/EXPIRED = pod never
+    // filled or was cancelled by the organizer — members get their collateral back.
+    const REFUNDABLE_STATUSES = ['COMPLETED', 'CANCELLED', 'EXPIRED']
+
+    if (!pod)                                   return { statusCode: 404, body: JSON.stringify({ error: 'Pod not found' }) }
+    if (pod.chain !== 'XRPL')                   return { statusCode: 400, body: JSON.stringify({ error: 'Not an XRPL pod' }) }
+    if (!REFUNDABLE_STATUSES.includes(pod.status)) return { statusCode: 400, body: JSON.stringify({ error: 'Pod is not eligible for a collateral claim yet' }) }
 
     // ── 2. Verify caller is a member ───────────────────────────
     const member = pod.pod_members?.find(m => m.user?.wallet_address === walletAddress)

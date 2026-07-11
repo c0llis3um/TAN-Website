@@ -6,14 +6,14 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import useAppStore from '@/store/useAppStore'
-import { getPod, joinPod, getUser, upsertUser, maybeActivatePod, cycleMs, updatePodStatus, getPodPayments, getVaultInfo } from '@/lib/db'
+import { getPod, joinPod, getUser, upsertUser, maybeActivatePod, cycleMs, updatePodStatus, getPodPayments, getVaultInfo, getPodMembership } from '@/lib/db'
 import { tandaPodJoin, cancelTandaPod, claimCollateral } from '@/lib/contracts'
 import { safeJson } from '@/lib/http'
 
 function shareWa(text) { window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank') }
 function shareTg(url, text) { window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank') }
 
-const STATUS_VARIANT = { OPEN: 'blue', LOCKED: 'yellow', ACTIVE: 'green', COMPLETED: 'muted', DEFAULTED: 'red', CANCELLED: 'red' }
+const STATUS_VARIANT = { OPEN: 'blue', LOCKED: 'yellow', ACTIVE: 'green', COMPLETED: 'muted', DEFAULTED: 'red', CANCELLED: 'red', EXPIRED: 'red' }
 
 export default function PodView() {
   const { id }       = useParams()
@@ -35,6 +35,7 @@ export default function PodView() {
   const [claimErr,    setClaimErr]    = useState(null)
   const [vaultInfo,   setVaultInfo]   = useState(null)
   const [joinEmail,   setJoinEmail]   = useState('')
+  const [copied,      setCopied]      = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -52,10 +53,32 @@ export default function PodView() {
     })
   }, [id])
 
+  // While waiting for a pod to fill, poll for new members instead of making
+  // people manually refresh to see if it's full yet.
+  useEffect(() => {
+    if (pod?.status !== 'OPEN') return
+    const iv = setInterval(() => {
+      getPod(id).then(({ data: fresh }) => { if (fresh) setPod(fresh) })
+    }, 15000)
+    return () => clearInterval(iv)
+  }, [id, pod?.status])
+
   async function handleJoin() {
     if (!wallet?.address) return
     setJoining(true)
     setJoinError(null)
+
+    if (pod.status !== 'OPEN') {
+      setJoinError(t('pod.noLongerOpen'))
+      setJoining(false)
+      return
+    }
+    if (pod.expires_at && new Date(pod.expires_at) < new Date()) {
+      setJoinError(t('pod.podExpired'))
+      setJoining(false)
+      return
+    }
+
     const { data: user, error: userErr } = await upsertUser({
       wallet_address: wallet.address,
       chain: wallet.chain ?? 'Ethereum',
@@ -67,6 +90,19 @@ export default function PodView() {
       setJoining(false)
       return
     }
+
+    // Re-check membership right before moving funds — protects against a
+    // stale page, double click, or a second tab sending collateral twice.
+    const { data: existingMember } = await getPodMembership(id, user.id)
+    if (existingMember) {
+      setJoinError(t('pod.alreadyJoined'))
+      setJoinDone(true)
+      setJoining(false)
+      const { data: fresh } = await getPod(id)
+      if (fresh) setPod(fresh)
+      return
+    }
+
     // ── On-chain join: lock collateral ──────────────────────────
     if (pod.chain === 'Ethereum') {
       if (!pod.contract_address) {
@@ -159,6 +195,12 @@ export default function PodView() {
     setCancelling(false)
   }
 
+  function copyLink(url) {
+    navigator.clipboard.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1600)
+  }
+
   async function handleClaim() {
     if (!wallet?.address) return
     setClaiming(true)
@@ -239,6 +281,10 @@ export default function PodView() {
   const daysLeft = dueDate ? Math.ceil((dueDate - Date.now()) / 864e5) : null
   const isOverdue = daysLeft !== null && daysLeft < 0
 
+  const spotsLeft = Math.max(0, pod.size - members.length)
+  const expiryDate = pod.expires_at ? new Date(pod.expires_at) : null
+  const daysUntilExpiry = expiryDate ? Math.ceil((expiryDate - Date.now()) / 864e5) : null
+
   const podUrl   = `${window.location.origin}/app/pod/${id}`
   const shareMsg = i18n.language === 'es'
     ? `¡Únete a mi Tanda DeFi! 💰\n${pod.contribution_amount} ${pod.token}/semana por ${totalCycles} semanas.\nSeguro, automático, sin banco.\n👉 ${podUrl}`
@@ -268,6 +314,12 @@ export default function PodView() {
             hasPaidThisCycle
               ? <span className="text-sm font-semibold text-emerald-400 px-4 py-2 rounded-xl bg-emerald-500/10">{t('pod.paidBadge', { n: currentCycle })}</span>
               : <Button onClick={() => navigate(`/app/pod/${id}/pay`)}>{t('pod.payNow', { amount: pod.contribution_amount })} {pod.token} →</Button>
+          )}
+          {pod.status === 'OPEN' && myMember && (
+            <span className="text-sm font-semibold text-brand-cyan px-4 py-2 rounded-xl dark:bg-brand-blue/10 bg-blue-50 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-brand-cyan animate-pulse" />
+              {t('pod.waitingBadge')}
+            </span>
           )}
           {(pod.status === 'OPEN' || (pod.status === 'ACTIVE' && !pod.current_cycle)) && !myMember && wallet?.address && (
             <>
@@ -306,6 +358,49 @@ export default function PodView() {
           )}
         </div>
       </motion.div>
+
+      {/* Waiting for others banner — shown once you've paid collateral but the pod isn't full yet */}
+      {pod.status === 'OPEN' && myMember && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+          className="mb-6 px-5 py-4 rounded-2xl border dark:bg-brand-blue/5 bg-blue-50 dark:border-brand-blue/20 border-blue-200">
+          <div className="flex items-start gap-3 mb-3">
+            <span className="text-lg">⏳</span>
+            <div>
+              <p className="font-bold dark:text-white text-slate-900">{t('pod.waitingTitle')}</p>
+              <p className="text-sm dark:text-brand-text text-slate-600 mt-0.5">{t('pod.waitingBody', { n: spotsLeft })}</p>
+              {daysUntilExpiry !== null && (
+                <p className="text-xs text-amber-500 font-semibold mt-1">
+                  {daysUntilExpiry <= 0 ? t('pod.expiresToday') : t('pod.expiresIn', { n: daysUntilExpiry })}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="mb-3">
+            <div className="flex justify-between text-xs dark:text-brand-muted text-slate-400 mb-1">
+              <span>{t('pod.filled', { n: members.length, total: pod.size })}</span>
+            </div>
+            <div className="h-1.5 dark:bg-brand-border/50 bg-slate-200 rounded-full overflow-hidden">
+              <motion.div className="h-full bg-gradient-brand rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${pod.size > 0 ? Math.round((members.length / pod.size) * 100) : 0}%` }}
+                transition={{ duration: 0.8, ease: 'easeOut' }}
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button size="sm" className="gap-2" disabled={env === 'dev'} onClick={() => shareWa(shareMsg)}>
+              <WaIcon /> {t('pod.shareWa')}
+            </Button>
+            <Button size="sm" variant="outline" className="gap-2" disabled={env === 'dev'} onClick={() => shareTg(podUrl, shareMsg)}>
+              <TgIcon /> {t('pod.shareTg')}
+            </Button>
+            <button onClick={() => copyLink(podUrl)}
+              className="text-xs px-3 py-2 rounded-xl bg-brand-blue/10 text-brand-cyan font-semibold hover:bg-brand-blue/20 transition-colors">
+              {copied ? t('pod.linkCopied') : t('pod.copyLink')}
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Due date banner */}
       {pod.status === 'ACTIVE' && dueDate && (
@@ -596,12 +691,12 @@ export default function PodView() {
             </Card>
           )}
 
-          {/* Claim Collateral */}
-          {pod.status === 'COMPLETED' && myMember && pod.contract_address && (
+          {/* Claim Collateral — after the pod completes, or if it was cancelled/expired before filling */}
+          {['COMPLETED', 'CANCELLED', 'EXPIRED'].includes(pod.status) && myMember && pod.contract_address && (
             <Card hover={false} className="p-5">
               <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-1">{t('pod.collateralReturn')}</h3>
               <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">
-                {t('pod.claimBody')} <span className="font-bold dark:text-white text-slate-900">{pod.contribution_amount * 2} {pod.token}</span>
+                {t(pod.status === 'COMPLETED' ? 'pod.claimBody' : 'pod.claimBodyRefund')} <span className="font-bold dark:text-white text-slate-900">{pod.contribution_amount * 2} {pod.token}</span>
               </p>
 
               {claimTx ? (
@@ -635,7 +730,10 @@ export default function PodView() {
           <Card hover={false} className="p-5">
             <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-1">{t('pod.inviteTitle')}</h3>
             <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">
-              {t('pod.spotsLeft', { n: Math.max(0, pod.size - members.length) })}
+              {t('pod.spotsLeft', { n: spotsLeft })}
+              {pod.status === 'OPEN' && daysUntilExpiry !== null && (
+                <> · {daysUntilExpiry <= 0 ? t('pod.expiresToday') : t('pod.expiresIn', { n: daysUntilExpiry })}</>
+              )}
             </p>
             <div className="space-y-2">
               <Button size="sm" className="w-full justify-center gap-2"
@@ -653,9 +751,9 @@ export default function PodView() {
             <div className="mt-3 flex items-center gap-2">
               <input readOnly value={podUrl}
                 className="flex-1 text-xs px-3 py-2 rounded-xl dark:bg-brand-dark bg-slate-50 dark:border-brand-border border border-slate-200 dark:text-brand-muted text-slate-500 truncate" />
-              <button onClick={() => navigator.clipboard.writeText(podUrl)}
+              <button onClick={() => copyLink(podUrl)}
                 className="text-xs px-3 py-2 rounded-xl bg-brand-blue/10 text-brand-cyan font-semibold hover:bg-brand-blue/20 transition-colors">
-                {t('common.copy', 'Copy')}
+                {copied ? t('pod.linkCopied') : t('common.copy', 'Copy')}
               </button>
             </div>
           </Card>

@@ -204,6 +204,17 @@ export async function joinPod(podId, userId) {
     .single()
 }
 
+// Freshly re-check membership right before sending collateral on-chain, so a
+// stale UI (double click, second tab, cached page) can't send collateral twice.
+export async function getPodMembership(podId, userId) {
+  return supabase
+    .from('pod_members')
+    .select('id')
+    .eq('pod_id', podId)
+    .eq('user_id', userId)
+    .maybeSingle()
+}
+
 // Call after every join — if pod is now full, assign slots and activate
 export async function maybeActivatePod(podId) {
   // Fetch pod + current members

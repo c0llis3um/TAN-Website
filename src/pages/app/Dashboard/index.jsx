@@ -12,7 +12,8 @@ import { getUser, getOrganizerPods, getMemberPods } from '@/lib/db'
 const stagger = { visible: { transition: { staggerChildren: 0.08 } } }
 const item    = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }
 
-const STATUS_VARIANT = { OPEN: 'blue', LOCKED: 'yellow', ACTIVE: 'green',  COMPLETED: 'muted',     CANCELLED: 'red' }
+const STATUS_VARIANT = { OPEN: 'blue', LOCKED: 'yellow', ACTIVE: 'green',  COMPLETED: 'muted',     CANCELLED: 'red', EXPIRED: 'red' }
+const CLAIMABLE_STATUSES = ['EXPIRED', 'CANCELLED']
 
 export default function Dashboard() {
   const { t }             = useTranslation()
@@ -22,7 +23,7 @@ export default function Dashboard() {
   const STATUS_LABEL = {
     OPEN: t('dashboard.statusOpen'), LOCKED: t('dashboard.statusLocked'),
     ACTIVE: t('dashboard.statusActive'), COMPLETED: t('dashboard.statusCompleted'),
-    CANCELLED: t('dashboard.statusCancelled'),
+    CANCELLED: t('dashboard.statusCancelled'), EXPIRED: t('dashboard.statusExpired'),
   }
   const QUICK = [
     { label: t('dashboard.createPod'), icon: '➕', to: '/app/create', highlight: true,  disabled: false },
@@ -173,7 +174,12 @@ export default function Dashboard() {
                       <p className="text-sm font-semibold dark:text-white text-slate-900">{pod.name}</p>
                       <p className="text-xs dark:text-brand-muted text-slate-400">{pod.chain} · {pod.token} · {pod.contribution_amount} {pod.token}{t('dashboard.perCycle')}</p>
                     </div>
-                    <Badge variant={STATUS_VARIANT[pod.status] ?? 'muted'}>{STATUS_LABEL[pod.status] ?? pod.status}</Badge>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant={STATUS_VARIANT[pod.status] ?? 'muted'}>{STATUS_LABEL[pod.status] ?? pod.status}</Badge>
+                      {CLAIMABLE_STATUSES.includes(pod.status) && (
+                        <span className="text-[10px] text-emerald-400 font-semibold">{t('dashboard.claimAvailable')} →</span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </Card>
@@ -193,7 +199,12 @@ export default function Dashboard() {
                       <p className="text-sm font-semibold dark:text-white text-slate-900">{pod.name}</p>
                       <p className="text-xs dark:text-brand-muted text-slate-400">{pod.chain} · {pod.token}</p>
                     </div>
-                    <Badge variant={STATUS_VARIANT[pod.status] ?? 'muted'}>{STATUS_LABEL[pod.status] ?? pod.status}</Badge>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant={STATUS_VARIANT[pod.status] ?? 'muted'}>{STATUS_LABEL[pod.status] ?? pod.status}</Badge>
+                      {CLAIMABLE_STATUSES.includes(pod.status) && (
+                        <span className="text-[10px] text-emerald-400 font-semibold">{t('dashboard.claimAvailable')} →</span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </Card>
@@ -210,7 +221,7 @@ export default function Dashboard() {
             {pods.length > 0 ? (() => {
               const openCount      = pods.filter(p => p.status === 'OPEN').length
               const activeCount    = pods.filter(p => p.status === 'ACTIVE').length
-              const completedCount = pods.filter(p => ['COMPLETED','DEFAULTED','CANCELLED'].includes(p.status)).length
+              const completedCount = pods.filter(p => ['COMPLETED','DEFAULTED','CANCELLED','EXPIRED'].includes(p.status)).length
               const slices = [
                 { name: t('dashboard.statusOpen'),      value: openCount,      color: '#f59e0b' },
                 { name: t('dashboard.statusActive'),    value: activeCount,    color: '#006aff' },
