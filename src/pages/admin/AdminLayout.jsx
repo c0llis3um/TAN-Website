@@ -215,27 +215,21 @@ function EnvToggle({ env, setEnv }) {
                   <li key={w} className="flex items-start gap-2"><span className="text-red-400 mt-0.5">•</span>{w}</li>
                 ))}
               </ul>
-              <p className="text-xs dark:text-brand-muted text-slate-400 text-center mb-4">
-                Requires 2-of-3 super_admin approval. A confirmation email will be sent.
+              <p className="text-xs dark:text-brand-muted text-slate-400 text-center mb-6">
+                Single-admin mode — you're switching this yourself, no second approver configured.
               </p>
-              <div className="rounded-xl border dark:border-amber-500/30 border-amber-300 dark:bg-amber-500/10 bg-amber-50 px-4 py-3 mb-6">
-                <p className="text-xs font-semibold dark:text-amber-400 text-amber-700 text-center">
-                  Not yet available — the approval workflow and live-switch backend haven't been built yet.
-                </p>
-              </div>
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirming(false)}
                   className="flex-1 py-3 rounded-2xl dark:bg-brand-mid bg-slate-100 dark:text-brand-text text-slate-700 font-semibold text-sm hover:opacity-80 transition-opacity"
                 >
-                  Close
+                  Cancel
                 </button>
                 <button
-                  disabled
-                  title="Not implemented yet"
-                  className="flex-1 py-3 rounded-2xl bg-gradient-brand text-white font-bold text-sm opacity-40 cursor-not-allowed"
+                  onClick={() => { setEnv('live'); setConfirming(false) }}
+                  className="flex-1 py-3 rounded-2xl bg-gradient-brand text-white font-bold text-sm hover:opacity-90 transition-opacity"
                 >
-                  Request Switch
+                  Confirm — Switch to LIVE
                 </button>
               </div>
             </motion.div>
