@@ -268,7 +268,7 @@ export default function Landing() {
                 <h4 className="text-lg font-bold dark:text-white text-slate-900 mb-3">{t('pay.walletTitle')}</h4>
                 <p className="dark:text-brand-muted text-slate-500 text-sm mb-6 leading-relaxed">{t('pay.walletBody')}</p>
                 <div className="flex flex-wrap gap-2">
-                  {['MetaMask','Xaman','Coinbase'].map(w => (
+                  {['MetaMask','Xaman'].map(w => (
                     <span key={w} className="px-3 py-1.5 rounded-xl text-xs font-bold border dark:bg-brand-mid bg-slate-100 dark:border-brand-border border-slate-200 dark:text-brand-text text-slate-600">{w}</span>
                   ))}
                 </div>

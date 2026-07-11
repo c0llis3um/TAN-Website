@@ -16,6 +16,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { Client, Wallet, xrpToDrops } from 'xrpl'
 import { paymentReminderEmail, overdueSlashEmail, sendEmail } from './lib/email.js'
+import { sendPushToUser } from './lib/push.js'
 
 const NODES = {
   dev:  'wss://s.devnet.rippletest.net:51233',
@@ -34,7 +35,7 @@ async function sendDueSoonReminders({ supabase, pod, cycleDue }) {
   const cycle = pod.current_cycle
 
   for (const member of pod.pod_members ?? []) {
-    if (member.status === 'DEFAULTED' || !member.user?.email) continue
+    if (member.status === 'DEFAULTED') continue
 
     const { data: paid } = await supabase
       .from('payments')
@@ -47,8 +48,21 @@ async function sendDueSoonReminders({ supabase, pod, cycleDue }) {
 
     if (paid) continue
 
-    const { subject, html } = paymentReminderEmail(pod, { cycle, dueDate: cycleDue })
-    await sendEmail({ to: member.user.email, subject, html })
+    // Email and push are independent channels — a member with only one
+    // (no email on file, or no push subscription) still gets reminded on
+    // whichever channel they do have. Both no-op gracefully if unavailable.
+    if (member.user?.email) {
+      const { subject, html } = paymentReminderEmail(pod, { cycle, dueDate: cycleDue })
+      await sendEmail({ to: member.user.email, subject, html })
+    }
+
+    if (member.user_id) {
+      await sendPushToUser(supabase, member.user_id, {
+        title: `${pod.name} — payment due soon`,
+        body:  `Cycle ${cycle} is due ${new Date(cycleDue).toLocaleDateString()}. Don't miss it — a late payment slashes your collateral.`,
+        podId: pod.id,
+      })
+    }
   }
 }
 
@@ -126,6 +140,14 @@ async function slashMember({ supabase, pod, member, escrowWallet, env }) {
   if (member.user?.email) {
     const { subject, html } = overdueSlashEmail(pod, { cycle, amount, token: pod.token })
     await sendEmail({ to: member.user.email, subject, html })
+  }
+
+  if (memberUserId) {
+    await sendPushToUser(supabase, memberUserId, {
+      title: `${pod.name} — collateral slashed`,
+      body:  `You missed cycle ${cycle}. ${amount} ${pod.token} was taken from your collateral and sent to this cycle's recipient.`,
+      podId: pod.id,
+    })
   }
 
   return { slashed: true, txHash, sentTo: recipient.user.wallet_address, amount }

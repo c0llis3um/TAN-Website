@@ -382,6 +382,16 @@ export async function getMyPayments(userId, podId) {
     .order('cycle', { ascending: true })
 }
 
+// ── Push Notifications ───────────────────────────────────────
+
+export async function savePushSubscription({ user_id, endpoint, keys_p256dh, keys_auth }) {
+  return supabase
+    .from('push_subscriptions')
+    .upsert({ user_id, endpoint, keys_p256dh, keys_auth }, { onConflict: 'endpoint' })
+    .select('id')
+    .single()
+}
+
 // ── Disputes ─────────────────────────────────────────────────
 
 export async function fileDispute({ pod_id, reporter_id, respondent_id, type, description, amount_at_stake }) {

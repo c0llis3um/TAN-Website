@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import useAppStore from '@/store/useAppStore'
 import { getUser, getOrganizerPods, getMemberPods } from '@/lib/db'
+import { isPushSupported, enablePushNotifications } from '@/lib/push'
 
 const stagger = { visible: { transition: { staggerChildren: 0.08 } } }
 const item    = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }
@@ -36,6 +37,25 @@ export default function Dashboard() {
   const [pods,        setPods]        = useState([])
   const [joinedPods,  setJoinedPods]  = useState([])
   const [loading,     setLoading]     = useState(false)
+
+  const [notifPrompt,   setNotifPrompt]   = useState(false)
+  const [notifDismissed,setNotifDismissed]= useState(false)
+  const [notifBusy,     setNotifBusy]     = useState(false)
+  const [notifErr,      setNotifErr]      = useState(null)
+
+  useEffect(() => {
+    if (isPushSupported() && Notification.permission === 'default') setNotifPrompt(true)
+  }, [])
+
+  async function handleEnableNotifications() {
+    if (!user?.id) return
+    setNotifBusy(true)
+    setNotifErr(null)
+    const { ok, reason } = await enablePushNotifications(user.id)
+    setNotifBusy(false)
+    if (ok) setNotifPrompt(false)
+    else setNotifErr(reason === 'denied' ? t('dashboard.notifDenied') : t('dashboard.notifError'))
+  }
 
   useEffect(() => {
     if (!wallet?.address) return
@@ -75,6 +95,30 @@ export default function Dashboard() {
           <p className="text-sm text-amber-400 mt-1">{t('dashboard.noWallet')}</p>
         )}
       </motion.div>
+
+      {/* Enable push notifications */}
+      {notifPrompt && !notifDismissed && user && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 rounded-2xl flex items-center justify-between gap-4 flex-wrap dark:bg-brand-blue/5 bg-blue-50 border dark:border-brand-blue/20 border-blue-200">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🔔</span>
+            <div>
+              <p className="font-bold dark:text-white text-slate-900 text-sm">{t('dashboard.notifTitle')}</p>
+              <p className="text-xs dark:text-brand-muted text-slate-500">{t('dashboard.notifBody')}</p>
+              {notifErr && <p className="text-xs text-red-400 mt-1">{notifErr}</p>}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button onClick={() => setNotifDismissed(true)}
+              className="text-xs px-3 py-2 rounded-xl dark:text-brand-muted text-slate-500 hover:opacity-70 transition-opacity">
+              {t('dashboard.notifNotNow')}
+            </button>
+            <Button size="sm" onClick={handleEnableNotifications} disabled={notifBusy}>
+              {notifBusy ? '…' : t('dashboard.notifEnable')}
+            </Button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Payment due banner */}
       {duePod && (
