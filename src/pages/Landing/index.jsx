@@ -311,6 +311,55 @@ export default function Landing() {
         </div>
       </Section>
 
+      {/* ══ WHY XRP ══ */}
+      <Section id="xrp">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-14">
+            <FadeUp><h2 className="text-4xl font-extrabold dark:text-white text-slate-900 mb-3">{t('xrp.title')}</h2></FadeUp>
+            <FadeUp delay={0.05}><div className="w-14 h-1 bg-gradient-brand rounded-full mx-auto mb-4" /></FadeUp>
+            <FadeUp delay={0.1}><p className="dark:text-brand-muted text-slate-500 text-lg max-w-2xl mx-auto">{t('xrp.sub')}</p></FadeUp>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-12">
+            {/* History */}
+            <div>
+              <FadeUp><h3 className="text-xs font-bold uppercase tracking-widest gradient-text mb-5">{t('xrp.historyLabel')}</h3></FadeUp>
+              {['h1','h2','h3','h4'].map((k, i) => (
+                <FadeUp key={k} delay={0.08 * i}>
+                  <p className="dark:text-brand-text text-slate-600 leading-relaxed mb-4">{t(`xrp.${k}`)}</p>
+                </FadeUp>
+              ))}
+            </div>
+
+            {/* Why long-term */}
+            <div>
+              <FadeUp><h3 className="text-xs font-bold uppercase tracking-widest gradient-text mb-5">{t('xrp.longTermLabel')}</h3></FadeUp>
+              <div className="space-y-3">
+                {[
+                  { key: 'utility',   icon: '🌎' },
+                  { key: 'speed',     icon: '⚡' },
+                  { key: 'supply',    icon: '📊' },
+                  { key: 'adoption',  icon: '🏦' },
+                ].map(({ key, icon }, i) => (
+                  <FadeUp key={key} delay={0.08 * i}>
+                    <Card className="p-5 text-left flex gap-4 items-start" hover={false}>
+                      <span className="text-2xl flex-shrink-0">{icon}</span>
+                      <div>
+                        <h4 className="font-bold dark:text-white text-slate-900 mb-1 text-sm">{t(`xrp.${key}.title`)}</h4>
+                        <p className="text-sm dark:text-brand-muted text-slate-500 leading-relaxed">{t(`xrp.${key}.body`)}</p>
+                      </div>
+                    </Card>
+                  </FadeUp>
+                ))}
+              </div>
+              <FadeUp delay={0.3}>
+                <p className="text-xs dark:text-brand-border text-slate-400 mt-5 leading-relaxed">{t('xrp.disclaimer')}</p>
+              </FadeUp>
+            </div>
+          </div>
+        </div>
+      </Section>
+
       {/* ══ LEARN ══ */}
       <Section id="learn">
         <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-16 items-center">

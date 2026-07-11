@@ -116,6 +116,33 @@
       "best": "⭐ Disponible ahora · Recomendado"
     }
   },
+  "xrp": {
+    "title": "¿Por qué XRP?",
+    "sub": "El libro contable donde vive la garantía de tu tanda — de dónde viene y por qué está hecho para durar.",
+    "historyLabel": "Breve Historia",
+    "h1": "XRP se lanzó en 2012, creado por los fundadores de Ripple como una alternativa más rápida y ecológica a la minería de Bitcoin. Los 100 mil millones de XRP se crearon completos desde el lanzamiento — no hay minería continua.",
+    "h2": "El XRP Ledger (XRPL) liquida transacciones en 3–5 segundos por una fracción de centavo usando un protocolo de consenso en lugar de minería — diseñado desde el primer día para pagos reales, no especulación.",
+    "h3": "En 2024, Ripple lanzó RLUSD, una stablecoin en dólares totalmente respaldada emitida directamente en el XRPL — trayendo liquidez regulada y estable en dólares al mismo libro contable donde ya corren las tandas.",
+    "h4": "Más de una década después, XRPL ha procesado miles de millones de transacciones con más del 99.99% de disponibilidad y es usado por bancos y proveedores de pago en todo el mundo para liquidaciones internacionales — la misma infraestructura donde corre la garantía de tu tanda.",
+    "longTermLabel": "Por Qué a Largo Plazo",
+    "utility": {
+      "title": "Hecho para pagos reales",
+      "body": "A diferencia de activos puramente especulativos, XRP fue diseñado para mover valor a través de fronteras al instante — exactamente el problema que las tandas resuelven para familias que envían dinero a casa."
+    },
+    "speed": {
+      "title": "Rápido y casi gratis",
+      "body": "Las transacciones se liquidan en 3–5 segundos por una fracción de centavo, sin importar la congestión de la red — costos que no se disparan como en otras cadenas."
+    },
+    "supply": {
+      "title": "Oferta fija y transparente",
+      "body": "Los 100 mil millones de XRP se crearon completos desde el lanzamiento — sin minería, sin inflación. Una pequeña comisión se destruye en cada transacción, haciendo la oferta ligeramente deflacionaria con el tiempo."
+    },
+    "adoption": {
+      "title": "Adopción institucional creciente",
+      "body": "Bancos y proveedores de pago usan XRPL para liquidaciones internacionales, y la stablecoin RLUSD de Ripple está expandiendo liquidez real en dólares directamente en el libro contable."
+    },
+    "disclaimer": "Esta es información educativa, no asesoría financiera. Los precios de las criptomonedas son volátiles y pueden bajar tanto como subir — contribuye solo lo que puedas permitirte."
+  },
   "learn": {
     "title": "¿Nunca usaste cripto?",
     "body1": "Está bien — la mayoría de nuestros usuarios tampoco. Akademia es nuestro centro de educación gratuito, hecho para personas que crecieron con tandas pero son nuevas en el mundo digital.",
@@ -396,6 +423,8 @@
     "typeStandardNote": "La garantía queda en custodia. Tanda clásica — sin rendimiento, sin riesgo.",
     "typeYield": "Con Rendimiento",
     "typeYieldNote": "La garantía genera rendimiento vía protocolo XRPL. Solo ciclos mensuales, mínimo 12 miembros.",
+    "yieldLiveSoon": "Las tandas de rendimiento aún no están disponibles en vivo — próximamente.",
+    "rlusdLiveSoon": "RLUSD aún no está disponible en vivo — próximamente. Usa XRP por ahora.",
     "chooseStrategy": "Elige la Estrategia de Rendimiento",
     "strategySub": "Esto determina dónde se despliega la garantía para generar rendimiento.",
     "apyDisclaimer": "Los rangos de APY son estimaciones únicamente — no están garantizados.",

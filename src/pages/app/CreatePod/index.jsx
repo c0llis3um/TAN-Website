@@ -88,10 +88,18 @@ export default function CreatePod() {
   // Ethereum pod creation is hidden for now (see CHAINS above) — always default to XRPL.
   const defaultChain = 'XRPL'
 
+  // RLUSD has no live issuer configured yet (RLUSD_ISSUER.live is empty) — default
+  // to XRP instead of RLUSD whenever we're on live, so a fresh form never lands on
+  // a broken token choice.
+  function defaultTokenFor(chain, envVal) {
+    if (chain === 'XRPL' && envVal === 'live') return 'XRP'
+    return CHAIN_TOKENS[chain]?.[0]?.id ?? 'ETH'
+  }
+
   const [step, setStep] = useState(0)
   const [form, setForm] = useState({
     chain:             defaultChain,
-    token:             CHAIN_TOKENS[defaultChain]?.[0]?.id ?? 'ETH',
+    token:             defaultTokenFor(defaultChain, env),
     tandaType:         'standard',
     yieldStrategy:     null,
     contribution:      defaultChain === 'Ethereum' ? 0.01 : 10,
@@ -114,6 +122,15 @@ export default function CreatePod() {
   useEffect(() => {
     getPlatformSetting('kyc_required').then(v => setKycEnforced(v === 'true'))
   }, [])
+
+  // RLUSD and yield tandas aren't safe on live yet (empty live RLUSD issuer) — if env
+  // flips to live mid-form, fall back to a plain XRP standard tanda.
+  useEffect(() => {
+    if (env !== 'live') return
+    setForm(f => (f.token === 'RLUSD' || f.tandaType === 'yield')
+      ? { ...f, token: 'XRP', tandaType: 'standard', yieldStrategy: null }
+      : f)
+  }, [env])
 
   useEffect(() => {
     if (!wallet?.address) { setKycStatus('none'); return }
@@ -152,7 +169,7 @@ export default function CreatePod() {
   }
 
   function handleChainChange(chain) {
-    const firstToken = CHAIN_TOKENS[chain]?.[0]?.id ?? 'ETH'
+    const firstToken = defaultTokenFor(chain, env)
     const cfg = TOKEN_CONFIG[firstToken] ?? TOKEN_CONFIG.USDC
     setForm(f => ({
       ...f,
@@ -513,24 +530,32 @@ export default function CreatePod() {
               <h3 className="font-bold dark:text-white text-slate-900 mb-2">{t('create.tokenLabel')}</h3>
               <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">{t('create.tokenSub')}</p>
               <div className="space-y-3">
-                {tokens.map(tok => (
-                  <motion.button key={tok.id} onClick={() => handleTokenChange(tok.id)}
-                    whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-                    className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
-                      form.token === tok.id ? 'border-brand-blue/60 dark:bg-brand-blue/10 bg-blue-50'
-                      : 'dark:bg-brand-darker dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
-                    <span className="text-2xl">{tok.icon}</span>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold dark:text-white text-slate-900">{tok.label}</span>
-                        {(tok.id === 'USDC' || tok.id === 'RLUSD') && <Badge variant="green">Stable</Badge>}
-                        {(tok.id === 'ETH'  || tok.id === 'XRP')   && <Badge variant="muted">Native</Badge>}
+                {tokens.map(tok => {
+                  const disabled = tok.id === 'RLUSD' && env === 'live'
+                  return (
+                    <motion.button key={tok.id} onClick={() => !disabled && handleTokenChange(tok.id)}
+                      disabled={disabled}
+                      whileHover={disabled ? {} : { scale: 1.01 }} whileTap={disabled ? {} : { scale: 0.99 }}
+                      className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
+                        disabled ? 'dark:bg-brand-darker/50 bg-slate-50 dark:border-brand-border/50 border-slate-200 opacity-50 cursor-not-allowed'
+                        : form.token === tok.id ? 'border-brand-blue/60 dark:bg-brand-blue/10 bg-blue-50'
+                        : 'dark:bg-brand-darker dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
+                      <span className="text-2xl">{tok.icon}</span>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold dark:text-white text-slate-900">{tok.label}</span>
+                          {disabled && <Badge variant="muted">{t('common.soon')}</Badge>}
+                          {!disabled && (tok.id === 'USDC' || tok.id === 'RLUSD') && <Badge variant="green">Stable</Badge>}
+                          {!disabled && (tok.id === 'ETH'  || tok.id === 'XRP')   && <Badge variant="muted">Native</Badge>}
+                        </div>
+                        <span className="text-xs dark:text-brand-muted text-slate-400">
+                          {disabled ? t('create.rlusdLiveSoon') : tok.note}
+                        </span>
                       </div>
-                      <span className="text-xs dark:text-brand-muted text-slate-400">{tok.note}</span>
-                    </div>
-                    {form.token === tok.id && <span className="text-brand-cyan text-xl flex-shrink-0">●</span>}
-                  </motion.button>
-                ))}
+                      {!disabled && form.token === tok.id && <span className="text-brand-cyan text-xl flex-shrink-0">●</span>}
+                    </motion.button>
+                  )
+                })}
               </div>
 
               {(form.token === 'ETH' || form.token === 'XRP') && (
@@ -567,23 +592,30 @@ export default function CreatePod() {
                     note:  t('create.typeYieldNote'),
                     badges: [{ label: 'Min 12 months', variant: 'blue' }, { label: 'XRPL only', variant: 'muted' }],
                   },
-                ].map(opt => (
-                  <motion.button key={opt.id} onClick={() => handleTypeChange(opt.id)}
-                    whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
-                    className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
-                      form.tandaType === opt.id ? 'border-brand-blue/60 dark:bg-brand-blue/10 bg-blue-50'
-                      : 'dark:bg-brand-darker dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
-                    <span className="text-2xl">{opt.icon}</span>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="font-bold dark:text-white text-slate-900">{opt.label}</span>
-                        {opt.badges?.map(b => <Badge key={b.label} variant={b.variant}>{b.label}</Badge>)}
+                ].map(opt => {
+                  const disabled = opt.id === 'yield' && env === 'live'
+                  return (
+                    <motion.button key={opt.id} onClick={() => !disabled && handleTypeChange(opt.id)}
+                      disabled={disabled}
+                      whileHover={disabled ? {} : { scale: 1.01 }} whileTap={disabled ? {} : { scale: 0.99 }}
+                      className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
+                        disabled ? 'dark:bg-brand-darker/50 bg-slate-50 dark:border-brand-border/50 border-slate-200 opacity-50 cursor-not-allowed'
+                        : form.tandaType === opt.id ? 'border-brand-blue/60 dark:bg-brand-blue/10 bg-blue-50'
+                        : 'dark:bg-brand-darker dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
+                      <span className="text-2xl">{opt.icon}</span>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="font-bold dark:text-white text-slate-900">{opt.label}</span>
+                          {disabled ? <Badge variant="muted">{t('common.soon')}</Badge> : opt.badges?.map(b => <Badge key={b.label} variant={b.variant}>{b.label}</Badge>)}
+                        </div>
+                        <span className="text-xs dark:text-brand-muted text-slate-400">
+                          {disabled ? t('create.yieldLiveSoon') : opt.note}
+                        </span>
                       </div>
-                      <span className="text-xs dark:text-brand-muted text-slate-400">{opt.note}</span>
-                    </div>
-                    {form.tandaType === opt.id && <span className="text-brand-cyan text-xl flex-shrink-0">●</span>}
-                  </motion.button>
-                ))}
+                      {!disabled && form.tandaType === opt.id && <span className="text-brand-cyan text-xl flex-shrink-0">●</span>}
+                    </motion.button>
+                  )
+                })}
               </div>
             </Card>
             <div className="flex gap-3">

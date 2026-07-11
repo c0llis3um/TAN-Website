@@ -116,6 +116,33 @@
       "best": "⭐ Live now · Recommended"
     }
   },
+  "xrp": {
+    "title": "Why XRP?",
+    "sub": "The ledger your tanda's collateral runs on — where it came from, and why it's built to last.",
+    "historyLabel": "A Brief History",
+    "h1": "XRP launched in 2012, created by Ripple's founders as a faster, greener alternative to Bitcoin's proof-of-work mining. The entire 100 billion XRP supply was created at launch — there's no ongoing mining.",
+    "h2": "The XRP Ledger (XRPL) settles transactions in 3–5 seconds for a fraction of a cent using a consensus protocol instead of mining — built from day one for real-world payments, not speculation.",
+    "h3": "In 2024, Ripple launched RLUSD, a fully-reserved USD stablecoin issued directly on the XRPL — bringing regulated, dollar-stable liquidity onto the same ledger tandas already run on.",
+    "h4": "Over a decade later, XRPL has processed billions of transactions with 99.99%+ uptime and is used by banks and payment providers worldwide for cross-border settlement — the same infrastructure your tanda's collateral runs on.",
+    "longTermLabel": "Why Long-Term",
+    "utility": {
+      "title": "Built for real payments",
+      "body": "Unlike purely speculative assets, XRP was designed to move value across borders instantly — the exact problem tandas solve for families sending money home."
+    },
+    "speed": {
+      "title": "Fast & nearly free",
+      "body": "Transactions settle in 3–5 seconds for a fraction of a cent, regardless of network congestion — costs that don't spike the way other chains' can."
+    },
+    "supply": {
+      "title": "Fixed, transparent supply",
+      "body": "All 100 billion XRP were created at launch — no mining, no inflation. A small fee is destroyed with every transaction, making supply slightly deflationary over time."
+    },
+    "adoption": {
+      "title": "Growing institutional use",
+      "body": "Banks and payment providers use XRPL for cross-border settlement, and Ripple's RLUSD stablecoin is expanding real-world dollar liquidity directly on the ledger."
+    },
+    "disclaimer": "This is educational information, not financial advice. Cryptocurrency prices are volatile and can go down as well as up — only contribute what you can afford."
+  },
   "learn": {
     "title": "Never done crypto before?",
     "body1": "That's okay — most of our users haven't either. Akademia is our free education center, built for people who grew up with tandas but are new to the digital side.",
@@ -396,6 +423,8 @@
     "typeStandardNote": "Collateral sits in escrow. Classic tanda — no yield, no risk.",
     "typeYield": "Yield",
     "typeYieldNote": "Collateral earns yield via XRPL protocol. Monthly cycles only, minimum 12 members.",
+    "yieldLiveSoon": "Yield tandas aren't available on live yet — coming soon.",
+    "rlusdLiveSoon": "RLUSD isn't available on live yet — coming soon. Use XRP for now.",
     "chooseStrategy": "Choose Yield Strategy",
     "strategySub": "This determines where collateral is deployed to earn yield.",
     "apyDisclaimer": "APY ranges are estimates only — not guaranteed. Actual returns vary.",
