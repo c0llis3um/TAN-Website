@@ -1,8 +1,11 @@
+import { useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import Navbar from '@/components/Layout/Navbar'
 import Footer from '@/components/Layout/Footer'
 import DevBanner from '@/components/DevBanner'
+import useAppStore from '@/store/useAppStore'
+import { getPlatformSetting } from '@/lib/db'
 
 import Landing      from '@/pages/Landing'
 import Pitch        from '@/pages/Pitch'
@@ -45,6 +48,16 @@ function PageWrapper({ children }) {
 export default function App() {
   const location = useLocation()
   const isAdmin  = location.pathname.startsWith('/admin')
+  const setEnv   = useAppStore((s) => s.setEnv)
+
+  // env is now a site-wide setting (platform_settings.env), not a per-browser
+  // toggle — every visitor picks it up here so an admin's live/dev switch
+  // actually applies to everyone, not just their own browser.
+  useEffect(() => {
+    getPlatformSetting('env').then((v) => {
+      if (v === 'dev' || v === 'live') setEnv(v)
+    })
+  }, [setEnv])
 
   return (
     <div className="min-h-screen flex flex-col dark:bg-brand-dark bg-slate-50 dark:text-brand-text text-slate-800">

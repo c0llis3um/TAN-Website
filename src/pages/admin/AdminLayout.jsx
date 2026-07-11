@@ -171,20 +171,47 @@ export default function AdminLayout() {
 
 function EnvToggle({ env, setEnv }) {
   const [confirming, setConfirming] = useState(false)
+  const [switching,  setSwitching]  = useState(false)
+  const [switchErr,  setSwitchErr]  = useState(null)
   const isDev = env === 'dev'
+
+  // env is a site-wide setting now (platform_settings.env) — persist through
+  // the admin-gated Netlify function first, then reflect it locally. Every
+  // other visitor picks up the change on their next page load (see App.jsx).
+  async function applyEnv(nextEnv) {
+    setSwitching(true)
+    setSwitchErr(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/.netlify/functions/set-platform-env', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token ?? ''}` },
+        body:    JSON.stringify({ env: nextEnv }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.error ?? 'Switch failed')
+      setEnv(nextEnv)
+      setConfirming(false)
+    } catch (e) {
+      setSwitchErr(e?.message ?? String(e))
+    } finally {
+      setSwitching(false)
+    }
+  }
 
   const handleSwitch = () => {
     if (isDev) { setConfirming(true) }
-    else { setEnv('dev') }
+    else { applyEnv('dev') }
   }
 
   return (
     <>
       <motion.button
         onClick={handleSwitch}
+        disabled={switching}
         whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
         className={cn(
-          'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all',
+          'flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all disabled:opacity-50',
           isDev
             ? 'bg-amber-500/10 border-amber-500/40 text-amber-500 hover:bg-amber-500/20'
             : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/20'
@@ -192,7 +219,7 @@ function EnvToggle({ env, setEnv }) {
       >
         <span className={cn('w-2 h-2 rounded-full', isDev ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400')} />
         {isDev ? 'DEV — Testnet' : 'LIVE — Mainnet'}
-        <span className="opacity-60">{isDev ? '↑ Switch to LIVE' : '↓ Switch to DEV'}</span>
+        <span className="opacity-60">{switching ? '…' : isDev ? '↑ Switch to LIVE' : '↓ Switch to DEV'}</span>
       </motion.button>
 
       {/* Confirmation modal */}
@@ -215,21 +242,27 @@ function EnvToggle({ env, setEnv }) {
                   <li key={w} className="flex items-start gap-2"><span className="text-red-400 mt-0.5">•</span>{w}</li>
                 ))}
               </ul>
-              <p className="text-xs dark:text-brand-muted text-slate-400 text-center mb-6">
+              <p className="text-xs dark:text-brand-muted text-slate-400 text-center mb-2">
                 Single-admin mode — you're switching this yourself, no second approver configured.
               </p>
+              <p className="text-xs font-semibold text-red-500 text-center mb-4">
+                This is site-wide — every visitor will be on LIVE, not just you.
+              </p>
+              {switchErr && <p className="text-xs text-red-400 text-center mb-4 break-all">{switchErr}</p>}
               <div className="flex gap-3">
                 <button
                   onClick={() => setConfirming(false)}
-                  className="flex-1 py-3 rounded-2xl dark:bg-brand-mid bg-slate-100 dark:text-brand-text text-slate-700 font-semibold text-sm hover:opacity-80 transition-opacity"
+                  disabled={switching}
+                  className="flex-1 py-3 rounded-2xl dark:bg-brand-mid bg-slate-100 dark:text-brand-text text-slate-700 font-semibold text-sm hover:opacity-80 transition-opacity disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => { setEnv('live'); setConfirming(false) }}
-                  className="flex-1 py-3 rounded-2xl bg-gradient-brand text-white font-bold text-sm hover:opacity-90 transition-opacity"
+                  onClick={() => applyEnv('live')}
+                  disabled={switching}
+                  className="flex-1 py-3 rounded-2xl bg-gradient-brand text-white font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
-                  Confirm — Switch to LIVE
+                  {switching ? 'Switching…' : 'Confirm — Switch to LIVE'}
                 </button>
               </div>
             </motion.div>
