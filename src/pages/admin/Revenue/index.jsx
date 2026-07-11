@@ -3,6 +3,8 @@ import { motion } from 'framer-motion'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import Pagination from '@/components/ui/Pagination'
+import usePagination from '@/lib/usePagination'
 import { adminGetAllPods } from '@/lib/db'
 
 const CREATION_FEE = 2  // $2 per pod
@@ -26,6 +28,7 @@ export default function AdminRevenue() {
   }, [])
 
   const paidPods   = pods.filter(p => p.creation_fee_paid)
+  const { page, setPage, pageCount, paged } = usePagination(paidPods, paidPods.length)
   const totalFees  = paidPods.length * CREATION_FEE
   const thisMonth  = paidPods.filter(p => {
     const d = new Date(p.created_at)
@@ -104,7 +107,7 @@ export default function AdminRevenue() {
                 <tr><td colSpan={6} className="px-5 py-12 text-center dark:text-brand-muted text-slate-400">Loading…</td></tr>
               ) : paidPods.length === 0 ? (
                 <tr><td colSpan={6} className="px-5 py-12 text-center dark:text-brand-muted text-slate-400">No paid creation fees yet.</td></tr>
-              ) : paidPods.map((pod, i) => (
+              ) : paged.map((pod, i) => (
                 <motion.tr key={pod.id}
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.03 * i }}
                   className="border-b dark:border-brand-border/40 border-slate-100 last:border-0 dark:hover:bg-brand-mid/40 hover:bg-slate-50 transition-colors">
@@ -121,6 +124,8 @@ export default function AdminRevenue() {
             </tbody>
           </table>
         </div>
+
+        {!loading && <Pagination page={page} pageCount={pageCount} total={paidPods.length} onChange={setPage} />}
       </Card>
     </div>
   )

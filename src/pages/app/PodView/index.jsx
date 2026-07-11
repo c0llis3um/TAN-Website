@@ -780,7 +780,7 @@ function HowItWorksCard({ pod, t }) {
     ? ['🎉', '💰', '🏅', '🔄']
     : status === 'ACTIVE'
     ? ['⏰', '🔒', '💸', '✅']
-    : ['🔑', '👥', '🔄', '🏁']
+    : ['🔑', '👥', '⏳', '🔄', '🏁']
 
   return (
     <Card hover={false} className="overflow-hidden">

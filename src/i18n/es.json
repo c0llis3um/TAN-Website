@@ -268,7 +268,8 @@
     "howToggle": "Cómo funciona",
     "howOpen": [
       "Únete depositando 2× tu contribución como garantía — este es tu depósito de seguridad.",
-      "Cuando los {{size}} miembros se unan, la tanda se bloquea y comienza el primer ciclo.",
+      "Cuando los {{size}} miembros se unan, la tanda se bloquea y comienza el primer ciclo. Comparte el enlace para llenarla más rápido.",
+      "¿No se llena en 7 días? La tanda expira automáticamente y todos pueden reclamar su garantía de vuelta — nada queda bloqueado.",
       "Cada ciclo, todos pagan su contribución. El pozo completo va al miembro en turno.",
       "Al terminar todos los ciclos, tu garantía se devuelve completa a tu billetera."
     ],

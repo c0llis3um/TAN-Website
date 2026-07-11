@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import Pagination from '@/components/ui/Pagination'
+import usePagination from '@/lib/usePagination'
 import { adminGetDisputes, adminUpdateDisputeStatus } from '@/lib/db'
 
 const STATUS_COLORS   = { OPEN: 'red', REVIEWING: 'yellow', RESOLVED: 'green', CLOSED: 'muted' }
@@ -35,6 +37,7 @@ export default function AdminDisputes() {
   }
 
   const filtered = disputes.filter(d => statusFilter === 'ALL' || d.status === statusFilter)
+  const { page, setPage, pageCount, paged } = usePagination(filtered, statusFilter)
   const open     = disputes.filter(d => d.status === 'OPEN').length
 
   return (
@@ -85,7 +88,7 @@ export default function AdminDisputes() {
             <motion.tbody variants={stagger} initial="hidden" animate="visible">
               {loading ? (
                 <tr><td colSpan={8} className="px-5 py-12 text-center dark:text-brand-muted text-slate-400">Loading…</td></tr>
-              ) : filtered.map(d => (
+              ) : paged.map(d => (
                 <motion.tr key={d.id} variants={row} onClick={() => setSelected(d)}
                   className="border-b dark:border-brand-border/40 border-slate-100 last:border-0 dark:hover:bg-brand-mid/40 hover:bg-slate-50 transition-colors cursor-pointer">
                   <td className="px-5 py-4 font-semibold dark:text-white text-slate-900">{d.pod?.name ?? '—'}</td>
@@ -104,6 +107,8 @@ export default function AdminDisputes() {
             <p className="text-center dark:text-brand-muted text-slate-400 py-12 text-sm">No disputes found.</p>
           )}
         </div>
+
+        {!loading && <Pagination page={page} pageCount={pageCount} total={filtered.length} onChange={setPage} />}
       </Card>
 
       {selected && <DisputeDetail dispute={selected} onClose={() => setSelected(null)} onStatusChange={handleStatusChange} />}

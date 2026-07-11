@@ -268,7 +268,8 @@
     "howToggle": "How it works",
     "howOpen": [
       "Join by depositing 2× your contribution as collateral — this is your security deposit.",
-      "Once all {{size}} members join, the tanda locks and the first cycle starts.",
+      "Once all {{size}} members join, the tanda locks and the first cycle starts. Share the link to fill it faster.",
+      "Doesn't fill up within 7 days? The tanda expires automatically and everyone can claim their collateral back — nothing stays locked.",
       "Every cycle, each member pays their contribution. The full pot goes to whoever's turn it is.",
       "When every cycle completes, your collateral is returned to your wallet in full."
     ],

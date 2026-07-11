@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import Pagination from '@/components/ui/Pagination'
+import usePagination from '@/lib/usePagination'
 import { adminGetAllPods, updatePodStatus, adminForceAdvanceCycle } from '@/lib/db'
 import { releaseCollateral } from '@/lib/contracts'
 import { safeJson } from '@/lib/http'
 import useAppStore from '@/store/useAppStore'
 
-const STATUS_COLORS = { ACTIVE: 'green', COMPLETED: 'blue', DEFAULTED: 'red', OPEN: 'yellow', LOCKED: 'yellow', CANCELLED: 'muted' }
+const STATUS_COLORS = { ACTIVE: 'green', COMPLETED: 'blue', DEFAULTED: 'red', OPEN: 'yellow', LOCKED: 'yellow', CANCELLED: 'muted', EXPIRED: 'red' }
 const CHAIN_COLORS  = { XRPL: 'blue', Solana: 'muted', Ethereum: 'muted' }
 
 const stagger = { visible: { transition: { staggerChildren: 0.05 } } }
@@ -44,6 +46,8 @@ export default function AdminPods() {
     return matchSearch && matchChain && matchStatus
   })
 
+  const { page, setPage, pageCount, paged } = usePagination(filtered, `${search}|${chainFilter}|${statusFilter}`)
+
   const activePods = pods.filter(p => p.status === 'ACTIVE').length
 
   return (
@@ -64,7 +68,7 @@ export default function AdminPods() {
             className="flex-1 min-w-[200px] px-4 py-2 rounded-xl text-sm dark:bg-brand-dark bg-slate-50 dark:border-brand-border border border-slate-200 dark:text-white text-slate-900 dark:placeholder-brand-muted placeholder-slate-400 outline-none focus:border-brand-blue/60"
           />
           <FilterChips label="Chain"  value={chainFilter}  onChange={setChainFilter}  options={['ALL','XRPL','Solana','Ethereum']} />
-          <FilterChips label="Status" value={statusFilter} onChange={setStatusFilter} options={['ALL','OPEN','ACTIVE','LOCKED','COMPLETED','DEFAULTED']} />
+          <FilterChips label="Status" value={statusFilter} onChange={setStatusFilter} options={['ALL','OPEN','ACTIVE','LOCKED','COMPLETED','DEFAULTED','CANCELLED','EXPIRED']} />
         </div>
       </Card>
 
@@ -81,7 +85,7 @@ export default function AdminPods() {
             <motion.tbody variants={stagger} initial="hidden" animate="visible">
               {loading ? (
                 <tr><td colSpan={10} className="px-5 py-12 text-center dark:text-brand-muted text-slate-400">Loading…</td></tr>
-              ) : filtered.map(pod => {
+              ) : paged.map(pod => {
                 const members  = pod.pod_members?.length ?? 0
                 const organizer = pod.organizer?.alias ?? pod.organizer?.wallet_address?.slice(0,10) ?? '—'
                 const pot      = pod.contribution_amount * pod.size
@@ -109,6 +113,8 @@ export default function AdminPods() {
             <p className="text-center dark:text-brand-muted text-slate-400 py-12 text-sm">No pods match your filters.</p>
           )}
         </div>
+
+        {!loading && <Pagination page={page} pageCount={pageCount} total={filtered.length} onChange={setPage} />}
       </Card>
 
       {selected && <PodDetail pod={selected} onClose={() => setSelected(null)} />}

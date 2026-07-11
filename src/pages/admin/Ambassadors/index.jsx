@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import Pagination from '@/components/ui/Pagination'
+import usePagination from '@/lib/usePagination'
 import { adminGetAmbassadors } from '@/lib/db'
 
 const TIER_COLORS   = { Gold: 'yellow', Silver: 'muted', Bronze: 'muted' }
@@ -22,6 +24,7 @@ export default function AdminAmbassadors() {
 
   const active   = ambassadors.filter(a => a.status === 'ACTIVE')
   const pending  = ambassadors.filter(a => a.status === 'PENDING')
+  const { page, setPage, pageCount, paged } = usePagination(active, active.length)
 
   return (
     <div className="space-y-6">
@@ -102,7 +105,7 @@ export default function AdminAmbassadors() {
                   </tr>
                 </thead>
                 <tbody>
-                  {active.map(a => (
+                  {paged.map(a => (
                     <tr key={a.id} className="border-b dark:border-brand-border/40 border-slate-100 last:border-0 dark:hover:bg-brand-mid/40 hover:bg-slate-50 transition-colors">
                       <td className="px-5 py-4">
                         <div>
@@ -122,6 +125,7 @@ export default function AdminAmbassadors() {
                 </tbody>
               </table>
             </div>
+            <Pagination page={page} pageCount={pageCount} total={active.length} onChange={setPage} />
           </Card>
         )}
       </div>

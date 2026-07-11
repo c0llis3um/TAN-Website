@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import Pagination from '@/components/ui/Pagination'
+import usePagination from '@/lib/usePagination'
 import { adminGetAllUsers, adminUpdateUserStatus, adminUpdateUserKyc } from '@/lib/db'
 
 const STATUS_COLORS = { ACTIVE: 'green', FLAGGED: 'yellow', SUSPENDED: 'red' }
@@ -32,6 +34,8 @@ export default function AdminUsers() {
     const matchKyc    = kycFilter === 'ALL' || (u.kyc_status ?? 'none') === kycFilter
     return matchSearch && matchStatus && matchKyc
   })
+
+  const { page, setPage, pageCount, paged } = usePagination(filtered, `${search}|${statusFilter}|${kycFilter}`)
 
   async function handleStatusChange(user, status) {
     await adminUpdateUserStatus(user.id, status)
@@ -114,7 +118,7 @@ export default function AdminUsers() {
             <motion.tbody variants={stagger} initial="hidden" animate="visible">
               {loading ? (
                 <tr><td colSpan={8} className="px-5 py-12 text-center dark:text-brand-muted text-slate-400">Loading…</td></tr>
-              ) : filtered.map(user => {
+              ) : paged.map(user => {
                 const initials  = (user.alias ?? user.wallet_address ?? '?')[0].toUpperCase()
                 const short     = `${user.wallet_address.slice(0,6)}…${user.wallet_address.slice(-4)}`
                 const kycStatus = user.kyc_status ?? 'none'
@@ -145,6 +149,8 @@ export default function AdminUsers() {
             <p className="text-center dark:text-brand-muted text-slate-400 py-12 text-sm">No users match your filters.</p>
           )}
         </div>
+
+        {!loading && <Pagination page={page} pageCount={pageCount} total={filtered.length} onChange={setPage} />}
       </Card>
 
       {selected && (

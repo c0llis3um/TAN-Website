@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import Pagination from '@/components/ui/Pagination'
+import usePagination from '@/lib/usePagination'
 import { adminGetWaitlist } from '@/lib/db'
 
 const stagger = { visible: { transition: { staggerChildren: 0.05 } } }
@@ -26,6 +28,8 @@ export default function AdminWaitlist() {
     const matchFilter = filter === 'ALL' || (filter === 'INVITED' ? w.invited : !w.invited)
     return matchSearch && matchFilter
   })
+
+  const { page, setPage, pageCount, paged } = usePagination(filtered, `${search}|${filter}`)
 
   const pending  = list.filter(w => !w.invited).length
   const invited  = list.filter(w => w.invited).length
@@ -119,7 +123,7 @@ export default function AdminWaitlist() {
             <motion.tbody variants={stagger} initial="hidden" animate="visible">
               {loading ? (
                 <tr><td colSpan={8} className="px-5 py-12 text-center dark:text-brand-muted text-slate-400">Loading…</td></tr>
-              ) : filtered.map(w => (
+              ) : paged.map(w => (
                 <motion.tr key={w.id} variants={row}
                   className="border-b dark:border-brand-border/40 border-slate-100 last:border-0 dark:hover:bg-brand-mid/40 hover:bg-slate-50 transition-colors">
                   <td className="px-5 py-4 font-semibold dark:text-white text-slate-900">{w.name ?? '—'}</td>
@@ -138,6 +142,8 @@ export default function AdminWaitlist() {
             <p className="text-center dark:text-brand-muted text-slate-400 py-12 text-sm">No entries found.</p>
           )}
         </div>
+
+        {!loading && <Pagination page={page} pageCount={pageCount} total={filtered.length} onChange={setPage} />}
       </Card>
     </div>
   )
