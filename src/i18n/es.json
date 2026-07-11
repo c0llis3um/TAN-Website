@@ -371,6 +371,7 @@
     "deploy": {
       "saving": "Guardando en la base de datos…",
       "escrow": "Creando billetera de garantía…",
+      "fee": "Cobrando cuota de creación de $2…",
       "confirming": "Esperando confirmación…",
       "done": "¡Tanda creada!"
     },
@@ -403,6 +404,10 @@
     "gas": "Gas para desplegar contrato",
     "collateral": "Depósito de garantía",
     "firstContrib": "Primera contribución",
+    "creationFee": "Cuota de creación",
+    "inXrp": "en XRP",
+    "nonRefundable": "no reembolsable",
+    "creationFeeDisclosure": "La cuota de creación de ${{fee}} se cobra al desplegar esta tanda y no es reembolsable — incluso si la tanda no se llena y expira antes de comenzar.",
     "totalUpfront": "Total inicial para unirse",
     "cancelPolicy": "⚠ ¿Qué pasa si la tanda no se llena?",
     "cancelPolicy1": "Tú (el organizador) puedes cancelar en cualquier momento antes de que se llene.",

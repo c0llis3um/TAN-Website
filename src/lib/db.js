@@ -509,6 +509,18 @@ export async function getSettings(keys) {
 
 // ── Treasury ─────────────────────────────────────────────────
 
+// Public read — used to find where to send the pod creation fee. Reads on
+// treasury_wallets are open to anon (see migration 023); only writes are admin-gated.
+export async function getTreasuryWallet(chain) {
+  const { data } = await supabase
+    .from('treasury_wallets')
+    .select('address')
+    .eq('chain', chain)
+    .eq('active', true)
+    .maybeSingle()
+  return data?.address ?? null
+}
+
 export async function adminGetTreasuryWallets() {
   return supabase
     .from('treasury_wallets')

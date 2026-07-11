@@ -6,11 +6,23 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import useAppStore from '@/store/useAppStore'
-import { createPod, upsertUser, updatePodContract, getUserKycStatus, getPlatformSetting } from '@/lib/db'
-import { deployPodEVM } from '@/lib/contracts'
+import { createPod, upsertUser, updatePodContract, getUserKycStatus, getPlatformSetting, getTreasuryWallet } from '@/lib/db'
+import { deployPodEVM, sendContribution } from '@/lib/contracts'
 import { safeJson } from '@/lib/http'
 
 // ── Config ───────────────────────────────────────────────────
+
+// Flat USD creation fee, charged in XRP at current market price. Only
+// charged for live XRPL pods — dev/testnet pods stay free.
+const CREATION_FEE_USD = 2
+
+async function fetchXrpUsdPrice() {
+  const res  = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd')
+  const json = await res.json()
+  const price = json.ripple?.usd
+  if (!price) throw new Error('Could not fetch XRP price — try again in a moment.')
+  return price
+}
 
 // Ethereum hidden for now — no TandaFactory/TandaPod contracts deployed to mainnet yet.
 // Re-add { id: 'Ethereum', label: 'Ethereum', icon: '🔷', note: 'Secure · Widely supported' }
@@ -78,13 +90,6 @@ export default function CreatePod() {
     review:   t('create.steps.review'),
   }
 
-  const DEPLOY_STEPS = [
-    { key: 'save',    label: t('create.deploy.saving')     },
-    { key: 'approve', label: t('create.deploy.escrow')     },
-    { key: 'confirm', label: t('create.deploy.confirming') },
-    { key: 'done',    label: t('create.deploy.done')       },
-  ]
-
   // Ethereum pod creation is hidden for now (see CHAINS above) — always default to XRPL.
   const defaultChain = 'XRPL'
 
@@ -115,6 +120,14 @@ export default function CreatePod() {
     rulesAck3:         false,
     rulesAck4:         false,
   })
+
+  const DEPLOY_STEPS = [
+    { key: 'save',    label: t('create.deploy.saving')     },
+    { key: 'approve', label: t('create.deploy.escrow')     },
+    ...(form.chain === 'XRPL' && env === 'live' ? [{ key: 'fee', label: t('create.deploy.fee') }] : []),
+    { key: 'confirm', label: t('create.deploy.confirming') },
+    { key: 'done',    label: t('create.deploy.done')       },
+  ]
 
   const [kycStatus,   setKycStatus]   = useState(null)
   const [kycEnforced, setKycEnforced] = useState(false)
@@ -271,14 +284,32 @@ export default function CreatePod() {
         throw chainErr
       }
 
+      // ── Creation fee — $2 USD in XRP, live XRPL pods only ─────────
+      let feeResult = { txHash: null, paid: false }
+
+      if (form.chain === 'XRPL' && env === 'live') {
+        setDeployStep('fee')
+        try {
+          const treasuryAddress = await getTreasuryWallet('XRPL')
+          if (!treasuryAddress) throw new Error('Treasury wallet not configured — contact support.')
+          const xrpPrice = await fetchXrpUsdPrice()
+          const feeXrp   = +(CREATION_FEE_USD / xrpPrice).toFixed(2)
+          const { txHash } = await sendContribution(treasuryAddress, feeXrp, 'XRP', 'XRPL', env)
+          feeResult = { txHash, paid: true }
+        } catch (feeErr) {
+          await updatePodContract(podId, { status: 'FAILED' }).catch(() => {})
+          throw new Error(`Creation fee payment failed: ${feeErr?.message ?? feeErr}`)
+        }
+      }
+
       setDeployStep('confirm')
 
       let dbErr = null
       for (let i = 1; i <= 3; i++) {
         const { error } = await updatePodContract(podId, {
           contract_address:  contractResult.contractAddress,
-          creation_fee_tx:   contractResult.txHash,
-          creation_fee_paid: !contractResult.simulated,
+          creation_fee_tx:   feeResult.txHash,
+          creation_fee_paid: feeResult.paid,
           status:            'OPEN',
           deployed_at:       contractResult.simulated ? null : new Date().toISOString(),
         })
@@ -292,7 +323,7 @@ export default function CreatePod() {
       }
 
       setDeployStep('done')
-      setResult({ podId, txHash: contractResult.txHash, simulated: contractResult.simulated })
+      setResult({ podId, txHash: feeResult.txHash ?? contractResult.txHash, simulated: contractResult.simulated })
 
       fetch('/.netlify/functions/notify', {
         method:  'POST',
@@ -842,11 +873,22 @@ export default function CreatePod() {
                     <span className="dark:text-brand-muted text-slate-500">{t('create.firstContrib')}</span>
                     <span className="font-bold dark:text-white text-slate-900">{form.contribution} {form.token}</span>
                   </div>
+                  {form.chain === 'XRPL' && env === 'live' && (
+                    <div className="flex justify-between text-sm">
+                      <span className="dark:text-brand-muted text-slate-500">{t('create.creationFee')}</span>
+                      <span className="font-bold dark:text-white text-slate-900">${CREATION_FEE_USD} ({t('create.inXrp')}) · {t('create.nonRefundable')}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm border-t dark:border-brand-border border-slate-200 pt-2 mt-2">
                     <span className="font-bold dark:text-white text-slate-900">{t('create.totalUpfront')}</span>
                     <span className="font-extrabold text-brand-cyan">{form.contribution * 3} {form.token}{form.chain === 'Ethereum' ? ' + gas' : ''}</span>
                   </div>
                 </div>
+                {form.chain === 'XRPL' && env === 'live' && (
+                  <p className="text-xs dark:text-brand-muted text-slate-500 mt-3 pt-3 border-t dark:border-brand-border border-slate-200">
+                    {t('create.creationFeeDisclosure', { fee: CREATION_FEE_USD })}
+                  </p>
+                )}
               </div>
 
               {/* Yield risk acknowledgments */}
