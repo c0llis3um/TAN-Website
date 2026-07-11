@@ -12,6 +12,9 @@ import { useTranslation } from 'react-i18next'
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
 import { Client, xrpToDrops } from 'xrpl'
 import Card from '@/components/ui/Card'
+import MoonPayButton from '@/components/MoonPayButton'
+
+const BITSO_XRP_URL = 'https://bitso.com/mx/prices/xrp'
 
 const NODES = {
   dev:  'wss://s.devnet.rippletest.net:51233',
@@ -408,6 +411,25 @@ export default function XrplDashboard({ wallet, env }) {
             </div>
             <span className="text-brand-blue text-sm">→</span>
           </a>
+        </Card>
+      )}
+
+      {/* Get XRP — live only */}
+      {env === 'live' && (
+        <Card hover={false} className="p-5">
+          <h3 className="font-bold dark:text-white text-slate-900 text-sm mb-1">{t('walletPage.getXrpTitle')}</h3>
+          <p className="text-xs dark:text-brand-muted text-slate-400 mb-3">{t('walletPage.getXrpDesc')}</p>
+          <div className="space-y-2">
+            <MoonPayButton walletAddress={wallet.address} token="XRP" env={env} label={t('walletPage.buyMoonpay')} />
+            <a href={BITSO_XRP_URL} target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-between p-3 rounded-2xl dark:bg-brand-dark bg-slate-50 border dark:border-brand-border border-slate-200 hover:border-brand-blue/40 transition-colors group">
+              <div>
+                <p className="text-sm font-semibold dark:text-white text-slate-900 group-hover:text-brand-blue transition-colors">{t('walletPage.buyBitso')}</p>
+                <p className="text-xs dark:text-brand-muted text-slate-400">{t('walletPage.bitsoDesc')}</p>
+              </div>
+              <span className="text-brand-blue text-sm">→</span>
+            </a>
+          </div>
         </Card>
       )}
     </div>
