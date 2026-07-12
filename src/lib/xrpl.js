@@ -113,11 +113,78 @@ export async function getXrplBalances(walletAddress, env) {
   return { xrp, rlusd }
 }
 
+// ── Ledger-level verification ───────────────────────────────────
+//
+// Xaman resolving with `signed: true` only means the user approved the
+// transaction in their wallet — it does NOT mean XRPL accepted it. A signed
+// payment can still fail on-chain (insufficient balance, no path, bad trust
+// line) and Xaman has no way to tell us that. Every send routes through
+// verifyXrplPayment() below so callers (join, cycle payments, creation fee)
+// only ever see a resolved promise once the ledger has actually confirmed
+// tesSUCCESS and the full expected amount was delivered — never on a merely
+// signed-but-failed transaction.
+
+function deliveredAmountToNumber(delivered) {
+  if (delivered == null) return 0
+  if (typeof delivered === 'string') return Number(delivered) / 1_000_000 // XRP drops
+  return Number(delivered.value ?? 0) // issued currency
+}
+
+/**
+ * Polls the ledger for a submitted transaction until it's validated, then
+ * confirms it actually succeeded and delivered at least the expected amount.
+ * Throws a user-readable error otherwise.
+ *
+ * @param {string} txHash
+ * @param {'dev'|'live'} env
+ * @param {{ expectedAmount?: number, timeoutMs?: number }} [opts]
+ */
+export async function verifyXrplPayment(txHash, env, { expectedAmount, timeoutMs = 20000 } = {}) {
+  const client = new Client(NODES[env] ?? NODES.dev)
+  await client.connect()
+
+  try {
+    const start = Date.now()
+    let txResult = null
+
+    while (Date.now() - start < timeoutMs) {
+      try {
+        const resp = await client.request({ command: 'tx', transaction: txHash })
+        if (resp.result?.validated) { txResult = resp.result; break }
+      } catch {
+        // Not found yet — the ledger hasn't caught up to this tx. Keep polling.
+      }
+      await new Promise((r) => setTimeout(r, 1500))
+    }
+
+    if (!txResult) {
+      throw new Error('Could not confirm the transaction on-chain in time. Check your wallet before retrying — do not pay twice.')
+    }
+
+    const engineResult = txResult.meta?.TransactionResult
+    if (engineResult !== 'tesSUCCESS') {
+      throw new Error(`Payment failed on-chain: ${engineResult}`)
+    }
+
+    if (expectedAmount != null) {
+      const delivered = txResult.meta?.delivered_amount ?? txResult.meta?.DeliveredAmount
+      const deliveredValue = deliveredAmountToNumber(delivered)
+      if (deliveredValue < expectedAmount - 1e-6) {
+        throw new Error(`Only ${deliveredValue} of ${expectedAmount} was actually delivered on-chain.`)
+      }
+    }
+
+    return { ok: true }
+  } finally {
+    await client.disconnect()
+  }
+}
+
 // ── Send XRP or RLUSD ─────────────────────────────────────────
 
 /**
- * Build a payment transaction and sign it via XUMM.
- * XUMM returns a SignRequest — the user approves on their phone or extension.
+ * Build a payment transaction, sign it via XUMM, and verify on the ledger
+ * that it actually succeeded (see verifyXrplPayment above) before resolving.
  *
  * @param {string} toAddress
  * @param {number} amount
@@ -174,7 +241,12 @@ export async function sendXrplContribution(toAddress, amount, token, env) {
   const result = await resolved
   if (!result?.signed) throw new Error('Transaction rejected in Xaman.')
 
-  return { txHash: result.txid }
+  const txHash = result.txid
+  // Signed != succeeded — confirm the ledger actually accepted it and
+  // delivered the full amount before telling the caller this payment happened.
+  await verifyXrplPayment(txHash, env, { expectedAmount: Number(amount) })
+
+  return { txHash }
 }
 
 // ── Pod escrow account management ─────────────────────────────
