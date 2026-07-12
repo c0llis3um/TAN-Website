@@ -19,7 +19,7 @@ import { paymentReminderEmail, overdueSlashEmail, sendEmail } from './lib/email.
 import { sendPushToUser } from './lib/push.js'
 
 const NODES = {
-  dev:  'wss://s.devnet.rippletest.net:51233',
+  dev:  'wss://testnet.xrpl-labs.com',
   live: 'wss://xrplcluster.com',
 }
 

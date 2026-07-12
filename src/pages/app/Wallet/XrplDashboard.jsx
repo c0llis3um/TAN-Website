@@ -17,7 +17,7 @@ import MoonPayButton from '@/components/MoonPayButton'
 const BITSO_XRP_URL = 'https://bitso.com/mx/prices/xrp'
 
 const NODES = {
-  dev:  'wss://s.devnet.rippletest.net:51233',
+  dev:  'wss://testnet.xrpl-labs.com',
   live: 'wss://xrplcluster.com',
 }
 
@@ -403,7 +403,7 @@ export default function XrplDashboard({ wallet, env }) {
         <Card hover={false} className="p-5">
           <h3 className="font-bold dark:text-white text-slate-900 text-sm mb-1">{t('walletPage.faucetXrpl')}</h3>
           <p className="text-xs dark:text-brand-muted text-slate-400 mb-3">{t('walletPage.faucetXrplDesc')}</p>
-          <a href="https://faucet.devnet.rippletest.net/accounts" target="_blank" rel="noopener noreferrer"
+          <a href="https://faucet.altnet.rippletest.net/accounts" target="_blank" rel="noopener noreferrer"
             className="flex items-center justify-between p-3 rounded-2xl dark:bg-brand-dark bg-slate-50 border dark:border-brand-border border-slate-200 hover:border-brand-blue/40 transition-colors group">
             <div>
               <p className="text-sm font-semibold dark:text-white text-slate-900 group-hover:text-brand-blue transition-colors">{t('walletPage.getDevnet')}</p>

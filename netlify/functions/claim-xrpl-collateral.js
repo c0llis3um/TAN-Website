@@ -16,12 +16,12 @@ import { createClient } from '@supabase/supabase-js'
 import { Client, Wallet, xrpToDrops } from 'xrpl'
 
 const NODES = {
-  dev:  'wss://s.devnet.rippletest.net:51233',
+  dev:  'wss://testnet.xrpl-labs.com',
   live: 'wss://xrplcluster.com',
 }
 
 const RLUSD_ISSUER = {
-  dev:  'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh',
+  dev:  'rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV',
   live: '',
 }
 

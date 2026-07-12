@@ -4,7 +4,7 @@
  * Uses the Xumm SDK (npm: xumm) which works on mobile and desktop.
  * Set VITE_XUMM_API_KEY in .env — get one free at apps.xumm.dev
  *
- * RLUSD issuer (testnet): rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh (placeholder)
+ * RLUSD issuer (testnet): rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV (real Ripple-issued testnet RLUSD)
  * For mainnet RLUSD issuer contact Ripple.
  */
 
@@ -29,13 +29,13 @@ export function getXumm() {
 }
 
 const NODES = {
-  dev:  'wss://s.devnet.rippletest.net:51233',
+  dev:  'wss://testnet.xrpl-labs.com',
   live: 'wss://xrplcluster.com',
 }
 
 // RLUSD issuer addresses
 const RLUSD_ISSUER = {
-  dev:  'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh',  // testnet placeholder
+  dev:  'rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV',  // real XRPL Testnet RLUSD issuer
   live: '',  // fill in when Ripple publishes mainnet RLUSD issuer
 }
 

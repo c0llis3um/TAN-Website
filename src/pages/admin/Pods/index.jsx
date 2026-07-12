@@ -176,7 +176,7 @@ function PodDetail({ pod, onClose }) {
 
   const xrplBase = (pod.env ?? 'dev') === 'live'
     ? 'https://xrpl.org/transactions/'
-    : 'https://devnet.xrpl.org/transactions/'
+    : 'https://testnet.xrpl.org/transactions/'
 
   async function handleForceComplete() {
     if (!window.confirm('Mark pod as COMPLETED? This will enable collateral release.')) return
