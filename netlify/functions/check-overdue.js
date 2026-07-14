@@ -11,12 +11,17 @@
  * sitting locked in an escrow that's never going to activate.
  *
  * Safe to re-run — slash logic is idempotent (won't slash twice per cycle).
+ *
+ * Required env vars (no VITE_ prefix) include ESCROW_SEED_ENCRYPTION_KEY
+ * alongside SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY.
  */
 
 import { createClient } from '@supabase/supabase-js'
 import { Client, Wallet, xrpToDrops } from 'xrpl'
 import { paymentReminderEmail, overdueSlashEmail, sendEmail } from './lib/email.js'
 import { sendPushToUser } from './lib/push.js'
+import { decryptSeed } from './lib/crypto.js'
+import { rateLimit } from './lib/rateLimit.js'
 
 const NODES = {
   dev:  'wss://testnet.xrpl-labs.com',
@@ -180,11 +185,26 @@ async function expireStalePods(supabase) {
   return stale.length
 }
 
-export const handler = async () => {
+export const handler = async (event = {}) => {
+  // Netlify's scheduler POSTs a body containing `next_run` for a genuine
+  // scheduled invocation. This function auto-slashes real member collateral
+  // with no per-caller verification otherwise, so a direct call to its public
+  // URL is worth flagging loudly — logged rather than hard-blocked, since
+  // getting Netlify's exact invocation contract wrong here would silently
+  // disable the daily slash/expiry sweep with no one noticing.
+  let isScheduled = false
+  try { isScheduled = !!JSON.parse(event.body ?? '{}').next_run } catch { /* not scheduled */ }
+  if (!isScheduled) {
+    console.warn('[check-overdue] Invoked without a scheduler payload — verify this wasn\'t a direct external call.')
+  }
+
   const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY,
   )
+
+  const limited = await rateLimit(supabase, event, 'check-overdue', { max: 2, windowSeconds: 3600 })
+  if (limited) return limited
 
   console.log('[check-overdue] Starting scan…')
 
@@ -237,7 +257,7 @@ export const handler = async () => {
     }
 
     const env          = pod.env ?? 'dev'
-    const escrowWallet = Wallet.fromSeed(escrowRow.escrow_seed)
+    const escrowWallet = Wallet.fromSeed(decryptSeed(escrowRow.escrow_seed))
 
     // Check each active member
     for (const member of pod.pod_members ?? []) {

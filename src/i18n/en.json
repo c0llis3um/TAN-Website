@@ -95,7 +95,16 @@
     "back": "← Back to pod",
     "notFound": "Pod not found",
     "alreadyPaid": "Already paid this cycle",
-    "alreadyPaidDesc": "You already submitted your contribution for cycle {{cycle}}. No action needed."
+    "alreadyPaidDesc": "You already submitted your contribution for cycle {{cycle}}. No action needed.",
+    "contactPrompt": "Something wrong? Contact us",
+    "contactTitle": "Contact support",
+    "contactBody": "Describe what happened — we'll include your wallet and this pod's details automatically.",
+    "contactPlaceholder": "e.g. I sent my payment but it isn't showing as confirmed…",
+    "contactSend": "Send",
+    "contactSending": "Sending…",
+    "contactCancel": "Cancel",
+    "contactSent": "Thanks — we got your message and will follow up.",
+    "contactError": "Couldn't send your message. Please try again."
   },
   "chains": {
     "title": "Built on XRP Ledger",

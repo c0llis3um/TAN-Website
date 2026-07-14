@@ -4,9 +4,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import ContactSupportModal from '@/components/ContactSupportModal'
 import useAppStore from '@/store/useAppStore'
 import { getPod, getPodPayments, recordPayment, maybeAdvanceCycle, getUser } from '@/lib/db'
 import { sendContribution, tandaPodContribute } from '@/lib/contracts'
+import { safeJson } from '@/lib/http'
 
 function shareWa(text) { window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank') }
 function shareTg(url, text) { window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank') }
@@ -24,6 +26,7 @@ export default function Pay() {
   const [payError,  setPayError]  = useState(null)
   const [txHash,    setTxHash]    = useState(null)
   const [recipient, setRecipient] = useState(null)
+  const [showContact, setShowContact] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -55,9 +58,18 @@ export default function Pay() {
     setPayError(null)
     setTxHash(null)
 
+    // Open the Xaman sign window synchronously, still inside the click's
+    // user-gesture — Brave/iOS silently blocks window.open once any `await`
+    // has run, which made taps look like they'd failed and led people to
+    // retry (paying a cycle contribution more than once).
+    const xummPopup = (m === 'wallet' && pod.chain === 'XRPL')
+      ? window.open('', '_blank', 'width=480,height=720,noopener')
+      : null
+
     // Look up the user record to get their UUID
     const { data: user } = await getUser(wallet.address)
     if (!user) {
+      xummPopup?.close()
       setPayError('Wallet not found — connect your wallet first.')
       setStep('select')
       return
@@ -72,6 +84,7 @@ export default function Pay() {
 
     if (m === 'wallet') {
       if (!recipientAddr) {
+        xummPopup?.close()
         setPayError('Payout recipient not assigned yet — pod may not be fully active.')
         setStep('select')
         return
@@ -82,19 +95,34 @@ export default function Pay() {
       const iAmRecipient = wallet?.address?.toLowerCase() === recipientAddr?.toLowerCase()
 
       if (iAmRecipient) {
+        xummPopup?.close()
         txHashResult = 'self-recipient'
         setTxHash('self-recipient')
       } else {
         try {
-          const result = await sendContribution(
-            recipientAddr,
-            pod.contribution_amount,
-            pod.token,
-            pod.chain,
-            env,
-          )
-          txHashResult = result.txHash
-          setTxHash(result.txHash)
+          // A previous attempt may have already sent this cycle's payment
+          // on-chain but failed to record it (closed tab, blocked popup,
+          // dropped network) — don't pay the recipient twice on retry.
+          const alreadyPaid = pod.chain === 'XRPL'
+            ? await (await import('@/lib/xrpl')).hasAlreadyPaid(wallet.address, recipientAddr, pod.contribution_amount, pod.token, env)
+            : false
+
+          if (alreadyPaid) {
+            xummPopup?.close()
+            txHashResult = 'already-sent'
+            setTxHash('already-sent')
+          } else {
+            const result = await sendContribution(
+              recipientAddr,
+              pod.contribution_amount,
+              pod.token,
+              pod.chain,
+              env,
+              xummPopup,
+            )
+            txHashResult = result.txHash
+            setTxHash(result.txHash)
+          }
         } catch (err) {
           setPayError(err?.message ?? 'Transaction failed.')
           setStep('select')
@@ -106,26 +134,50 @@ export default function Pay() {
 
     setRecipient(recipientAlias)
 
-    // Record the payment in the DB
-    const { error: payErr } = await recordPayment({
-      pod_id:  id,
-      user_id: user.id,
-      cycle:   pod.current_cycle,
-      amount:  pod.contribution_amount,
-      token:   pod.token,
-      chain:   pod.chain,
-      method:  m,
-      tx_hash: txHashResult,
-    })
+    if (pod.chain === 'XRPL') {
+      // payments/pods writes are now service-role only (migration 028) — the
+      // server re-verifies the on-chain payment itself rather than trusting
+      // whatever this page claims happened, and advances the cycle if this
+      // completes it.
+      try {
+        const res = await fetch('/.netlify/functions/pod-record-payment', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ podId: id, walletAddress: wallet.address, txHash: txHashResult }),
+        })
+        const json = await safeJson(res)
+        if (!res.ok) throw new Error(json.error ?? 'Could not record your payment.')
+      } catch (err) {
+        setPayError(err?.message ?? 'Could not record your payment — contact support, do not pay again.')
+        setStep('select')
+        return
+      }
+    } else {
+      // TODO: pod_id/user_id-keyed writes are now locked to service-role only
+      // (migration 028) for every chain. Ethereum/Solana never got an equivalent
+      // server-verified endpoint in this pass (XRPL/RLUSD is the only chain going
+      // live right now) — this will fail with a DB permission error until one is
+      // built.
+      const { error: payErr } = await recordPayment({
+        pod_id:  id,
+        user_id: user.id,
+        cycle:   pod.current_cycle,
+        amount:  pod.contribution_amount,
+        token:   pod.token,
+        chain:   pod.chain,
+        method:  m,
+        tx_hash: txHashResult,
+      })
 
-    if (payErr) {
-      setPayError(payErr.message)
-      setStep('select')
-      return
+      if (payErr) {
+        setPayError(payErr.message)
+        setStep('select')
+        return
+      }
+
+      // If everyone has paid this cycle, advance to next cycle (or complete the pod)
+      await maybeAdvanceCycle(id)
     }
-
-    // If everyone has paid this cycle, advance to next cycle (or complete the pod)
-    await maybeAdvanceCycle(id)
 
     fetch('/.netlify/functions/notify', {
       method:  'POST',
@@ -226,7 +278,15 @@ export default function Pay() {
                 </motion.button>
 
                 {payError && (
-                  <p className="text-xs text-red-400 text-center bg-red-500/10 rounded-xl p-3">{payError}</p>
+                  <div className="space-y-2">
+                    <p className="text-xs text-red-400 text-center bg-red-500/10 rounded-xl p-3">{payError}</p>
+                    <button
+                      onClick={() => setShowContact(true)}
+                      className="w-full text-xs text-brand-cyan hover:underline text-center"
+                    >
+                      {t('pay.contactPrompt')}
+                    </button>
+                  </div>
                 )}
                 <p className="text-xs dark:text-brand-muted text-slate-400 text-center pt-1">
                   {t('pay.secured', { chain: pod.chain })}
@@ -284,7 +344,7 @@ export default function Pay() {
                   {t('pay.sentTo', { name: recipient })}
                 </motion.p>
               )}
-              {txHash && txHash !== 'self-recipient' && (
+              {txHash && !['self-recipient', 'already-sent'].includes(txHash) && (
                 <motion.p className="font-mono text-xs dark:text-brand-muted text-slate-400 mt-2 break-all px-4"
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
                   Tx: {txHash.slice(0, 20)}…{txHash.slice(-6)}
@@ -305,16 +365,31 @@ export default function Pay() {
                 {env === 'dev' && <p className="text-xs text-amber-500 text-center">{t('pay.sharingDisabled')}</p>}
               </motion.div>
 
-              <motion.div className="mt-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }}>
+              <motion.div className="mt-6 space-y-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }}>
                 <Button variant="ghost" size="sm" onClick={() => navigate(`/app/pod/${id}`)}>
                   {t('common.back')}
                 </Button>
+                <button
+                  onClick={() => setShowContact(true)}
+                  className="block w-full text-xs text-brand-cyan hover:underline text-center"
+                >
+                  {t('pay.contactPrompt')}
+                </button>
               </motion.div>
             </Card>
           </motion.div>
         )}
 
       </AnimatePresence>
+
+      {showContact && (
+        <ContactSupportModal
+          podId={id}
+          podName={pod?.name}
+          txHash={txHash && !['self-recipient', 'already-sent'].includes(txHash) ? txHash : undefined}
+          onClose={() => setShowContact(false)}
+        />
+      )}
     </div>
   )
 }

@@ -260,6 +260,24 @@ export default function CreatePod() {
       setDeployStep('approve')
       let contractResult = { simulated: true, txHash: null, contractAddress: null }
 
+      // pods.status/contract_address writes are now service-role only (migration
+      // 028). For XRPL, create-xrpl-escrow.js and confirm-pod-creation-fee.js do
+      // that finalization server-side themselves; markFailed()/updatePodContract
+      // below are the "give up on this pod" rollback paths.
+      const markFailed = async () => {
+        if (form.chain === 'XRPL') {
+          await fetch('/.netlify/functions/pod-mark-failed', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ podId }),
+          }).catch(() => {})
+        } else {
+          // TODO: Ethereum/Solana pod finalization never got a service-role
+          // equivalent in this pass (XRPL/RLUSD is the only chain going live
+          // right now, and Ethereum isn't selectable in the UI yet — see the
+          // CHAINS comment above). This will fail with a DB permission error.
+          await updatePodContract(podId, { status: 'FAILED' }).catch(() => {})
+        }
+      }
+
       try {
         if (form.chain === 'Ethereum') {
           contractResult = await deployPodEVM({
@@ -280,7 +298,7 @@ export default function CreatePod() {
           contractResult = { simulated: false, txHash: null, contractAddress: escrowJson.escrowAddress }
         }
       } catch (chainErr) {
-        await updatePodContract(podId, { status: 'FAILED' }).catch(() => {})
+        await markFailed()
         throw chainErr
       }
 
@@ -297,7 +315,7 @@ export default function CreatePod() {
           const { txHash } = await sendContribution(treasuryAddress, feeXrp, 'XRP', 'XRPL', env)
           feeResult = { txHash, paid: true }
         } catch (feeErr) {
-          await updatePodContract(podId, { status: 'FAILED' }).catch(() => {})
+          await markFailed()
           throw new Error(`Creation fee payment failed: ${feeErr?.message ?? feeErr}`)
         }
       }
@@ -305,17 +323,35 @@ export default function CreatePod() {
       setDeployStep('confirm')
 
       let dbErr = null
-      for (let i = 1; i <= 3; i++) {
-        const { error } = await updatePodContract(podId, {
-          contract_address:  contractResult.contractAddress,
-          creation_fee_tx:   feeResult.txHash,
-          creation_fee_paid: feeResult.paid,
-          status:            'OPEN',
-          deployed_at:       contractResult.simulated ? null : new Date().toISOString(),
-        })
-        if (!error) { dbErr = null; break }
-        dbErr = error
-        await new Promise(r => setTimeout(r, i * 800))
+      if (form.chain === 'XRPL') {
+        // dev: create-xrpl-escrow.js already finalized the pod (contract_address +
+        // deployed_at) server-side. live: still needs the fee verified.
+        if (env === 'live') {
+          for (let i = 1; i <= 3; i++) {
+            const res = await fetch('/.netlify/functions/confirm-pod-creation-fee', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ podId, txHash: feeResult.txHash }),
+            })
+            const json = await safeJson(res)
+            if (res.ok) { dbErr = null; break }
+            dbErr = json.error ?? `HTTP ${res.status}`
+            await new Promise(r => setTimeout(r, i * 800))
+          }
+        }
+      } else {
+        // TODO: see markFailed() above — same Ethereum/Solana follow-up gap.
+        for (let i = 1; i <= 3; i++) {
+          const { error } = await updatePodContract(podId, {
+            contract_address:  contractResult.contractAddress,
+            creation_fee_tx:   feeResult.txHash,
+            creation_fee_paid: feeResult.paid,
+            status:            'OPEN',
+            deployed_at:       contractResult.simulated ? null : new Date().toISOString(),
+          })
+          if (!error) { dbErr = null; break }
+          dbErr = error
+          await new Promise(r => setTimeout(r, i * 800))
+        }
       }
 
       if (dbErr) {

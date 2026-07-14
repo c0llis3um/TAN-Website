@@ -18,10 +18,13 @@
  * Required env vars (Netlify dashboard — NO VITE_ prefix):
  *   SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
+ *   ESCROW_SEED_ENCRYPTION_KEY
  */
 
 import { createClient } from '@supabase/supabase-js'
 import { Client, Wallet } from 'xrpl'
+import { encryptSeed } from './lib/crypto.js'
+import { rateLimit } from './lib/rateLimit.js'
 
 const NODES = {
   dev:  'wss://testnet.xrpl-labs.com',
@@ -58,6 +61,9 @@ export const handler = async (event) => {
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY,
   )
+
+  const limited = await rateLimit(supabase, event, 'create-xrpl-escrow', { max: 5, windowSeconds: 600 })
+  if (limited) return limited
 
   try {
     // ── 1. Parse body ──────────────────────────────────────────
@@ -202,7 +208,7 @@ export const handler = async (event) => {
     // ── 5. Save seed + vault_id server-side (service_role bypasses RLS) ───
     const insertPayload = {
       pod_id:      podId,
-      escrow_seed: wallet.seed,
+      escrow_seed: encryptSeed(wallet.seed),
     }
     if (vaultId) {
       insertPayload.vault_id = vaultId
@@ -215,6 +221,23 @@ export const handler = async (event) => {
     if (dbErr) {
       console.error('[create-xrpl-escrow] DB save failed', dbErr)
       return { statusCode: 500, body: JSON.stringify({ error: `Seed save failed: ${dbErr.message}` }) }
+    }
+
+    // ── 6. Record the escrow address on the pod (service_role — anon/authenticated
+    // no longer have UPDATE on pods, see migration 028). `dev` pods have no creation
+    // fee to wait for, so they're fully deployed now; `live` pods still need
+    // confirm-pod-creation-fee.js to run before deployed_at is set.
+    const podUpdate = { contract_address: wallet.address }
+    if (env === 'dev') podUpdate.deployed_at = new Date().toISOString()
+
+    const { error: podErr } = await supabase
+      .from('pods')
+      .update(podUpdate)
+      .eq('id', podId)
+
+    if (podErr) {
+      console.error('[create-xrpl-escrow] pod update failed', podErr)
+      return { statusCode: 500, body: JSON.stringify({ error: `Escrow created but pod update failed: ${podErr.message}` }) }
     }
 
     console.log(`[create-xrpl-escrow] Pod ${podId} escrow: ${wallet.address} (${env})${vaultId ? ` | vault: ${vaultId}` : ''}`)

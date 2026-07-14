@@ -21,10 +21,12 @@
  * Required env vars (Netlify dashboard — no VITE_ prefix):
  *   SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
+ *   ESCROW_SEED_ENCRYPTION_KEY
  */
 
 import { createClient } from '@supabase/supabase-js'
 import { Client, Wallet } from 'xrpl'
+import { decryptSeed } from './lib/crypto.js'
 
 const NODES = {
   dev:  'wss://testnet.xrpl-labs.com',
@@ -257,7 +259,7 @@ export const handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'RLUSD issuer not configured for this environment' }) }
     }
 
-    const escrowWallet = Wallet.fromSeed(escrowRow.escrow_seed)
+    const escrowWallet = Wallet.fromSeed(decryptSeed(escrowRow.escrow_seed))
     const node         = NODES[env] ?? NODES.dev
     const xrplClient   = new Client(node)
 

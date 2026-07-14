@@ -4,7 +4,7 @@ import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Pagination from '@/components/ui/Pagination'
 import usePagination from '@/lib/usePagination'
-import { adminGetAllPods, updatePodStatus, adminForceAdvanceCycle } from '@/lib/db'
+import { adminGetAllPods } from '@/lib/db'
 import { releaseCollateral } from '@/lib/contracts'
 import { safeJson } from '@/lib/http'
 import useAppStore from '@/store/useAppStore'
@@ -182,7 +182,16 @@ function PodDetail({ pod, onClose }) {
     if (!window.confirm('Mark pod as COMPLETED? This will enable collateral release.')) return
     setCompleting(true)
     try {
-      await updatePodStatus(pod.id, 'COMPLETED')
+      // pods.status writes are now service-role only (migration 028).
+      const supabaseModule = await import('@/lib/supabase')
+      const { data: { session } } = await supabaseModule.default.auth.getSession()
+      const res = await fetch('/.netlify/functions/admin-set-pod-status', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token ?? ''}` },
+        body:    JSON.stringify({ podId: pod.id, status: 'COMPLETED' }),
+      })
+      const json = await safeJson(res)
+      if (!res.ok) throw new Error(json.error ?? 'Failed to complete pod')
       setCurrentStatus('COMPLETED')
     } catch (e) {
       alert(e?.message ?? 'Failed to complete pod')
@@ -252,20 +261,30 @@ function PodDetail({ pod, onClose }) {
     setAdvancing(true)
     setAdvanceErr(null)
     setAdvanceResult(null)
-    const { data, error } = await adminForceAdvanceCycle(pod.id)
-    if (error) {
-      setAdvanceErr(typeof error === 'string' ? error : error.message)
-    } else {
-      setAdvanceResult(data)
-      setCurrentStatus(data.status)
+    try {
+      // pod_members/payments/pods writes are now service-role only (migration 028).
+      const supabaseModule = await import('@/lib/supabase')
+      const { data: { session } } = await supabaseModule.default.auth.getSession()
+      const res = await fetch('/.netlify/functions/admin-force-advance-cycle', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token ?? ''}` },
+        body:    JSON.stringify({ podId: pod.id }),
+      })
+      const json = await safeJson(res)
+      if (!res.ok) throw new Error(json.error ?? 'Failed to force-advance cycle')
+
+      setAdvanceResult(json.pod)
+      setCurrentStatus(json.pod.status)
       // Refresh member/payment detail
-      const supabase = (await import('@/lib/supabase')).default
+      const supabase = supabaseModule.default
       const [{ data: mems }, { data: pays }] = await Promise.all([
         supabase.from('pod_members').select('id, user_id, payout_slot, status, user:users(id, alias, wallet_address)').eq('pod_id', pod.id).order('payout_slot'),
         supabase.from('payments').select('user_id, method, status, tx_hash').eq('pod_id', pod.id).eq('cycle', pod.current_cycle ?? 0),
       ])
       setMembers(mems ?? [])
       setCyclePayments(pays ?? [])
+    } catch (e) {
+      setAdvanceErr(e?.message ?? String(e))
     }
     setAdvancing(false)
   }

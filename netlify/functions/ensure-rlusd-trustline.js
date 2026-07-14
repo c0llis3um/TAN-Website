@@ -7,10 +7,15 @@
  * Checks whether the pod's escrow wallet already has an RLUSD trust line.
  * If not, submits a TrustSet transaction from the escrow wallet.
  * Safe to call multiple times — no-ops if trust line already exists.
+ *
+ * Required env vars (no VITE_ prefix): SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+ * ESCROW_SEED_ENCRYPTION_KEY.
  */
 
 import { createClient } from '@supabase/supabase-js'
 import { Client, Wallet } from 'xrpl'
+import { decryptSeed } from './lib/crypto.js'
+import { rateLimit } from './lib/rateLimit.js'
 
 const NODES = {
   dev:  'wss://testnet.xrpl-labs.com',
@@ -34,6 +39,9 @@ export const handler = async (event) => {
     process.env.SUPABASE_SERVICE_ROLE_KEY,
   )
 
+  const limited = await rateLimit(supabase, event, 'ensure-rlusd-trustline', { max: 10, windowSeconds: 600 })
+  if (limited) return limited
+
   try {
     const { podId, env = 'dev' } = JSON.parse(event.body ?? '{}')
     if (!podId) return { statusCode: 400, body: JSON.stringify({ error: 'podId required' }) }
@@ -52,7 +60,7 @@ export const handler = async (event) => {
       return { statusCode: 404, body: JSON.stringify({ error: 'Escrow not found for this pod.' }) }
     }
 
-    const wallet = Wallet.fromSeed(escrow.escrow_seed)
+    const wallet = Wallet.fromSeed(decryptSeed(escrow.escrow_seed))
     const client = new Client(NODES[env] ?? NODES.dev)
     await client.connect()
 

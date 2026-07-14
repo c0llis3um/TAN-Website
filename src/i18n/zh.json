@@ -95,7 +95,16 @@
     "back": "← 返回圈子",
     "notFound": "找不到该圈子",
     "alreadyPaid": "本期已缴费",
-    "alreadyPaidDesc": "你已提交第 {{cycle}} 期的缴费。无需任何操作。"
+    "alreadyPaidDesc": "你已提交第 {{cycle}} 期的缴费。无需任何操作。",
+    "contactPrompt": "遇到问题？联系我们",
+    "contactTitle": "联系支持",
+    "contactBody": "描述发生的问题——我们会自动附上你的钱包和本圈子的信息。",
+    "contactPlaceholder": "例如：我已付款，但状态未显示为已确认……",
+    "contactSend": "发送",
+    "contactSending": "发送中……",
+    "contactCancel": "取消",
+    "contactSent": "感谢反馈——我们已收到你的消息，会尽快跟进。",
+    "contactError": "消息发送失败，请重试。"
   },
   "chains": {
     "title": "基于 XRP 账本构建",

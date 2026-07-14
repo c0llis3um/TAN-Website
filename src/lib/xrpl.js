@@ -180,6 +180,123 @@ export async function verifyXrplPayment(txHash, env, { expectedAmount, timeoutMs
   }
 }
 
+function deliveredMatchesToken(delivered, token, env) {
+  if (token === 'XRP') return typeof delivered === 'string'
+  const issuer = RLUSD_ISSUER[env]
+  return !!delivered && typeof delivered === 'object' &&
+    delivered.currency === RLUSD_HEX && delivered.issuer === issuer
+}
+
+/**
+ * Checks whether `fromAddress` already has a confirmed on-ledger payment of
+ * at least `expectedAmount` to `toAddress`. Used to make wallet-to-escrow
+ * flows (pod join, cycle payment) idempotent: if a previous attempt's
+ * payment succeeded on-chain but the app's DB write never ran (closed tab,
+ * dropped network, popup blocked mid-flow), a retry should complete the
+ * record instead of sending collateral again.
+ *
+ * @param {string} fromAddress
+ * @param {string} toAddress
+ * @param {number} expectedAmount
+ * @param {'XRP'|'RLUSD'} token
+ * @param {'dev'|'live'} env
+ */
+export async function hasAlreadyPaid(fromAddress, toAddress, expectedAmount, token, env) {
+  const client = new Client(NODES[env] ?? NODES.dev)
+  await client.connect()
+
+  try {
+    const { result } = await client.request({
+      command: 'account_tx',
+      account: fromAddress,
+      limit:   50,
+    })
+
+    for (const entry of result.transactions ?? []) {
+      const tx = entry.tx_json ?? entry.tx
+      if (
+        tx?.TransactionType === 'Payment' &&
+        tx?.Destination === toAddress &&
+        entry.validated &&
+        entry.meta?.TransactionResult === 'tesSUCCESS'
+      ) {
+        const delivered = entry.meta?.delivered_amount ?? entry.meta?.DeliveredAmount
+        if (!deliveredMatchesToken(delivered, token, env)) continue
+        if (deliveredAmountToNumber(delivered) >= expectedAmount - 1e-6) return true
+      }
+    }
+    return false
+  } finally {
+    await client.disconnect()
+  }
+}
+
+/**
+ * Scans a pod escrow's inbound payment history and flags senders whose total
+ * paid-in isn't accounted for by pod membership: either a wallet that sent
+ * collateral but never became a member (e.g. a join that succeeded on-chain
+ * but whose DB write never landed), or a member who paid in more than their
+ * expected collateral.
+ *
+ * @param {string} escrowAddress
+ * @param {'XRP'|'RLUSD'} token
+ * @param {'dev'|'live'} env
+ * @param {{ address: string, expectedAmount: number }[]} expectedSenders — current
+ *   pod members and the collateral each is expected to have sent to this escrow
+ * @returns {{ sender: string, totalSent: number, expected: number, excess: number,
+ *   reason: 'non_member_payment'|'overpaid_member', sampleTxHash: string }[]}
+ */
+export async function scanEscrowAnomalies(escrowAddress, token, env, expectedSenders) {
+  const client = new Client(NODES[env] ?? NODES.dev)
+  await client.connect()
+
+  try {
+    const { result } = await client.request({
+      command: 'account_tx',
+      account: escrowAddress,
+      limit:   100,
+    })
+
+    const totals = new Map() // sender address -> { amount, sampleTxHash }
+    for (const entry of result.transactions ?? []) {
+      const tx = entry.tx_json ?? entry.tx
+      if (
+        tx?.TransactionType !== 'Payment' ||
+        tx?.Destination !== escrowAddress ||
+        !entry.validated ||
+        entry.meta?.TransactionResult !== 'tesSUCCESS'
+      ) continue
+
+      const delivered = entry.meta?.delivered_amount ?? entry.meta?.DeliveredAmount
+      if (!deliveredMatchesToken(delivered, token, env)) continue
+
+      const value = deliveredAmountToNumber(delivered)
+      const prev  = totals.get(tx.Account) ?? { amount: 0, sampleTxHash: entry.hash ?? tx.hash }
+      totals.set(tx.Account, { amount: prev.amount + value, sampleTxHash: prev.sampleTxHash })
+    }
+
+    const expectedMap = new Map(expectedSenders.map(s => [s.address, s.expectedAmount]))
+    const anomalies = []
+
+    for (const [sender, { amount, sampleTxHash }] of totals) {
+      const expected = expectedMap.get(sender) ?? 0
+      if (amount > expected + 1e-6) {
+        anomalies.push({
+          sender,
+          totalSent: Number(amount.toFixed(6)),
+          expected,
+          excess:    Number((amount - expected).toFixed(6)),
+          reason:    expectedMap.has(sender) ? 'overpaid_member' : 'non_member_payment',
+          sampleTxHash,
+        })
+      }
+    }
+    return anomalies
+  } finally {
+    await client.disconnect()
+  }
+}
+
 // ── Send XRP or RLUSD ─────────────────────────────────────────
 
 /**
@@ -190,13 +307,20 @@ export async function verifyXrplPayment(txHash, env, { expectedAmount, timeoutMs
  * @param {number} amount
  * @param {'XRP'|'RLUSD'} token
  * @param {'dev'|'live'} env
+ * @param {Window|null} [popup] — a window already opened synchronously inside
+ *   the triggering click (see callers). Brave/iOS blocks `window.open` once
+ *   any `await` has run, so opening fresh here is too late — we navigate the
+ *   pre-opened tab instead and only fall back to a fresh `window.open`.
  * @returns {{ txHash: string }}
  */
-export async function sendXrplContribution(toAddress, amount, token, env) {
+export async function sendXrplContribution(toAddress, amount, token, env, popup = null) {
   const xumm = getXumm()
 
   const fromAddress = await getXummAddress()
-  if (!fromAddress) throw new Error('Connect your Xaman wallet first.')
+  if (!fromAddress) {
+    popup?.close()
+    throw new Error('Connect your Xaman wallet first.')
+  }
 
   let payment
 
@@ -221,6 +345,7 @@ export async function sendXrplContribution(toAddress, amount, token, env) {
       },
     }
   } else {
+    popup?.close()
     throw new Error(`Token ${token} not supported on XRPL.`)
   }
 
@@ -232,14 +357,23 @@ export async function sendXrplContribution(toAddress, amount, token, env) {
     }
   )
 
-  // Open the Xaman sign page — works on mobile (deep link) and desktop (web)
+  // Navigate the pre-opened popup to the Xaman sign page — works on mobile
+  // (deep link) and desktop (web). Only open a fresh window as a fallback
+  // if the caller didn't hand us a live one (e.g. it got blocked anyway).
   const signUrl = created?.next?.always
   if (signUrl) {
-    window.open(signUrl, '_blank', 'width=480,height=720,noopener')
+    if (popup && !popup.closed) {
+      popup.location.href = signUrl
+    } else {
+      window.open(signUrl, '_blank', 'width=480,height=720,noopener')
+    }
   }
 
   const result = await resolved
-  if (!result?.signed) throw new Error('Transaction rejected in Xaman.')
+  if (!result?.signed) {
+    popup?.close()
+    throw new Error('Transaction rejected in Xaman.')
+  }
 
   const txHash = result.txid
   // Signed != succeeded — confirm the ledger actually accepted it and

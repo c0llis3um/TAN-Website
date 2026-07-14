@@ -366,13 +366,15 @@ const ERC20_TRANSFER_ABI = [
  * @param {string} token      — 'ETH' | 'USDC' | 'USDT' | 'SOL' | 'XRP' | 'RLUSD'
  * @param {string} chain      — 'Ethereum' | 'Solana' | 'XRPL'
  * @param {string} env        — 'dev' | 'live'
+ * @param {Window|null} [popup] — pre-opened XUMM sign window (XRPL only, see sendXrplContribution)
  * @returns {{ txHash: string }}
  */
-export async function sendContribution(toAddress, amount, token, chain, env) {
+export async function sendContribution(toAddress, amount, token, chain, env, popup = null) {
   // ── XRPL ─────────────────────────────────────────────────────
   if (chain === 'XRPL') {
-    return sendXrplContribution(toAddress, amount, token, env)
+    return sendXrplContribution(toAddress, amount, token, env, popup)
   }
+  popup?.close() // not needed outside the XRPL/XUMM flow
 
   // ── Ethereum ──────────────────────────────────────────────────
   await assertCorrectNetwork(env)

@@ -95,7 +95,16 @@
     "back": "← Volver a la tanda",
     "notFound": "Tanda no encontrada",
     "alreadyPaid": "Ya pagaste este ciclo",
-    "alreadyPaidDesc": "Ya enviaste tu contribución para el ciclo {{cycle}}. No necesitas hacer nada más."
+    "alreadyPaidDesc": "Ya enviaste tu contribución para el ciclo {{cycle}}. No necesitas hacer nada más.",
+    "contactPrompt": "¿Algo salió mal? Contáctanos",
+    "contactTitle": "Contactar soporte",
+    "contactBody": "Describe qué pasó — incluiremos tu billetera y los datos de esta tanda automáticamente.",
+    "contactPlaceholder": "ej. Envié mi pago pero no aparece como confirmado…",
+    "contactSend": "Enviar",
+    "contactSending": "Enviando…",
+    "contactCancel": "Cancelar",
+    "contactSent": "Gracias — recibimos tu mensaje y te responderemos pronto.",
+    "contactError": "No se pudo enviar tu mensaje. Intenta de nuevo."
   },
   "chains": {
     "title": "Construido en XRP Ledger",

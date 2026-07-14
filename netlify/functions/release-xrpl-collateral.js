@@ -23,10 +23,12 @@
  * Required env vars (set in Netlify dashboard, NOT prefixed with VITE_):
  *   SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
+ *   ESCROW_SEED_ENCRYPTION_KEY
  */
 
 import { createClient } from '@supabase/supabase-js'
 import { Client, Wallet, xrpToDrops } from 'xrpl'
+import { decryptSeed } from './lib/crypto.js'
 
 const NODES = {
   dev:  'wss://testnet.xrpl-labs.com',
@@ -118,7 +120,7 @@ export const handler = async (event) => {
     const client = new Client(node)
     await client.connect()
 
-    const escrowWallet        = Wallet.fromSeed(escrowRow.escrow_seed)
+    const escrowWallet        = Wallet.fromSeed(decryptSeed(escrowRow.escrow_seed))
     const collateralPerMember = pod.contribution_amount * 2
     const results             = []
 

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import ContactSupportModal from '@/components/ContactSupportModal'
 import useAppStore from '@/store/useAppStore'
 import { getPod, joinPod, getUser, upsertUser, maybeActivatePod, cycleMs, updatePodStatus, getPodPayments, getVaultInfo, getPodMembership } from '@/lib/db'
 import { tandaPodJoin, cancelTandaPod, claimCollateral } from '@/lib/contracts'
@@ -36,6 +37,7 @@ export default function PodView() {
   const [vaultInfo,   setVaultInfo]   = useState(null)
   const [joinEmail,   setJoinEmail]   = useState('')
   const [copied,      setCopied]      = useState(false)
+  const [showContact, setShowContact] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -68,12 +70,22 @@ export default function PodView() {
     setJoining(true)
     setJoinError(null)
 
+    // Open the Xaman sign window synchronously, still inside the click's
+    // user-gesture — Brave/iOS silently blocks window.open once any `await`
+    // has run, which made taps look like they'd failed and led people to
+    // retry (paying collateral more than once for a join that never recorded).
+    const xummPopup = pod.chain === 'XRPL'
+      ? window.open('', '_blank', 'width=480,height=720,noopener')
+      : null
+
     if (pod.status !== 'OPEN') {
+      xummPopup?.close()
       setJoinError(t('pod.noLongerOpen'))
       setJoining(false)
       return
     }
     if (pod.expires_at && new Date(pod.expires_at) < new Date()) {
+      xummPopup?.close()
       setJoinError(t('pod.podExpired'))
       setJoining(false)
       return
@@ -86,6 +98,7 @@ export default function PodView() {
       email: joinEmail.trim() || undefined,
     })
     if (userErr || !user) {
+      xummPopup?.close()
       setJoinError(userErr?.message ?? 'Could not create user profile.')
       setJoining(false)
       return
@@ -95,6 +108,7 @@ export default function PodView() {
     // stale page, double click, or a second tab sending collateral twice.
     const { data: existingMember } = await getPodMembership(id, user.id)
     if (existingMember) {
+      xummPopup?.close()
       setJoinError(t('pod.alreadyJoined'))
       setJoinDone(true)
       setJoining(false)
@@ -119,6 +133,7 @@ export default function PodView() {
       }
     } else if (pod.chain === 'XRPL') {
       if (!pod.contract_address) {
+        xummPopup?.close()
         setJoinError('This pod has no escrow wallet — contact the organizer.')
         setJoining(false)
         return
@@ -134,37 +149,87 @@ export default function PodView() {
           const json = await safeJson(res)
           if (!res.ok) throw new Error(json.error ?? 'Could not set up RLUSD trust line on escrow.')
         } catch (err) {
+          xummPopup?.close()
           setJoinError(err?.message ?? 'RLUSD escrow setup failed.')
           setJoining(false)
           return
         }
       }
+      const collateralAmount = pod.contribution_amount * 2
+      let txHash = null
       try {
-        const { sendContribution } = await import('@/lib/contracts')
-        await sendContribution(
-          pod.contract_address,
-          pod.contribution_amount * 2,
-          pod.token,
-          pod.chain,
-          env,
-        )
+        const { hasAlreadyPaid } = await import('@/lib/xrpl')
+        const alreadyPaid = await hasAlreadyPaid(wallet.address, pod.contract_address, collateralAmount, pod.token, env)
+        if (alreadyPaid) {
+          // A previous attempt's collateral payment already succeeded on-chain
+          // but the join was never recorded (closed tab, blocked popup, etc.)
+          // — pod-join.js below will find that same payment on-chain itself and
+          // complete the membership record instead of charging again.
+          xummPopup?.close()
+        } else {
+          const { sendContribution } = await import('@/lib/contracts')
+          const result = await sendContribution(
+            pod.contract_address,
+            collateralAmount,
+            pod.token,
+            pod.chain,
+            env,
+            xummPopup,
+          )
+          txHash = result.txHash
+        }
       } catch (err) {
         setJoinError(err?.message ?? 'Collateral deposit failed.')
         setJoining(false)
         return
       }
+
+      // ── Record in DB — server-verified against the ledger. pod_members/pods
+      // writes are locked to service-role only (migration 028); the client can no
+      // longer write these directly, and pod-join.js re-checks the payment itself
+      // rather than trusting whatever this page claims happened.
+      try {
+        const res = await fetch('/.netlify/functions/pod-join', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ podId: id, walletAddress: wallet.address, txHash }),
+        })
+        const json = await safeJson(res)
+        if (!res.ok) throw new Error(json.error ?? 'Could not record your membership.')
+      } catch (err) {
+        setJoinError(err?.message ?? 'Could not record your membership — contact support, do not pay again.')
+        setJoining(false)
+        return
+      }
+
+      const { data: fresh } = await getPod(id)
+      if (fresh) setPod(fresh)
+
+      fetch('/.netlify/functions/notify', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ event: 'pod_joined', podId: id, userId: user.id }),
+      }).catch(() => {}) // best-effort — never block joining on the notification
+
+      setJoinDone(true)
+      setJoining(false)
+      return
     }
 
-    // ── Record in DB ─────────────────────────────────────────────
+    // ── Ethereum: DB mirror of on-chain membership ──────────────────
+    // TODO: pod_members/pods writes are now locked to service-role only
+    // (migration 028) for every chain. Ethereum/Solana never got an equivalent
+    // server-verified endpoint in this pass (XRPL/RLUSD is the only chain going
+    // live right now) — this call will fail with a DB permission error until one
+    // is built. Real membership still lives safely on-chain in the contract
+    // either way; this only affects the Supabase mirror used for the UI.
     const { error: joinErr } = await joinPod(id, user.id)
     if (joinErr) {
       setJoinError(joinErr.message)
       setJoining(false)
       return
     }
-    // Check if pod is now full — assign slots and activate if so
     await maybeActivatePod(id)
-    // Refresh pod data to show new member + updated status
     const { data: fresh } = await getPod(id)
     if (fresh) setPod(fresh)
 
@@ -172,7 +237,7 @@ export default function PodView() {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ event: 'pod_joined', podId: id, userId: user.id }),
-    }).catch(() => {}) // best-effort — never block joining on the notification
+    }).catch(() => {})
 
     setJoinDone(true)
     setJoining(false)
@@ -185,8 +250,20 @@ export default function PodView() {
     try {
       if (pod.chain === 'Ethereum' && pod.contract_address) {
         await cancelTandaPod(env, pod.contract_address)
+        await updatePodStatus(pod.id, 'CANCELLED')
+      } else if (pod.chain === 'XRPL') {
+        // pods.status writes are now service-role only (migration 028). A pod with
+        // members already has real collateral in escrow — self-service cancel only
+        // works while it's still OPEN and empty; anything past that needs an admin
+        // (see admin-set-pod-status.js).
+        const res  = await fetch('/.netlify/functions/pod-cancel-open', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ podId: pod.id }),
+        })
+        const json = await safeJson(res)
+        if (!res.ok) throw new Error(json.error ?? 'Cancel failed')
       }
-      await updatePodStatus(pod.id, 'CANCELLED')
       const { data: fresh } = await getPod(pod.id)
       if (fresh) setPod(fresh)
     } catch (err) {
@@ -341,7 +418,17 @@ export default function PodView() {
                   {t('pod.xamanHint')}
                 </p>
               )}
-              {joinError && <p className="text-xs text-red-400 max-w-[200px] text-right">{joinError}</p>}
+              {joinError && (
+                <div className="max-w-[200px] text-right space-y-1">
+                  <p className="text-xs text-red-400">{joinError}</p>
+                  <button
+                    onClick={() => setShowContact(true)}
+                    className="text-xs text-brand-cyan hover:underline"
+                  >
+                    {t('pay.contactPrompt')}
+                  </button>
+                </div>
+              )}
             </>
           )}
           {pod.status === 'OPEN' && !wallet?.address && (
@@ -759,6 +846,14 @@ export default function PodView() {
           </Card>
         </div>
       </div>
+
+      {showContact && (
+        <ContactSupportModal
+          podId={pod.id}
+          podName={pod.name}
+          onClose={() => setShowContact(false)}
+        />
+      )}
     </div>
   )
 }

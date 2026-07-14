@@ -13,7 +13,14 @@
  *   2. Fetch pod (must be yield/vault) + escrow row
  *   3. Read RLUSD balance of escrow wallet on-ledger
  *   4. If vault_id is null: submit VaultCreate (escrow wallet as owner)
- *   5. Submit VaultDeposit of full RLUSD balance
+ *   5. Submit VaultDeposit of the EXPECTED collateral (active members × 2×
+ *      contribution) — not necessarily the full on-ledger balance. A stray
+ *      payment to the escrow (non-member, overpayment — see anomaly_refunds /
+ *      the admin Anomalies panel) must not get silently commingled into vault
+ *      shares, where it's no longer separable per-depositor. Any excess stays
+ *      in the escrow wallet, discoverable the same way the treasury-wallet
+ *      incident was. If the balance is LESS than expected, something is
+ *      missing and the deposit is refused rather than under-funding the vault.
  *   6. Persist vault_id, vault_shares, vault_deposited_at, vault_status
  *
  * Dev-mode fallback:
@@ -26,10 +33,12 @@
  * Required env vars (Netlify dashboard — no VITE_ prefix):
  *   SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
+ *   ESCROW_SEED_ENCRYPTION_KEY
  */
 
 import { createClient } from '@supabase/supabase-js'
 import { Client, Wallet } from 'xrpl'
+import { decryptSeed } from './lib/crypto.js'
 
 const NODES = {
   dev:  'wss://testnet.xrpl-labs.com',
@@ -157,7 +166,7 @@ export const handler = async (event) => {
       return { statusCode: 409, body: JSON.stringify({ error: 'Vault deposit already completed for this pod' }) }
     }
 
-    const escrowWallet = Wallet.fromSeed(escrowRow.escrow_seed)
+    const escrowWallet = Wallet.fromSeed(decryptSeed(escrowRow.escrow_seed))
     const issuer       = RLUSD_ISSUER[env]
     if (!issuer) {
       return { statusCode: 400, body: JSON.stringify({ error: 'RLUSD issuer not configured for this environment' }) }
@@ -218,6 +227,37 @@ export const handler = async (event) => {
         await releaseDepositClaim()
         return { statusCode: 400, body: JSON.stringify({ error: 'Escrow wallet has no RLUSD balance to deposit' }) }
       }
+
+      // ── 5b. Reconcile actual balance against expected member collateral ──
+      const { count: activeMemberCount } = await supabase
+        .from('pod_members')
+        .select('id', { count: 'exact', head: true })
+        .eq('pod_id', podId)
+        .eq('status', 'ACTIVE')
+
+      const expectedTotal = (activeMemberCount ?? 0) * pod.contribution_amount * 2
+      const EPSILON = 1e-6
+
+      if (balanceNum < expectedTotal - EPSILON) {
+        await releaseDepositClaim()
+        return {
+          statusCode: 409,
+          body: JSON.stringify({
+            error: `Escrow balance (${balanceNum} RLUSD) is less than expected collateral from ${activeMemberCount} active member(s) ` +
+              `(${expectedTotal} RLUSD). Something is missing — manual reconciliation required before vault deposit.`,
+          }),
+        }
+      }
+      if (balanceNum > expectedTotal + EPSILON) {
+        console.warn(
+          `[vault-deposit] Escrow balance (${balanceNum} RLUSD) exceeds expected collateral (${expectedTotal} RLUSD) ` +
+          `for pod ${podId} — depositing only the expected amount. The excess (${(balanceNum - expectedTotal).toFixed(6)} RLUSD) ` +
+          `stays in the escrow wallet unswept; check the admin Anomalies panel to identify and refund its source.`,
+        )
+      }
+
+      // Deposit exactly the expected amount, not the raw on-ledger balance.
+      const depositValue = expectedTotal > 0 ? expectedTotal.toFixed(6) : rlusdBalance
 
       // ── 6. VaultCreate (if vault not yet registered) ─────────────────
       if (!vaultId) {
@@ -290,7 +330,7 @@ export const handler = async (event) => {
           Amount: {
             currency: RLUSD_HEX,
             issuer,
-            value:    rlusdBalance,           // full balance
+            value:    depositValue,           // expected collateral, not necessarily the full balance
           },
         }
 
@@ -316,7 +356,7 @@ export const handler = async (event) => {
           sharesDeposited = lpNode
             ? String((lpNode.CreatedNode ?? lpNode.ModifiedNode)?.NewFields?.MPTAmount
                 ?? (lpNode.CreatedNode ?? lpNode.ModifiedNode)?.FinalFields?.MPTAmount)
-            : rlusdBalance  // graceful fallback: use deposited amount as proxy
+            : depositValue  // graceful fallback: use deposited amount as proxy
 
           console.log(`[vault-deposit] VaultDeposit OK — shares: ${sharesDeposited} | vaultId: ${vaultId}`)
 
@@ -325,7 +365,7 @@ export const handler = async (event) => {
             console.warn('[vault-deposit] VaultDeposit not enabled — falling back to simulation')
             simulated       = true
             vaultId         = 'SIMULATED'  // don't leave a real VaultID paired with a deposit that never happened
-            sharesDeposited = rlusdBalance
+            sharesDeposited = depositValue
             depositTxHash   = null
           } else {
             throw vaultDepositErr
@@ -333,7 +373,7 @@ export const handler = async (event) => {
         }
       } else {
         // Simulation: shares equal the nominal RLUSD deposited
-        sharesDeposited = rlusdBalance
+        sharesDeposited = depositValue
       }
 
       // ── 8. Persist vault state ────────────────────────────────────────

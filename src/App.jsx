@@ -28,6 +28,7 @@ import AdminDisputes     from '@/pages/admin/Disputes'
 import AdminRevenue      from '@/pages/admin/Revenue'
 import AdminWaitlist     from '@/pages/admin/Waitlist'
 import AdminTreasury     from '@/pages/admin/Treasury'
+import AdminAnomalies    from '@/pages/admin/Anomalies'
 import AdminSettings     from '@/pages/admin/Settings'
 import AdminContent      from '@/pages/admin/Content'
 
@@ -91,6 +92,7 @@ export default function App() {
               <Route path="revenue"           element={<AdminRevenue />} />
               <Route path="waitlist"          element={<AdminWaitlist />} />
               <Route path="treasury"          element={<AdminTreasury />} />
+              <Route path="anomalies"         element={<AdminAnomalies />} />
               <Route path="content"           element={<AdminContent />} />
               <Route path="settings"          element={<AdminSettings />} />
             </Route>

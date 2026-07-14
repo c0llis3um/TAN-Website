@@ -12,10 +12,14 @@
  *   4. Records a collateral_slash payment in the payments table
  *
  * Idempotent — won't slash the same member twice for the same cycle.
+ *
+ * Required env vars (no VITE_ prefix): SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+ * ESCROW_SEED_ENCRYPTION_KEY.
  */
 
 import { createClient } from '@supabase/supabase-js'
 import { Client, Wallet, xrpToDrops } from 'xrpl'
+import { decryptSeed } from './lib/crypto.js'
 
 const NODES = {
   dev:  'wss://testnet.xrpl-labs.com',
@@ -198,7 +202,7 @@ export const handler = async (event) => {
     const client       = new Client(NODES[env] ?? NODES.dev)
     await client.connect()
 
-    const escrowWallet = Wallet.fromSeed(escrowRow.escrow_seed)
+    const escrowWallet = Wallet.fromSeed(decryptSeed(escrowRow.escrow_seed))
     const amount       = pod.contribution_amount   // 1× covers the missed payment
 
     // For vault pods: withdraw from vault first so RLUSD lands in escrow wallet

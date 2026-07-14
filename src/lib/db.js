@@ -145,6 +145,12 @@ export async function getMemberPods(userId) {
     .order('created_at', { ascending: false })
 }
 
+// NOTE: anon/authenticated no longer have UPDATE on `pods` (migration 028 —
+// pods.status/contract_address could otherwise be rewritten by anyone with the
+// public anon key). XRPL call sites use pod-cancel-open.js / admin-set-pod-status.js
+// / confirm-pod-creation-fee.js instead. This export remains only for the
+// Ethereum path (not reachable in the UI right now — see CHAINS in CreatePod)
+// and will error with a DB permission error until that gets its own equivalent.
 export async function updatePodStatus(podId, status) {
   return supabase
     .from('pods')
@@ -154,22 +160,16 @@ export async function updatePodStatus(podId, status) {
     .single()
 }
 
+// NOTE: same as updatePodStatus above — pods UPDATE is service-role only now.
+// XRPL creation goes through create-xrpl-escrow.js / confirm-pod-creation-fee.js /
+// pod-mark-failed.js instead. Kept only for the (currently unreachable) Ethereum
+// creation path.
 export async function updatePodContract(podId, { contract_address, creation_fee_tx, creation_fee_paid, status, deployed_at }) {
   return supabase
     .from('pods')
     .update({ contract_address, creation_fee_tx, creation_fee_paid, status, deployed_at })
     .eq('id', podId)
     .select('id')
-    .single()
-}
-
-// Save XRPL escrow seed — written once at pod creation.
-// Readable only by service_role (Netlify functions), never via anon key.
-export async function savePodEscrow(podId, escrowSeed) {
-  return supabase
-    .from('pod_escrows')
-    .insert({ pod_id: podId, escrow_seed: escrowSeed })
-    .select('pod_id')
     .single()
 }
 
@@ -196,6 +196,12 @@ export async function createPod({
 
 // ── Pod Members ──────────────────────────────────────────────
 
+// NOTE: anon/authenticated no longer have INSERT/UPDATE on `pod_members`
+// (migration 028 — payout_slot could otherwise be rewritten by anyone with the
+// public anon key). XRPL joins go through netlify/functions/pod-join.js, which
+// verifies the collateral payment on-chain before writing. This export remains
+// only for the Ethereum path (not reachable in the UI right now) and will error
+// with a DB permission error until that gets its own equivalent.
 export async function joinPod(podId, userId) {
   return supabase
     .from('pod_members')
@@ -215,6 +221,9 @@ export async function getPodMembership(podId, userId) {
     .maybeSingle()
 }
 
+// NOTE: same as joinPod above — this writes pod_members.payout_slot and
+// pods.status, both service-role only now. pod-join.js (netlify function) folds
+// this logic in server-side for XRPL. Kept only for the Ethereum path.
 // Call after every join — if pod is now full, assign slots and activate
 export async function maybeActivatePod(podId) {
   // Fetch pod + current members
@@ -239,7 +248,7 @@ export async function maybeActivatePod(podId) {
 
   // Assign payout_slot (1-based). For RANDOM order, shuffle.
   let slots = members.map((_, i) => i + 1)
-  if (pod.payout_method === 'RANDOM') {
+  if (pod.payout_method === 'random') {
     for (let i = slots.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [slots[i], slots[j]] = [slots[j], slots[i]]
@@ -260,61 +269,10 @@ export async function maybeActivatePod(podId) {
     .single()
 }
 
-// Admin: mark all unpaid members as DEFAULTED for current cycle, then advance
-export async function adminForceAdvanceCycle(podId) {
-  const { data: pod } = await supabase
-    .from('pods')
-    .select(`id, size, current_cycle, total_cycles, status, token, chain,
-      pod_members ( id, user_id, status )`)
-    .eq('id', podId)
-    .single()
 
-  if (!pod || pod.status !== 'ACTIVE') return { error: 'Pod is not active' }
-
-  // Find members who haven't paid this cycle
-  const { data: paid } = await supabase
-    .from('payments')
-    .select('user_id')
-    .eq('pod_id', podId)
-    .eq('cycle', pod.current_cycle)
-    .eq('status', 'CONFIRMED')
-
-  const paidIds = new Set((paid ?? []).map(p => p.user_id))
-  const unpaid  = (pod.pod_members ?? []).filter(m => !paidIds.has(m.user_id))
-
-  // Insert DEFAULTED payment + mark member DEFAULTED for each unpaid member
-  if (unpaid.length > 0) {
-    await Promise.all(unpaid.flatMap(m => [
-      supabase.from('payments').upsert({
-        pod_id:  podId,
-        user_id: m.user_id,
-        cycle:   pod.current_cycle,
-        amount:  0,
-        token:   pod.token,
-        chain:   pod.chain,
-        method:  'admin_skip',
-        status:  'CONFIRMED',
-        paid_at: new Date().toISOString(),
-      }, { onConflict: 'pod_id,user_id,cycle' }),
-      supabase.from('pod_members').update({ status: 'DEFAULTED' }).eq('id', m.id),
-    ]))
-  }
-
-  // Advance cycle
-  const nextCycle = pod.current_cycle + 1
-  const done      = nextCycle > pod.total_cycles
-
-  return supabase
-    .from('pods')
-    .update(done
-      ? { status: 'COMPLETED', completed_at: new Date().toISOString() }
-      : { current_cycle: nextCycle, cycle_started_at: new Date().toISOString() }
-    )
-    .eq('id', podId)
-    .select('id, status, current_cycle')
-    .single()
-}
-
+// NOTE: writes pods.status/current_cycle — service-role only now.
+// pod-record-payment.js folds this logic in server-side for XRPL. Kept only
+// for the Ethereum/Solana path.
 // After all members pay for a cycle, advance to next or complete the pod
 export async function maybeAdvanceCycle(podId) {
   const { data: pod } = await supabase
@@ -350,6 +308,11 @@ export async function maybeAdvanceCycle(podId) {
 
 // ── Payments ─────────────────────────────────────────────────
 
+// NOTE: anon/authenticated no longer have INSERT/UPDATE on `payments`
+// (migration 028 — fake CONFIRMED rows could otherwise trick maybeAdvanceCycle
+// into an early/incorrect payout). XRPL cycle payments go through
+// netlify/functions/pod-record-payment.js, which verifies the on-chain payment
+// before writing. Kept only for the Ethereum/Solana path.
 export async function recordPayment({ pod_id, user_id, cycle, amount, token, chain, method, tx_hash }) {
   return supabase
     .from('payments')
@@ -529,6 +492,19 @@ export async function getTreasuryWallet(chain) {
     .eq('active', true)
     .maybeSingle()
   return data?.address ?? null
+}
+
+// Pods with an XRPL escrow, plus current members' wallet addresses — used by
+// the admin Anomalies scanner to compute each escrow's expected balance.
+export async function adminGetPodsForAnomalyScan() {
+  return supabase
+    .from('pods')
+    .select(`
+      id, name, status, env, chain, token, contribution_amount, contract_address,
+      pod_members ( user:users ( wallet_address ) )
+    `)
+    .eq('chain', 'XRPL')
+    .not('contract_address', 'is', null)
 }
 
 export async function adminGetTreasuryWallets() {

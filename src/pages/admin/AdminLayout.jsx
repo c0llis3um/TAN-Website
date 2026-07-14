@@ -17,6 +17,7 @@ const NAV = [
   { to: '/admin/waitlist',    icon: '📋', label: 'Waitlist',      badge: 47  },
   { to: '/admin/content',     icon: '📚', label: 'Content'                    },
   { to: '/admin/treasury',    icon: '🏦', label: 'Treasury'                   },
+  { to: '/admin/anomalies',   icon: '🚨', label: 'Anomalies'                  },
   { to: '/admin/settings',    icon: '⚙️', label: 'Settings'                   },
 ]
 
