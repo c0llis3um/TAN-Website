@@ -56,21 +56,37 @@ function deliveredMatchesToken(delivered, token, env) {
 }
 
 /**
+ * A transaction hash that's already recorded as proof somewhere else (a join's
+ * collateral_tx, or any other payments.tx_hash) can't be reused as proof
+ * again — otherwise one real payment could satisfy verification an unlimited
+ * number of times. Concretely: a wallet's old, already-refunded payment to a
+ * recipient (e.g. from a since-fixed bug, or an unrelated earlier cycle) would
+ * otherwise still show up as a "qualifying payment" forever, since the chain
+ * itself has no notion of a transaction being "used up."
+ */
+async function isTxHashAlreadyUsed(supabase, txHash) {
+  const [{ count: memberCount }, { count: paymentCount }] = await Promise.all([
+    supabase.from('pod_members').select('id', { count: 'exact', head: true }).eq('collateral_tx', txHash),
+    supabase.from('payments').select('id', { count: 'exact', head: true }).eq('tx_hash', txHash),
+  ])
+  return (memberCount ?? 0) > 0 || (paymentCount ?? 0) > 0
+}
+
+/**
  * Scans fromAddress's own recent payment history for any validated, tesSUCCESS
- * Payment to toAddress delivering >= expectedAmount — rather than looking up
- * one specific txHash. A client-supplied txHash can't be trusted as the sole
- * proof: the client's own "did I already pay?" pre-check (hasAlreadyPaid in
- * src/lib/xrpl.js) may find a qualifying payment without knowing its exact
- * hash (e.g. from an earlier attempt whose result was lost), and sends a
- * placeholder instead of a real hash — looking that placeholder up as a
- * transaction always fails verification even though the payment is real.
- * Scanning for ANY qualifying payment sidesteps that entirely; the (pod_id,
- * user_id, cycle) unique constraint on `payments` is what actually prevents
- * one payment from being credited twice, not which specific hash we found.
+ * Payment to toAddress delivering >= expectedAmount, that hasn't already been
+ * used as proof elsewhere — rather than looking up one specific txHash. A
+ * client-supplied txHash can't be trusted as the sole proof: the client's own
+ * "did I already pay?" pre-check (hasAlreadyPaid in src/lib/xrpl.js) may find
+ * a qualifying payment without knowing its exact hash (e.g. from an earlier
+ * attempt whose result was lost), and sends a placeholder instead of a real
+ * hash — looking that placeholder up as a transaction always fails
+ * verification even though the payment is real. Scanning for ANY qualifying,
+ * not-already-used payment sidesteps that entirely.
  *
  * @returns {Promise<string|null>} the matching txHash if found, else null
  */
-async function findQualifyingPayment(fromAddress, toAddress, expectedAmount, token, env) {
+async function findQualifyingPayment(supabase, fromAddress, toAddress, expectedAmount, token, env) {
   const client = new Client(NODES[env] ?? NODES.dev)
   await client.connect()
 
@@ -88,10 +104,13 @@ async function findQualifyingPayment(fromAddress, toAddress, expectedAmount, tok
 
       const delivered = entry.meta?.delivered_amount ?? entry.meta?.DeliveredAmount
       if (!deliveredMatchesToken(delivered, token, env)) continue
+      if (deliveredAmountToNumber(delivered) < expectedAmount - 1e-6) continue
 
-      if (deliveredAmountToNumber(delivered) >= expectedAmount - 1e-6) {
-        return entry.hash ?? tx.hash ?? null
-      }
+      const candidateHash = entry.hash ?? tx.hash
+      if (!candidateHash) continue
+      if (await isTxHashAlreadyUsed(supabase, candidateHash)) continue
+
+      return candidateHash
     }
     return null
   } catch {
@@ -160,7 +179,7 @@ export const handler = async (event) => {
     let confirmedTxHash = 'self-recipient'
 
     if (!isSelfRecipient) {
-      const foundTxHash = await findQualifyingPayment(walletAddress, recipientAddr, pod.contribution_amount, pod.token, env)
+      const foundTxHash = await findQualifyingPayment(supabase, walletAddress, recipientAddr, pod.contribution_amount, pod.token, env)
       if (!foundTxHash) {
         return { statusCode: 400, body: JSON.stringify({ error: 'Could not verify payment on-chain. Check your wallet before retrying — do not pay twice.' }) }
       }
