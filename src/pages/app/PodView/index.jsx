@@ -352,8 +352,15 @@ export default function PodView() {
 
   const ms = cycleMs(pod, env)
   const cycleForDate = hasPaidThisCycle ? currentCycle + 1 : currentCycle
+  // cycle_started_at is reset every time a cycle advances, so it only ever
+  // marks the start of the CURRENT cycle — the due date is always exactly
+  // one cycle length after it (or two, when previewing the next cycle after
+  // already paying this one). Multiplying by cycleForDate (the cycle NUMBER)
+  // instead of this fixed offset made the shown window grow with every
+  // cycle — e.g. cycle 2 showed 14 days left on a 7-day cycle instead of 7.
+  const cycleOffset = hasPaidThisCycle ? 2 : 1
   const dueDate = pod.cycle_started_at && cycleForDate <= totalCycles
-    ? new Date(new Date(pod.cycle_started_at).getTime() + cycleForDate * ms)
+    ? new Date(new Date(pod.cycle_started_at).getTime() + cycleOffset * ms)
     : null
   const daysLeft = dueDate ? Math.ceil((dueDate - Date.now()) / 864e5) : null
   const isOverdue = daysLeft !== null && daysLeft < 0
@@ -753,7 +760,12 @@ export default function PodView() {
               <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-4">{t('pod.yourPayout')}</h3>
               {(() => {
                 const msPerCycle = cycleMs(pod, env)
-                const payoutDate = new Date(new Date(pod.cycle_started_at).getTime() + mySlot * msPerCycle)
+                // Same fix as the due-date calc above: cycle_started_at only marks
+                // the start of the CURRENT cycle (it resets every cycle), so the
+                // offset has to be relative to currentCycle, not the raw slot
+                // number — otherwise this was only ever correct while still on
+                // cycle 1.
+                const payoutDate = new Date(new Date(pod.cycle_started_at).getTime() + (mySlot - currentCycle + 1) * msPerCycle)
                 const daysUntil         = Math.ceil((payoutDate - Date.now()) / 864e5)
                 const alreadyPaid       = mySlot < currentCycle
                 const thisCycle         = mySlot === currentCycle

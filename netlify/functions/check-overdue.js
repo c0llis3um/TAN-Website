@@ -28,8 +28,77 @@ const NODES = {
   live: 'wss://xrplcluster.com',
 }
 
+const RLUSD_ISSUER = {
+  dev:  'rQhWct2fv4Vc4KRjRgMrxa8xPN9Zx9iLKV',
+  live: '',
+}
+
+const RLUSD_HEX = '524C555344000000000000000000000000000000'
+
 // How long before a cycle's due date to send the "payment due soon" reminder.
 const REMINDER_WINDOW_MS = 2 * 864e5 // 2 days
+
+function deliveredAmountToNumber(delivered) {
+  if (delivered == null) return 0
+  if (typeof delivered === 'string') return Number(delivered) / 1_000_000
+  return Number(delivered.value ?? 0)
+}
+
+function deliveredMatchesToken(delivered, token, env) {
+  if (token === 'XRP') return typeof delivered === 'string'
+  const issuer = RLUSD_ISSUER[env]
+  return !!delivered && typeof delivered === 'object' &&
+    delivered.currency === RLUSD_HEX && delivered.issuer === issuer
+}
+
+/** Same reuse-prevention as pod-join.js / pod-record-payment.js — a hash already used as proof elsewhere can't count again. */
+async function isTxHashAlreadyUsed(supabase, txHash) {
+  const [{ count: memberCount }, { count: paymentCount }] = await Promise.all([
+    supabase.from('pod_members').select('id', { count: 'exact', head: true }).eq('collateral_tx', txHash),
+    supabase.from('payments').select('id', { count: 'exact', head: true }).eq('tx_hash', txHash),
+  ])
+  return (memberCount ?? 0) > 0 || (paymentCount ?? 0) > 0
+}
+
+/**
+ * Scans fromAddress's own recent payment history for a qualifying, not-already-used
+ * payment to toAddress — used so a member who paid a cycle directly (e.g. ahead of
+ * time, without ever visiting the Pay page to register it) doesn't get wrongly
+ * slashed just because no `payments` row exists yet for that cycle.
+ */
+async function findQualifyingPayment(supabase, fromAddress, toAddress, expectedAmount, token, env) {
+  const client = new Client(NODES[env] ?? NODES.dev)
+  await client.connect()
+
+  try {
+    const { result } = await client.request({ command: 'account_tx', account: fromAddress, limit: 50 })
+
+    for (const entry of result.transactions ?? []) {
+      const tx = entry.tx_json ?? entry.tx
+      if (
+        tx?.TransactionType !== 'Payment' ||
+        tx?.Destination !== toAddress ||
+        !entry.validated ||
+        entry.meta?.TransactionResult !== 'tesSUCCESS'
+      ) continue
+
+      const delivered = entry.meta?.delivered_amount ?? entry.meta?.DeliveredAmount
+      if (!deliveredMatchesToken(delivered, token, env)) continue
+      if (deliveredAmountToNumber(delivered) < expectedAmount - 1e-6) continue
+
+      const candidateHash = entry.hash ?? tx.hash
+      if (!candidateHash) continue
+      if (await isTxHashAlreadyUsed(supabase, candidateHash)) continue
+
+      return candidateHash
+    }
+    return null
+  } catch {
+    return null
+  } finally {
+    await client.disconnect()
+  }
+}
 
 function cycleMs(pod) {
   const n = pod.cycle_frequency_days ?? 7
@@ -76,6 +145,24 @@ async function slashMember({ supabase, pod, member, escrowWallet, env }) {
   const memberUserId = member.user_id
   const cycle        = pod.current_cycle
 
+  // Find payout recipient — needed both for the paid-check below (on-chain
+  // scan target) and for where the slash payment goes if we do end up
+  // slashing.
+  const recipient = pod.pod_members?.find(m => m.payout_slot === cycle)
+  if (!recipient?.user?.wallet_address) {
+    return { skipped: true, reason: 'no payout recipient found' }
+  }
+
+  // This cycle's recipient never owes themselves a payment — nothing to
+  // check or slash. Previously unguarded: a recipient who never visited the
+  // Pay page to record their no-op 'self-recipient' payment would otherwise
+  // look unpaid here and get wrongly slashed — sending a "penalty" payment
+  // from their own collateral into their own wallet and marking them
+  // DEFAULTED for a cycle they'd already received.
+  if (recipient.user_id === memberUserId) {
+    return { skipped: true, reason: "member is this cycle's recipient" }
+  }
+
   // Already slashed?
   const { data: existing } = await supabase
     .from('payments')
@@ -88,7 +175,8 @@ async function slashMember({ supabase, pod, member, escrowWallet, env }) {
 
   if (existing) return { skipped: true, reason: 'already slashed' }
 
-  // Paid?
+  // Paid? Check the DB first (the normal case — the member used the Pay
+  // button), then fall back to a live on-chain scan before ever slashing.
   const { data: paid } = await supabase
     .from('payments')
     .select('id')
@@ -100,10 +188,30 @@ async function slashMember({ supabase, pod, member, escrowWallet, env }) {
 
   if (paid) return { skipped: true, reason: 'already paid' }
 
-  // Find payout recipient
-  const recipient = pod.pod_members?.find(m => m.payout_slot === cycle)
-  if (!recipient?.user?.wallet_address) {
-    return { skipped: true, reason: 'no payout recipient found' }
+  if (member.user?.wallet_address) {
+    const foundTxHash = await findQualifyingPayment(
+      supabase, member.user.wallet_address, recipient.user.wallet_address, pod.contribution_amount, pod.token, env,
+    )
+    if (foundTxHash) {
+      const { error: insertErr } = await supabase.from('payments').insert({
+        pod_id:  podId,
+        user_id: memberUserId,
+        cycle,
+        amount:  pod.contribution_amount,
+        token:   pod.token,
+        chain:   'XRPL',
+        method:  'wallet',
+        tx_hash: foundTxHash,
+        status:  'CONFIRMED',
+        paid_at: new Date().toISOString(),
+      })
+      if (!insertErr) {
+        return { skipped: true, reason: 'found unrecorded on-chain payment — recorded it instead of slashing', txHash: foundTxHash }
+      }
+      // Insert failed (e.g. a race with the member's own Pay click landing
+      // first) — fall through. The "already slashed"/"already paid" checks
+      // above already protect against any resulting double-attempt on retry.
+    }
   }
 
   const amount = pod.contribution_amount
