@@ -228,6 +228,17 @@ export default function CreatePod() {
     try {
       if (!wallet?.address) throw new Error('Connect your wallet first.')
 
+      // Catch this before creating anything — otherwise it only surfaces as a
+      // cryptic temREDUNDANT rejection from Xaman once the fee payment is
+      // attempted (the platform's own treasury can't pay itself), by which
+      // point a pod + escrow have already been created for nothing.
+      if (form.chain === 'XRPL' && env === 'live') {
+        const treasuryAddress = await getTreasuryWallet('XRPL')
+        if (treasuryAddress && treasuryAddress === wallet.address) {
+          throw new Error('This wallet is the platform\'s treasury wallet — it can\'t pay a creation fee to itself. Connect a different wallet to create this pod.')
+        }
+      }
+
       setDeployStep('save')
 
       const { data: user, error: uErr } = await upsertUser({
