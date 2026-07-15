@@ -1,0 +1,21 @@
+-- Migration 031: fix admin KYC/status update regression from 028/030
+--
+-- Same root cause as 030: narrowing the `users` UPDATE grant to specific
+-- columns broke every write that touches a column outside that list, no
+-- matter which value it targets. 030 fixed upsertUser() (wallet_address,
+-- chain). This fixes the two remaining callers in src/lib/db.js that were
+-- missed:
+--   adminUpdateUserKyc()    updates kyc_status, kyc_verified_at
+--   adminUpdateUserStatus() updates status
+-- Both are admin-only actions reachable only through the admin panel, which
+-- authenticates via real Supabase Auth (email/password) — the shared
+-- supabase client (src/lib/supabase.js) automatically attaches that session's
+-- JWT, so these calls execute as `authenticated`, not `anon`. Granted only to
+-- `authenticated` accordingly; `anon` (an unauthenticated visitor) has no
+-- legitimate reason to touch these columns.
+--
+-- Confirmed broken by reproducing the exact update payloads against the live
+-- anon key before writing this fix (same "permission denied for table users"
+-- as the upsertUser bug).
+
+grant update (kyc_status, kyc_verified_at, status) on public.users to authenticated;

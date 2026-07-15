@@ -2,14 +2,19 @@
  * Netlify Function: pod-record-payment
  *
  * POST /.netlify/functions/pod-record-payment
- * Body: { podId: string, walletAddress: string, txHash: string }
+ * Body: { podId: string, walletAddress: string }
  *
  * Server-verified cycle contribution — the only way `payments` rows are written
  * now that anon/authenticated write grants on that table have been revoked (see
- * supabase/migrations/028_lock_fund_moving_tables.sql). Verifies txHash is a real,
- * validated on-chain payment to this cycle's payout recipient before recording
- * anything, folding in what used to be client-side recordPayment() +
+ * supabase/migrations/028_lock_fund_moving_tables.sql). Verifies a real,
+ * validated on-chain payment to this cycle's payout recipient exists before
+ * recording anything, folding in what used to be client-side recordPayment() +
  * maybeAdvanceCycle() (src/lib/db.js).
+ *
+ * Verification scans walletAddress's own recent payment history for a
+ * qualifying payment rather than trusting a client-supplied txHash — the
+ * client doesn't always know the right hash (see findQualifyingPayment below),
+ * so any txHash in the request body is accepted but ignored.
  *
  * Idempotent via the (pod_id, user_id, cycle) unique constraint on payments — a
  * retry after a prior call's write already landed just returns success.
@@ -50,27 +55,47 @@ function deliveredMatchesToken(delivered, token, env) {
     delivered.currency === RLUSD_HEX && delivered.issuer === issuer
 }
 
-async function verifyContributionPayment(txHash, fromAddress, toAddress, expectedAmount, token, env) {
+/**
+ * Scans fromAddress's own recent payment history for any validated, tesSUCCESS
+ * Payment to toAddress delivering >= expectedAmount — rather than looking up
+ * one specific txHash. A client-supplied txHash can't be trusted as the sole
+ * proof: the client's own "did I already pay?" pre-check (hasAlreadyPaid in
+ * src/lib/xrpl.js) may find a qualifying payment without knowing its exact
+ * hash (e.g. from an earlier attempt whose result was lost), and sends a
+ * placeholder instead of a real hash — looking that placeholder up as a
+ * transaction always fails verification even though the payment is real.
+ * Scanning for ANY qualifying payment sidesteps that entirely; the (pod_id,
+ * user_id, cycle) unique constraint on `payments` is what actually prevents
+ * one payment from being credited twice, not which specific hash we found.
+ *
+ * @returns {Promise<string|null>} the matching txHash if found, else null
+ */
+async function findQualifyingPayment(fromAddress, toAddress, expectedAmount, token, env) {
   const client = new Client(NODES[env] ?? NODES.dev)
   await client.connect()
 
   try {
-    const resp = await client.request({ command: 'tx', transaction: txHash })
-    const result = resp.result
-    if (!result?.validated) return false
+    const { result } = await client.request({ command: 'account_tx', account: fromAddress, limit: 50 })
 
-    const tx = result.tx_json ?? result
-    if (tx?.TransactionType !== 'Payment')       return false
-    if (tx?.Account !== fromAddress)             return false
-    if (tx?.Destination !== toAddress)           return false
-    if (result.meta?.TransactionResult !== 'tesSUCCESS') return false
+    for (const entry of result.transactions ?? []) {
+      const tx = entry.tx_json ?? entry.tx
+      if (
+        tx?.TransactionType !== 'Payment' ||
+        tx?.Destination !== toAddress ||
+        !entry.validated ||
+        entry.meta?.TransactionResult !== 'tesSUCCESS'
+      ) continue
 
-    const delivered = result.meta?.delivered_amount ?? result.meta?.DeliveredAmount
-    if (!deliveredMatchesToken(delivered, token, env)) return false
+      const delivered = entry.meta?.delivered_amount ?? entry.meta?.DeliveredAmount
+      if (!deliveredMatchesToken(delivered, token, env)) continue
 
-    return deliveredAmountToNumber(delivered) >= expectedAmount - 1e-6
+      if (deliveredAmountToNumber(delivered) >= expectedAmount - 1e-6) {
+        return entry.hash ?? tx.hash ?? null
+      }
+    }
+    return null
   } catch {
-    return false
+    return null
   } finally {
     await client.disconnect()
   }
@@ -90,7 +115,7 @@ export const handler = async (event) => {
   if (limited) return limited
 
   try {
-    const { podId, walletAddress, txHash } = JSON.parse(event.body ?? '{}')
+    const { podId, walletAddress } = JSON.parse(event.body ?? '{}')
     if (!podId || !walletAddress) {
       return { statusCode: 400, body: JSON.stringify({ error: 'podId and walletAddress are required' }) }
     }
@@ -132,13 +157,14 @@ export const handler = async (event) => {
     // ── 3. If I'm this cycle's recipient, there's nothing to verify on-chain ──
     const env = pod.env ?? 'dev'
     const isSelfRecipient = walletAddress.toLowerCase() === recipientAddr.toLowerCase()
+    let confirmedTxHash = 'self-recipient'
 
     if (!isSelfRecipient) {
-      if (!txHash) return { statusCode: 400, body: JSON.stringify({ error: 'txHash is required' }) }
-      const paid = await verifyContributionPayment(txHash, walletAddress, recipientAddr, pod.contribution_amount, pod.token, env)
-      if (!paid) {
+      const foundTxHash = await findQualifyingPayment(walletAddress, recipientAddr, pod.contribution_amount, pod.token, env)
+      if (!foundTxHash) {
         return { statusCode: 400, body: JSON.stringify({ error: 'Could not verify payment on-chain. Check your wallet before retrying — do not pay twice.' }) }
       }
+      confirmedTxHash = foundTxHash
     }
 
     // ── 4. Record the payment ───────────────────────────────────────
@@ -150,7 +176,7 @@ export const handler = async (event) => {
       token:   pod.token,
       chain:   pod.chain,
       method:  'wallet',
-      tx_hash: isSelfRecipient ? 'self-recipient' : txHash,
+      tx_hash: confirmedTxHash,
       status:  'CONFIRMED',
       paid_at: new Date().toISOString(),
     })
@@ -179,12 +205,12 @@ export const handler = async (event) => {
         .eq('id', podId)
     }
 
-    console.log(`[pod-record-payment] ${walletAddress} paid cycle ${pod.current_cycle} of pod ${podId} | tx: ${txHash}`)
+    console.log(`[pod-record-payment] ${walletAddress} paid cycle ${pod.current_cycle} of pod ${podId} | tx: ${confirmedTxHash}`)
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ success: true, txHash: isSelfRecipient ? 'self-recipient' : txHash }),
+      body: JSON.stringify({ success: true, txHash: confirmedTxHash }),
     }
 
   } catch (e) {

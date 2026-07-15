@@ -2,13 +2,18 @@
  * Netlify Function: pod-join
  *
  * POST /.netlify/functions/pod-join
- * Body: { podId: string, walletAddress: string, txHash: string }
+ * Body: { podId: string, walletAddress: string }
  *
  * Server-verified pod join — the only way pod_members/users/pods rows change for a
  * join now that anon/authenticated write grants on those tables have been revoked
- * (see supabase/migrations/028_lock_fund_moving_tables.sql). Verifies txHash is a
- * real, validated on-chain collateral payment before recording anything, folding in
- * what used to be client-side joinPod() + maybeActivatePod() (src/lib/db.js).
+ * (see supabase/migrations/028_lock_fund_moving_tables.sql). Verifies a real,
+ * validated on-chain collateral payment exists before recording anything, folding
+ * in what used to be client-side joinPod() + maybeActivatePod() (src/lib/db.js).
+ *
+ * Verification scans walletAddress's own recent payment history for a qualifying
+ * payment rather than trusting a client-supplied txHash — the client doesn't
+ * always know the right hash (see findQualifyingPayment below), so any txHash in
+ * the request body is accepted but ignored.
  *
  * Idempotent — if the wallet is already a member, returns success without
  * re-verifying (covers a retry after a prior call's DB write already landed).
@@ -52,28 +57,47 @@ function deliveredMatchesToken(delivered, token, env) {
     delivered.currency === RLUSD_HEX && delivered.issuer === issuer
 }
 
-/** Verifies txHash is a validated, tesSUCCESS Payment of >= expectedAmount from fromAddress to toAddress. */
-async function verifyCollateralPayment(txHash, fromAddress, toAddress, expectedAmount, token, env) {
+/**
+ * Scans fromAddress's own recent payment history for any validated, tesSUCCESS
+ * Payment to toAddress delivering >= expectedAmount — rather than looking up
+ * one specific txHash. A client-supplied txHash can't be trusted as the sole
+ * proof: the client's own "did I already pay?" pre-check (hasAlreadyPaid in
+ * src/lib/xrpl.js) may find a qualifying payment without knowing its exact
+ * hash (e.g. from an earlier attempt whose result was lost), and sends no
+ * usable hash at all in that case — looking up nothing (or a placeholder) as
+ * a transaction always fails verification even though the payment is real.
+ * Scanning for ANY qualifying payment sidesteps that entirely; the (pod_id,
+ * user_id) unique constraint on pod_members is what actually prevents one
+ * payment from joining a pod twice, not which specific hash we found.
+ *
+ * @returns {Promise<string|null>} the matching txHash if found, else null
+ */
+async function findQualifyingPayment(fromAddress, toAddress, expectedAmount, token, env) {
   const client = new Client(NODES[env] ?? NODES.dev)
   await client.connect()
 
   try {
-    const resp = await client.request({ command: 'tx', transaction: txHash })
-    const result = resp.result
-    if (!result?.validated) return false
+    const { result } = await client.request({ command: 'account_tx', account: fromAddress, limit: 50 })
 
-    const tx = result.tx_json ?? result
-    if (tx?.TransactionType !== 'Payment')       return false
-    if (tx?.Account !== fromAddress)             return false
-    if (tx?.Destination !== toAddress)           return false
-    if (result.meta?.TransactionResult !== 'tesSUCCESS') return false
+    for (const entry of result.transactions ?? []) {
+      const tx = entry.tx_json ?? entry.tx
+      if (
+        tx?.TransactionType !== 'Payment' ||
+        tx?.Destination !== toAddress ||
+        !entry.validated ||
+        entry.meta?.TransactionResult !== 'tesSUCCESS'
+      ) continue
 
-    const delivered = result.meta?.delivered_amount ?? result.meta?.DeliveredAmount
-    if (!deliveredMatchesToken(delivered, token, env)) return false
+      const delivered = entry.meta?.delivered_amount ?? entry.meta?.DeliveredAmount
+      if (!deliveredMatchesToken(delivered, token, env)) continue
 
-    return deliveredAmountToNumber(delivered) >= expectedAmount - 1e-6
+      if (deliveredAmountToNumber(delivered) >= expectedAmount - 1e-6) {
+        return entry.hash ?? tx.hash ?? null
+      }
+    }
+    return null
   } catch {
-    return false
+    return null
   } finally {
     await client.disconnect()
   }
@@ -93,9 +117,9 @@ export const handler = async (event) => {
   if (limited) return limited
 
   try {
-    const { podId, walletAddress, txHash } = JSON.parse(event.body ?? '{}')
-    if (!podId || !walletAddress || !txHash) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'podId, walletAddress, and txHash are required' }) }
+    const { podId, walletAddress } = JSON.parse(event.body ?? '{}')
+    if (!podId || !walletAddress) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'podId and walletAddress are required' }) }
     }
 
     // ── 1. Fetch pod ───────────────────────────────────────────
@@ -151,15 +175,15 @@ export const handler = async (event) => {
     // ── 5. Verify the collateral payment on-chain ─────────────────
     const collateralAmount = pod.contribution_amount * 2
     const env = pod.env ?? 'dev'
-    const paid = await verifyCollateralPayment(txHash, walletAddress, pod.contract_address, collateralAmount, pod.token, env)
-    if (!paid) {
+    const foundTxHash = await findQualifyingPayment(walletAddress, pod.contract_address, collateralAmount, pod.token, env)
+    if (!foundTxHash) {
       return { statusCode: 400, body: JSON.stringify({ error: 'Could not verify collateral payment on-chain. Check your wallet before retrying — do not pay twice.' }) }
     }
 
     // ── 6. Record membership ───────────────────────────────────────
     const { error: joinErr } = await supabase
       .from('pod_members')
-      .insert({ pod_id: podId, user_id: user.id, status: 'ACTIVE', collateral_tx: txHash })
+      .insert({ pod_id: podId, user_id: user.id, status: 'ACTIVE', collateral_tx: foundTxHash })
 
     if (joinErr && joinErr.code !== PG_UNIQUE_VIOLATION) {
       return { statusCode: 500, body: JSON.stringify({ error: `Payment verified but membership save failed: ${joinErr.message}. Contact support — do not pay again.` }) }
@@ -189,7 +213,7 @@ export const handler = async (event) => {
         .eq('id', podId)
     }
 
-    console.log(`[pod-join] ${walletAddress} joined pod ${podId} | tx: ${txHash}`)
+    console.log(`[pod-join] ${walletAddress} joined pod ${podId} | tx: ${foundTxHash}`)
 
     return {
       statusCode: 200,
