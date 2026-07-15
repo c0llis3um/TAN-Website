@@ -558,7 +558,7 @@ export default function PodView() {
                 </div>
                 {mySlot && (
                   <p className="text-xs dark:text-brand-muted text-slate-400 mt-4">
-                    {t('pod.yourPayoutSlot', { slot: mySlot, amount: pod.contribution_amount * totalCycles, token: pod.token })}
+                    {t('pod.yourPayoutSlot', { slot: mySlot, amount: pod.contribution_amount * (pod.size - 1), token: pod.token })}
                   </p>
                 )}
               </>
@@ -717,7 +717,7 @@ export default function PodView() {
           <Card hover={false} className="p-5">
             <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-4">{t('pod.podInfo')}</h3>
             {[
-              [t('pod.totalPot'),    `${pod.contribution_amount * totalCycles} ${pod.token}`],
+              [t('pod.totalPot'),    `${pod.contribution_amount * (pod.size - 1)} ${pod.token}`],
               [t('pod.contribution'), `${pod.contribution_amount} ${pod.token}${t('pod.perWeek')}`],
               [t('pod.members'),      `${pod.size} ${t('pod.people')}`],
               [t('pod.duration'),     `${totalCycles} ${t('pod.weeks')}`],
@@ -772,7 +772,12 @@ export default function PodView() {
                 return (
                   <div className="space-y-3">
                     <div className="text-center py-3 rounded-2xl dark:bg-brand-blue/5 bg-blue-50 border dark:border-brand-blue/20 border-blue-100">
-                      <p className="text-2xl font-extrabold gradient-text">{pod.contribution_amount * totalCycles} {pod.token}</p>
+                      {/* The pot you receive is what the OTHER members pay in — not
+                          contribution × totalCycles, which overstates it by exactly
+                          one contribution (your own, which you never actually pay
+                          yourself). Was showing 6 (2 × 3 cycles) on a 3-member,
+                          2-XRP pod instead of the correct 4 (2 × 2 other members). */}
+                      <p className="text-2xl font-extrabold gradient-text">{pod.contribution_amount * (pod.size - 1)} {pod.token}</p>
                       <p className="text-xs dark:text-brand-muted text-slate-400 mt-1">{t('pod.totalPotCycle', { slot: mySlot, total: totalCycles })}</p>
                     </div>
                     <div className="flex justify-between text-xs">

@@ -84,7 +84,9 @@ async function isTxHashAlreadyUsed(supabase, txHash) {
  * verification even though the payment is real. Scanning for ANY qualifying,
  * not-already-used payment sidesteps that entirely.
  *
- * @returns {Promise<string|null>} the matching txHash if found, else null
+ * @returns {Promise<{txHash: string, amount: number}|null>} the matching payment
+ *   (with the amount it actually delivered, not just the expected minimum) if
+ *   found, else null
  */
 async function findQualifyingPayment(supabase, fromAddress, toAddress, expectedAmount, token, env) {
   const client = new Client(NODES[env] ?? NODES.dev)
@@ -104,13 +106,14 @@ async function findQualifyingPayment(supabase, fromAddress, toAddress, expectedA
 
       const delivered = entry.meta?.delivered_amount ?? entry.meta?.DeliveredAmount
       if (!deliveredMatchesToken(delivered, token, env)) continue
-      if (deliveredAmountToNumber(delivered) < expectedAmount - 1e-6) continue
+      const deliveredValue = deliveredAmountToNumber(delivered)
+      if (deliveredValue < expectedAmount - 1e-6) continue
 
       const candidateHash = entry.hash ?? tx.hash
       if (!candidateHash) continue
       if (await isTxHashAlreadyUsed(supabase, candidateHash)) continue
 
-      return candidateHash
+      return { txHash: candidateHash, amount: deliveredValue }
     }
     return null
   } catch {
@@ -177,21 +180,26 @@ export const handler = async (event) => {
     const env = pod.env ?? 'dev'
     const isSelfRecipient = walletAddress.toLowerCase() === recipientAddr.toLowerCase()
     let confirmedTxHash = 'self-recipient'
+    let confirmedAmount = pod.contribution_amount
 
     if (!isSelfRecipient) {
-      const foundTxHash = await findQualifyingPayment(supabase, walletAddress, recipientAddr, pod.contribution_amount, pod.token, env)
-      if (!foundTxHash) {
+      const found = await findQualifyingPayment(supabase, walletAddress, recipientAddr, pod.contribution_amount, pod.token, env)
+      if (!found) {
         return { statusCode: 400, body: JSON.stringify({ error: 'Could not verify payment on-chain. Check your wallet before retrying — do not pay twice.' }) }
       }
-      confirmedTxHash = foundTxHash
+      confirmedTxHash = found.txHash
+      confirmedAmount = found.amount
     }
 
     // ── 4. Record the payment ───────────────────────────────────────
+    // amount is what the transaction actually delivered, not the minimum
+    // expected — a member who overpays should have that reflected, not
+    // silently rounded down to contribution_amount.
     const { error: insertErr } = await supabase.from('payments').insert({
       pod_id:  podId,
       user_id: member.user_id,
       cycle:   pod.current_cycle,
-      amount:  pod.contribution_amount,
+      amount:  confirmedAmount,
       token:   pod.token,
       chain:   pod.chain,
       method:  'wallet',

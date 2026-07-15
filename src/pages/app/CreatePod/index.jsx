@@ -161,7 +161,9 @@ export default function CreatePod() {
 
   const upd      = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const tokens   = CHAIN_TOKENS[form.chain] ?? []
-  const totalPot = +(form.contribution * form.size).toFixed(6)
+  // The pot a recipient collects is what the OTHER members pay in each cycle —
+  // size - 1, not size (which would count the recipient paying themselves).
+  const totalPot = +(form.contribution * (form.size - 1)).toFixed(6)
 
   const isYield    = form.chain === 'XRPL' && form.tandaType === 'yield'
   const strategy   = YIELD_STRATEGIES.find(s => s.id === form.yieldStrategy)

@@ -84,13 +84,14 @@ async function findQualifyingPayment(supabase, fromAddress, toAddress, expectedA
 
       const delivered = entry.meta?.delivered_amount ?? entry.meta?.DeliveredAmount
       if (!deliveredMatchesToken(delivered, token, env)) continue
-      if (deliveredAmountToNumber(delivered) < expectedAmount - 1e-6) continue
+      const deliveredValue = deliveredAmountToNumber(delivered)
+      if (deliveredValue < expectedAmount - 1e-6) continue
 
       const candidateHash = entry.hash ?? tx.hash
       if (!candidateHash) continue
       if (await isTxHashAlreadyUsed(supabase, candidateHash)) continue
 
-      return candidateHash
+      return { txHash: candidateHash, amount: deliveredValue }
     }
     return null
   } catch {
@@ -189,24 +190,24 @@ async function slashMember({ supabase, pod, member, escrowWallet, env }) {
   if (paid) return { skipped: true, reason: 'already paid' }
 
   if (member.user?.wallet_address) {
-    const foundTxHash = await findQualifyingPayment(
+    const found = await findQualifyingPayment(
       supabase, member.user.wallet_address, recipient.user.wallet_address, pod.contribution_amount, pod.token, env,
     )
-    if (foundTxHash) {
+    if (found) {
       const { error: insertErr } = await supabase.from('payments').insert({
         pod_id:  podId,
         user_id: memberUserId,
         cycle,
-        amount:  pod.contribution_amount,
+        amount:  found.amount,
         token:   pod.token,
         chain:   'XRPL',
         method:  'wallet',
-        tx_hash: foundTxHash,
+        tx_hash: found.txHash,
         status:  'CONFIRMED',
         paid_at: new Date().toISOString(),
       })
       if (!insertErr) {
-        return { skipped: true, reason: 'found unrecorded on-chain payment — recorded it instead of slashing', txHash: foundTxHash }
+        return { skipped: true, reason: 'found unrecorded on-chain payment — recorded it instead of slashing', txHash: found.txHash }
       }
       // Insert failed (e.g. a race with the member's own Pay click landing
       // first) — fall through. The "already slashed"/"already paid" checks

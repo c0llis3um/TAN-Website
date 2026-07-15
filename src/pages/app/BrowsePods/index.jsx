@@ -119,7 +119,7 @@ export default function BrowsePods() {
                       <p className="text-xs dark:text-brand-muted text-slate-400">{t('browse.perWeek')} {pod.token}</p>
                     </div>
                     <div className="dark:bg-brand-dark bg-slate-50 rounded-xl p-2.5 text-center">
-                      <p className="font-extrabold text-brand-cyan">{pod.contribution_amount * pod.size}</p>
+                      <p className="font-extrabold text-brand-cyan">{pod.contribution_amount * (pod.size - 1)}</p>
                       <p className="text-xs dark:text-brand-muted text-slate-400">{t('browse.totalPot')}</p>
                     </div>
                   </div>
@@ -205,7 +205,7 @@ function JoinModal({ pod, onClose, onJoin }) {
             [t('browse.modal.collateral'),   `${pod.contribution_amount * 2} ${pod.token}`],
             [t('browse.modal.firstPayment'), `${pod.contribution_amount} ${pod.token}`],
             [t('browse.modal.totalUpfront'), `${pod.contribution_amount * 3} ${pod.token}`],
-            [t('browse.modal.totalPot'),     `${pod.contribution_amount * pod.size} ${pod.token}`],
+            [t('browse.modal.totalPot'),     `${pod.contribution_amount * (pod.size - 1)} ${pod.token}`],
             [t('browse.modal.duration'),     `${pod.size} weeks`],
             [t('browse.modal.spotsLeft'),    `${pod.size - members} of ${pod.size}`],
           ].map(([l, v]) => (
