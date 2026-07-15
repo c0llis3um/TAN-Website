@@ -214,7 +214,7 @@ export const handler = async (event = {}) => {
   const { data: pods, error } = await supabase
     .from('pods')
     .select(`
-      id, chain, token, contribution_amount, status, env,
+      id, chain, token, contribution_amount, status, env, total_cycles,
       current_cycle, cycle_started_at, cycle_frequency_days,
       pod_members (
         id, user_id, payout_slot, status,
@@ -271,7 +271,10 @@ export const handler = async (event = {}) => {
       }
     }
 
-    // Advance cycle if all members are now accounted for
+    // Advance cycle if all still-ACTIVE members are now accounted for. A
+    // DEFAULTED member is permanently excluded from paying (skipped above),
+    // so comparing against the full pod_members.length would make the pod
+    // stuck at this cycle forever once anyone defaults.
     const { count: confirmedCount } = await supabase
       .from('payments')
       .select('id', { count: 'exact', head: true })
@@ -279,10 +282,11 @@ export const handler = async (event = {}) => {
       .eq('cycle', pod.current_cycle)
       .eq('status', 'CONFIRMED')
 
-    if (confirmedCount >= pod.pod_members.length) {
+    const activeMemberCount = pod.pod_members.filter(m => m.status === 'ACTIVE').length
+
+    if (confirmedCount >= activeMemberCount) {
       const nextCycle   = pod.current_cycle + 1
-      const totalCycles = pod.pod_members.length
-      const done        = nextCycle > totalCycles
+      const done        = nextCycle > pod.total_cycles
       await supabase
         .from('pods')
         .update(done

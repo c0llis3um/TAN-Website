@@ -186,6 +186,10 @@ export const handler = async (event) => {
     }
 
     // ── 5. Advance the cycle if everyone's paid ─────────────────────
+    // "Everyone" means every still-ACTIVE member, not the pod's original size —
+    // a DEFAULTED member is permanently excluded from paying (see the ACTIVE
+    // filter in step 1 above), so comparing against the original size would
+    // make the pod stuck at this cycle forever once anyone defaults.
     const { count } = await supabase
       .from('payments')
       .select('id', { count: 'exact', head: true })
@@ -193,7 +197,9 @@ export const handler = async (event) => {
       .eq('cycle', pod.current_cycle)
       .eq('status', 'CONFIRMED')
 
-    if ((count ?? 0) >= pod.size) {
+    const activeMemberCount = pod.pod_members?.filter(m => m.status === 'ACTIVE').length ?? pod.size
+
+    if ((count ?? 0) >= activeMemberCount) {
       const nextCycle = pod.current_cycle + 1
       const done      = nextCycle > pod.total_cycles
       await supabase
