@@ -4,8 +4,12 @@
  * POST /.netlify/functions/claim-xrpl-collateral
  * Body: { podId: string, walletAddress: string }
  *
- * Sends 2× contribution back from the pod escrow wallet to the
- * requesting member. Idempotent — won't send twice to the same member.
+ * Sends the requesting member's remaining collateral (2× contribution, minus
+ * any collateral_slash payments already taken from them for missed cycles —
+ * slash-xrpl-collateral.js takes exactly 1× contribution per default and the
+ * member is excluded from further cycles after that, so this is never more
+ * than one deduction) back from the pod escrow wallet. Idempotent — won't
+ * send twice to the same member.
  *
  * Required env vars (no VITE_ prefix):
  *   SUPABASE_URL
@@ -99,6 +103,21 @@ export const handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'No escrow found for this pod' }) }
     }
 
+    // ── 4b. Deduct any prior collateral slashes for this member ─────
+    const { data: slashes } = await supabase
+      .from('payments')
+      .select('amount')
+      .eq('pod_id', podId)
+      .eq('user_id', member.user.id)
+      .eq('method', 'collateral_slash')
+
+    const alreadySlashed = (slashes ?? []).reduce((sum, p) => sum + Number(p.amount), 0)
+    const amount = Math.max(0, pod.contribution_amount * 2 - alreadySlashed)
+
+    if (amount <= 0) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'No collateral remaining to claim — it was fully used to cover a missed payment.' }) }
+    }
+
     // ── 5. Send collateral ─────────────────────────────────────
     const isRlusd = pod.token === 'RLUSD'
     const env     = pod.env ?? 'dev'
@@ -112,7 +131,6 @@ export const handler = async (event) => {
     await client.connect()
 
     const escrowWallet = Wallet.fromSeed(decryptSeed(escrowRow.escrow_seed))
-    const amount        = pod.contribution_amount * 2
     let txHash
 
     try {

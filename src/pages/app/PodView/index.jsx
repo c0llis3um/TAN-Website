@@ -387,7 +387,10 @@ export default function PodView() {
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
-          {pod.status === 'ACTIVE' && myMember && (
+          {pod.status === 'ACTIVE' && myMember && myMember.status === 'DEFAULTED' && (
+            <span className="text-sm font-semibold text-red-400 px-4 py-2 rounded-xl bg-red-500/10">{t('pod.defaultedBadge')}</span>
+          )}
+          {pod.status === 'ACTIVE' && myMember && myMember.status !== 'DEFAULTED' && (
             hasPaidThisCycle
               ? <span className="text-sm font-semibold text-emerald-400 px-4 py-2 rounded-xl bg-emerald-500/10">{t('pod.paidBadge', { n: currentCycle })}</span>
               : <Button onClick={() => navigate(`/app/pod/${id}/pay`)}>{t('pod.payNow', { amount: pod.contribution_amount })} {pod.token} →</Button>

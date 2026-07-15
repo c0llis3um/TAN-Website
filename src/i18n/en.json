@@ -11,7 +11,68 @@
     "wallet": "Wallet",
     "history": "History",
     "profile": "Profile",
-    "create": "Create Tanda"
+    "create": "Create Tanda",
+    "faq": "FAQ"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "sub": "Everything about how a DeFi Tanda actually works, in plain language.",
+    "categories": {
+      "basics": "Basics",
+      "creating": "Creating & Joining",
+      "payments": "Payments & Defaults",
+      "security": "Security & Fees"
+    },
+    "q": {
+      "whatIsTanda": {
+        "q": "What is a tanda?",
+        "a": "A tanda (also called a ROSCA, susu, or hui) is a rotating savings circle. A fixed group of people each contribute the same amount every cycle, and the whole pot goes to one member per cycle until everyone has received it once. DeFi Tanda runs this on the XRP Ledger so contributions, payouts, and collateral are all verifiable on-chain instead of relying on trust in whoever's holding the cash."
+      },
+      "howRotationWorks": {
+        "q": "How does the payout rotation work?",
+        "a": "When a tanda fills up, every member is assigned a payout slot (in join order, or shuffled if the organizer chose random order). Each cycle, every member except that cycle's recipient sends their contribution directly to the recipient's wallet. Once everyone's cycle payment is confirmed, the tanda automatically advances to the next cycle. This repeats until every member has been the recipient exactly once, at which point the tanda is COMPLETED."
+      },
+      "whichChain": {
+        "q": "Which blockchain and token does this use?",
+        "a": "Tandas currently run on the XRP Ledger, using either XRP or RLUSD (a USD-backed stablecoin) as the contribution token. Everything — collateral, cycle payments, refunds — is a real on-chain XRPL transaction."
+      },
+      "howToCreate": {
+        "q": "How do I create a tanda?",
+        "a": "From the app, choose \"Create Tanda,\" pick your chain/token, group size, contribution amount, cycle length, and payout order (fixed by join order, or random). A dedicated escrow wallet is created for the pod. On live (mainnet), there's a small XRP creation fee paid to the platform treasury; on testnet it's free."
+      },
+      "howToJoin": {
+        "q": "How do I join a tanda?",
+        "a": "Open the pod and tap Join. Your wallet (Xaman) will prompt you to send the collateral amount to the pod's escrow wallet. Once that payment is confirmed on-chain, you're added as a member. When the group fills up, the tanda activates and cycle 1 begins."
+      },
+      "whyCollateral": {
+        "q": "Why do I have to pay 2× the contribution amount to join?",
+        "a": "Collateral protects the rest of the group. If you ever miss a cycle payment, your collateral covers it instead of leaving that cycle's recipient short. You get back whatever's left of your collateral once the tanda completes (or immediately, if the pod is cancelled before it fills)."
+      },
+      "howToPay": {
+        "q": "How do I pay each cycle?",
+        "a": "Go to the pod and tap Pay. If you're not this cycle's recipient, your wallet will prompt you to send your contribution directly to whoever is. If you ARE this cycle's recipient, there's nothing to send — you just receive everyone else's contributions. Every payment is verified on-chain before it's recorded, so you never need to worry about \"did it go through.\""
+      },
+      "whatIsDefault": {
+        "q": "What happens if I miss a payment (default)?",
+        "a": "Every day, the platform automatically checks for members who haven't paid the current cycle in time. If you've missed the window, 1× your contribution amount is automatically taken from your collateral and sent to that cycle's recipient on your behalf — so the recipient still gets paid in full, no matter what. You're then marked DEFAULTED and removed from the payment rotation for the rest of the tanda: you won't be asked to pay future cycles, and you won't receive a payout slot if you don't already have one.\n\nYou keep whatever's left of your collateral (originally 2× your contribution — 1× gets used to cover the missed cycle, so 1× remains) and can claim it back once the tanda completes."
+      },
+      "whyCantIPay": {
+        "q": "Why is there no Pay button after I've defaulted?",
+        "a": "Once you're marked DEFAULTED, you're no longer part of the cycle rotation — your missed payment was already covered by your own collateral, so there's nothing left to pay. Showing a Pay button that could only ever fail would just be confusing, so the app shows your defaulted status instead."
+      },
+      "howToClaimBack": {
+        "q": "How and when do I get my collateral back?",
+        "a": "Once a tanda reaches COMPLETED (everyone has received their payout) — or if it's CANCELLED or EXPIRED before it ever filled — every member can claim their remaining collateral back from the pod page. If you never defaulted, that's the full 2× your contribution. If you did default once, it's whatever was left after that single deduction."
+      },
+      "isItSafe": {
+        "q": "Is my money safe? How does verification work?",
+        "a": "Every contribution, collateral deposit, and refund is a real XRPL transaction, and the backend independently verifies each one on-chain — checking the sender, recipient, amount, and currency — before crediting anything or updating a pod's status. Nothing is taken on trust from what a browser claims happened. Pod escrow wallet keys are encrypted at rest and only ever used server-side to sign the specific payout/refund/slash a pod's rules call for."
+      },
+      "fees": {
+        "q": "What fees does the platform charge?",
+        "a": "Creating a live (mainnet) tanda has a small flat XRP creation fee paid once to the platform treasury. There are no per-cycle or per-payment fees beyond the XRPL network's own transaction fee (a fraction of a cent). Testnet tandas are free."
+      }
+    }
   },
   "hero": {
     "headline1": "Save together.",
@@ -96,6 +157,9 @@
     "notFound": "Pod not found",
     "alreadyPaid": "Already paid this cycle",
     "alreadyPaidDesc": "You already submitted your contribution for cycle {{cycle}}. No action needed.",
+    "defaulted": "You've defaulted on this tanda",
+    "defaultedDesc": "You missed a cycle payment, so your collateral was used to cover it and you're no longer part of the payout rotation. You can still claim whatever's left of your collateral once the tanda completes.",
+    "learnMore": "Learn more about how defaults work →",
     "contactPrompt": "Something wrong? Contact us",
     "contactTitle": "Contact support",
     "contactBody": "Describe what happened — we'll include your wallet and this pod's details automatically.",
@@ -250,6 +314,7 @@
     "score": "Score",
     "paidOut": "Paid out",
     "paidBadge": "✓ Paid cycle {{n}}",
+    "defaultedBadge": "⚠ Defaulted",
     "cycleProgress": "Cycle Progress",
     "cycleCompleted": "Completed",
     "filled": "{{n}}/{{total}} filled",

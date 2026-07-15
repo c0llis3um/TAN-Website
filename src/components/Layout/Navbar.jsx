@@ -110,6 +110,7 @@ const handleDisconnect = async () => {
                 <NavLink to="/app">{t('nav.dashboard')}</NavLink>
                 <NavLink to="/app/pods">{t('nav.myPods')}</NavLink>
                 <NavLink to="/app/create">{t('nav.create')}</NavLink>
+                <NavLink to="/faq">{t('nav.faq')}</NavLink>
               </>
             )}
           </div>
@@ -231,6 +232,7 @@ const handleDisconnect = async () => {
                     <MobileLink to="/app"        onClick={() => setMobileOpen(false)}>{t('nav.dashboard')}</MobileLink>
                     <MobileLink to="/app/pods"   onClick={() => setMobileOpen(false)}>{t('nav.myPods')}</MobileLink>
                     <MobileLink to="/app/create" onClick={() => setMobileOpen(false)}>{t('nav.create')}</MobileLink>
+                    <MobileLink to="/faq"        onClick={() => setMobileOpen(false)}>{t('nav.faq')}</MobileLink>
                   </>
                 )}
                 {isApp && !wallet && (

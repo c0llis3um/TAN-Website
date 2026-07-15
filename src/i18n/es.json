@@ -11,7 +11,68 @@
     "wallet": "Billetera",
     "history": "Historial",
     "profile": "Perfil",
-    "create": "Crear Tanda"
+    "create": "Crear Tanda",
+    "faq": "Preguntas Frecuentes"
+  },
+  "faq": {
+    "title": "Preguntas Frecuentes",
+    "sub": "Todo sobre cómo funciona realmente una DeFi Tanda, en palabras simples.",
+    "categories": {
+      "basics": "Lo básico",
+      "creating": "Crear y Unirse",
+      "payments": "Pagos e Incumplimientos",
+      "security": "Seguridad y Comisiones"
+    },
+    "q": {
+      "whatIsTanda": {
+        "q": "¿Qué es una tanda?",
+        "a": "Una tanda (también llamada ROSCA, susu o hui) es un círculo de ahorro rotativo. Un grupo fijo de personas contribuye la misma cantidad cada ciclo, y todo el fondo va a un solo integrante por ciclo hasta que todos lo hayan recibido una vez. DeFi Tanda hace esto en el XRP Ledger, así que las contribuciones, pagos y garantías son verificables en la cadena en vez de depender de la confianza en quien tiene el efectivo."
+      },
+      "howRotationWorks": {
+        "q": "¿Cómo funciona la rotación de pagos?",
+        "a": "Cuando una tanda se llena, cada integrante recibe un turno de pago (en orden de ingreso, o al azar si el organizador eligió orden aleatorio). En cada ciclo, todos los integrantes excepto quien recibe ese ciclo envían su contribución directamente a la billetera del receptor. Una vez que se confirman todos los pagos del ciclo, la tanda avanza automáticamente al siguiente ciclo. Esto se repite hasta que cada integrante haya sido el receptor exactamente una vez, momento en el cual la tanda queda COMPLETADA."
+      },
+      "whichChain": {
+        "q": "¿Qué blockchain y token se usa?",
+        "a": "Las tandas actualmente funcionan en el XRP Ledger, usando XRP o RLUSD (una stablecoin respaldada por USD) como token de contribución. Todo — garantía, pagos de ciclo, reembolsos — es una transacción real en la cadena de XRPL."
+      },
+      "howToCreate": {
+        "q": "¿Cómo creo una tanda?",
+        "a": "Desde la app, elige \"Crear Tanda\", selecciona tu red/token, tamaño del grupo, monto de contribución, duración del ciclo y orden de pago (fijo por orden de ingreso, o aleatorio). Se crea una billetera de garantía dedicada para el grupo. En modo live (mainnet) hay una pequeña comisión de creación en XRP que se paga una vez a la tesorería de la plataforma; en testnet es gratis."
+      },
+      "howToJoin": {
+        "q": "¿Cómo me uno a una tanda?",
+        "a": "Abre el grupo y toca Unirse. Tu billetera (Xaman) te pedirá enviar el monto de garantía a la billetera de garantía del grupo. Una vez confirmado ese pago en la cadena, quedas agregado como integrante. Cuando el grupo se llena, la tanda se activa y comienza el ciclo 1."
+      },
+      "whyCollateral": {
+        "q": "¿Por qué tengo que pagar 2× el monto de contribución para unirme?",
+        "a": "La garantía protege al resto del grupo. Si alguna vez no pagas un ciclo, tu garantía lo cubre en vez de dejar sin su pago a quien recibía ese ciclo. Recibes de vuelta lo que quede de tu garantía cuando la tanda termina (o de inmediato, si el grupo se cancela antes de llenarse)."
+      },
+      "howToPay": {
+        "q": "¿Cómo pago cada ciclo?",
+        "a": "Ve al grupo y toca Pagar. Si no eres quien recibe este ciclo, tu billetera te pedirá enviar tu contribución directamente a quien sí lo es. Si SÍ eres quien recibe este ciclo, no tienes que enviar nada — solo recibes las contribuciones de los demás. Cada pago se verifica en la cadena antes de registrarse, así que nunca tienes que preocuparte de \"si se procesó\"."
+      },
+      "whatIsDefault": {
+        "q": "¿Qué pasa si no pago a tiempo (incumplimiento)?",
+        "a": "Todos los días, la plataforma revisa automáticamente si hay integrantes que no pagaron el ciclo actual a tiempo. Si no pagaste a tiempo, se toma automáticamente 1× tu monto de contribución de tu garantía y se envía en tu nombre a quien recibía ese ciclo — así que quien recibe siempre cobra completo, pase lo que pase. Luego quedas marcado como INCUMPLIDO y se te retira de la rotación de pagos por el resto de la tanda: no se te pedirá pagar los ciclos futuros, y no recibirás un turno de pago si aún no lo tenías asignado.\n\nConservas lo que quede de tu garantía (originalmente 2× tu contribución — se usa 1× para cubrir el ciclo no pagado, así que queda 1×) y puedes reclamarlo cuando la tanda termine."
+      },
+      "whyCantIPay": {
+        "q": "¿Por qué ya no aparece el botón de Pagar después de incumplir?",
+        "a": "Una vez marcado como INCUMPLIDO, ya no formas parte de la rotación de ciclos — tu pago faltante ya fue cubierto por tu propia garantía, así que no queda nada que pagar. Mostrar un botón de Pagar que solo podría fallar sería confuso, así que la app muestra tu estado de incumplimiento en su lugar."
+      },
+      "howToClaimBack": {
+        "q": "¿Cómo y cuándo recupero mi garantía?",
+        "a": "Cuando una tanda llega a COMPLETADA (todos recibieron su pago) — o si se CANCELA o EXPIRA antes de llenarse — cada integrante puede reclamar su garantía restante desde la página del grupo. Si nunca incumpliste, es el 2× completo de tu contribución. Si incumpliste una vez, es lo que quedó después de ese único descuento."
+      },
+      "isItSafe": {
+        "q": "¿Mi dinero está seguro? ¿Cómo funciona la verificación?",
+        "a": "Cada contribución, depósito de garantía y reembolso es una transacción real de XRPL, y el backend verifica cada una de forma independiente en la cadena — revisando remitente, destinatario, monto y moneda — antes de acreditar nada o actualizar el estado de un grupo. Nada se da por hecho según lo que diga un navegador. Las claves de las billeteras de garantía de los grupos están cifradas en reposo y solo se usan del lado del servidor para firmar el pago, reembolso o penalización específico que las reglas del grupo indiquen."
+      },
+      "fees": {
+        "q": "¿Qué comisiones cobra la plataforma?",
+        "a": "Crear una tanda en modo live (mainnet) tiene una pequeña comisión fija en XRP que se paga una vez a la tesorería de la plataforma. No hay comisiones por ciclo ni por pago, más allá de la comisión propia de la red XRPL (una fracción de centavo). Las tandas en testnet son gratis."
+      }
+    }
   },
   "hero": {
     "headline1": "Ahorra juntos.",
@@ -96,6 +157,9 @@
     "notFound": "Tanda no encontrada",
     "alreadyPaid": "Ya pagaste este ciclo",
     "alreadyPaidDesc": "Ya enviaste tu contribución para el ciclo {{cycle}}. No necesitas hacer nada más.",
+    "defaulted": "Incumpliste esta tanda",
+    "defaultedDesc": "No pagaste un ciclo, así que tu garantía se usó para cubrirlo y ya no formas parte de la rotación de pagos. Aún puedes reclamar lo que quede de tu garantía cuando la tanda termine.",
+    "learnMore": "Aprende más sobre cómo funcionan los incumplimientos →",
     "contactPrompt": "¿Algo salió mal? Contáctanos",
     "contactTitle": "Contactar soporte",
     "contactBody": "Describe qué pasó — incluiremos tu billetera y los datos de esta tanda automáticamente.",
@@ -250,6 +314,7 @@
     "score": "Puntuación",
     "paidOut": "Pagado",
     "paidBadge": "✓ Pagado ciclo {{n}}",
+    "defaultedBadge": "⚠ Incumplido",
     "cycleProgress": "Progreso del Ciclo",
     "cycleCompleted": "Completado",
     "filled": "{{n}}/{{total}} ocupados",

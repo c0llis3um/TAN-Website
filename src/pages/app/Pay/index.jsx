@@ -21,7 +21,7 @@ export default function Pay() {
 
   const [pod,     setPod]     = useState(null)
   const [loading, setLoading] = useState(true)
-  const [step,      setStep]      = useState('select')  // select | confirming | done | already-paid
+  const [step,      setStep]      = useState('select')  // select | confirming | done | already-paid | defaulted
   const [method,    setMethod]    = useState(null)
   const [payError,  setPayError]  = useState(null)
   const [txHash,    setTxHash]    = useState(null)
@@ -32,14 +32,24 @@ export default function Pay() {
     if (!id) return
     Promise.all([getPod(id), getPodPayments(id)]).then(([{ data }, { data: pays }]) => {
       setPod(data ?? null)
-      // If the current wallet has already paid this cycle, skip straight to already-paid screen
-      if (data && wallet?.address && pays?.length) {
-        const alreadyPaid = pays.some(p =>
-          p.user?.wallet_address?.toLowerCase() === wallet.address.toLowerCase() &&
-          p.cycle === data.current_cycle &&
-          ['CONFIRMED', 'PENDING'].includes(p.status)
+      if (data && wallet?.address) {
+        // A defaulted member's collateral already covered their missed cycle and
+        // they're excluded from paying again (the server rejects it either way —
+        // this just avoids showing a "Pay" button that can only ever fail).
+        const myMembership = data.pod_members?.find(m =>
+          m.user?.wallet_address?.toLowerCase() === wallet.address.toLowerCase()
         )
-        if (alreadyPaid) setStep('already-paid')
+        if (myMembership?.status === 'DEFAULTED') {
+          setStep('defaulted')
+        } else if (pays?.length) {
+          // If the current wallet has already paid this cycle, skip straight to already-paid screen
+          const alreadyPaid = pays.some(p =>
+            p.user?.wallet_address?.toLowerCase() === wallet.address.toLowerCase() &&
+            p.cycle === data.current_cycle &&
+            ['CONFIRMED', 'PENDING'].includes(p.status)
+          )
+          if (alreadyPaid) setStep('already-paid')
+        }
       }
       setLoading(false)
     })
@@ -224,6 +234,27 @@ export default function Pay() {
       </motion.button>
 
       <AnimatePresence mode="wait">
+
+        {/* ── DEFAULTED ── */}
+        {step === 'defaulted' && (
+          <motion.div key="defaulted" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}>
+            <Card hover={false} className="p-8 text-center">
+              <div className="w-20 h-20 rounded-full bg-red-500/15 border border-red-500/30 mx-auto flex items-center justify-center mb-5">
+                <span className="text-4xl">⚠</span>
+              </div>
+              <h2 className="text-2xl font-extrabold dark:text-white text-slate-900 mb-2">
+                {t('pay.defaulted')}
+              </h2>
+              <p className="text-sm dark:text-brand-muted text-slate-500 mb-4">
+                {t('pay.defaultedDesc')}
+              </p>
+              <button onClick={() => navigate('/faq')} className="text-xs text-brand-cyan hover:underline mb-6 block mx-auto">
+                {t('pay.learnMore')}
+              </button>
+              <Button onClick={() => navigate(`/app/pod/${id}`)}>{t('pay.back')}</Button>
+            </Card>
+          </motion.div>
+        )}
 
         {/* ── ALREADY PAID ── */}
         {step === 'already-paid' && (

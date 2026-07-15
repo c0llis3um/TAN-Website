@@ -121,7 +121,7 @@ export const handler = async (event) => {
     await client.connect()
 
     const escrowWallet        = Wallet.fromSeed(decryptSeed(escrowRow.escrow_seed))
-    const collateralPerMember = pod.contribution_amount * 2
+    const fullCollateral      = pod.contribution_amount * 2
     const results             = []
 
     try {
@@ -146,6 +146,24 @@ export const handler = async (event) => {
 
         if (existing) {
           results.push({ member: recipientAddress, status: 'skipped', reason: 'already released/claimed' })
+          continue
+        }
+
+        // Deduct any prior collateral slashes for this member — a defaulted
+        // member's collateral was already partially used to cover a missed
+        // payment (see claim-xrpl-collateral.js for the same calculation).
+        const { data: slashes } = await supabase
+          .from('payments')
+          .select('amount')
+          .eq('pod_id', podId)
+          .eq('user_id', recipientUserId)
+          .eq('method', 'collateral_slash')
+
+        const alreadySlashed     = (slashes ?? []).reduce((sum, p) => sum + Number(p.amount), 0)
+        const collateralPerMember = Math.max(0, fullCollateral - alreadySlashed)
+
+        if (collateralPerMember <= 0) {
+          results.push({ member: recipientAddress, status: 'skipped', reason: 'no collateral remaining — fully used to cover a missed payment' })
           continue
         }
 

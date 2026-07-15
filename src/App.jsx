@@ -9,6 +9,7 @@ import { getPlatformSetting } from '@/lib/db'
 
 import Landing      from '@/pages/Landing'
 import Pitch        from '@/pages/Pitch'
+import FAQ          from '@/pages/FAQ'
 import Dashboard    from '@/pages/app/Dashboard'
 import PodView      from '@/pages/app/PodView'
 import Pay          from '@/pages/app/Pay'
@@ -71,6 +72,7 @@ export default function App() {
             {/* ── Public ── */}
             <Route path="/" element={<PageWrapper><Landing /></PageWrapper>} />
             <Route path="/pitch" element={<PageWrapper><Pitch /></PageWrapper>} />
+            <Route path="/faq" element={<PageWrapper><FAQ /></PageWrapper>} />
 
             {/* ── User App ── */}
             <Route path="/app"              element={<PageWrapper><Dashboard /></PageWrapper>} />
