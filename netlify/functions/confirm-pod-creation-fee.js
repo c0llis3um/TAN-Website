@@ -2,7 +2,7 @@
  * Netlify Function: confirm-pod-creation-fee
  *
  * POST /.netlify/functions/confirm-pod-creation-fee
- * Body: { podId: string, txHash: string }
+ * Body: { podId: string }
  *
  * Live-XRPL-only step: verifies the organizer's creation-fee payment landed on the
  * active XRPL treasury wallet, then finalizes the pod (deployed_at, creation_fee_tx,
@@ -10,12 +10,21 @@
  * anon/authenticated write grants on `pods` have been revoked (see
  * supabase/migrations/028_lock_fund_moving_tables.sql).
  *
- * Unlike collateral verification (pod-join.js / pod-record-payment.js), the exact
- * fee amount isn't independently re-derived here — the fee goes to the platform's
- * own treasury, not to another user, so the risk of under-verifying the amount is
- * "organizer underpays a platform fee," not "attacker redirects someone else's
- * funds." A real, successful payment from the organizer to the current treasury
- * wallet is enough.
+ * Verification scans the organizer's own recent payment history for a qualifying
+ * payment (same approach as pod-join.js / pod-record-payment.js) rather than
+ * trusting a client-supplied txHash, and retries a few times server-side — mainnet
+ * confirmation can occasionally take longer than the client's own poll window, and
+ * the client no longer blocks on that wait (see skipVerify in src/lib/xrpl.js /
+ * CreatePod's fee step), so this is the only place that actually confirms the
+ * payment landed. Any txHash in the request body is accepted but ignored.
+ *
+ * Unlike collateral verification, the exact fee amount isn't independently
+ * re-derived here — the fee goes to the platform's own treasury, not to another
+ * user, so the risk of under-verifying the amount is "organizer underpays a
+ * platform fee," not "attacker redirects someone else's funds." A real,
+ * successful payment from the organizer to the current treasury wallet is enough.
+ * Reuse is still prevented: the same on-chain payment can't be recycled to
+ * finalize a second pod's creation fee for free.
  *
  * Required env vars (no VITE_ prefix):
  *   SUPABASE_URL
@@ -30,27 +39,64 @@ const NODES = {
   live: 'wss://xrplcluster.com',
 }
 
-async function verifyFeePayment(txHash, fromAddress, toAddress, env) {
+// Kept small — Netlify Functions have a default execution timeout as low as
+// 10s on some plans (no override is configured in netlify.toml), and this
+// runs after other Supabase/XRPL round-trips in the same invocation. The
+// client (CreatePod's fee step) wraps this call in its own outer retry loop,
+// so additional attempts happen across fresh invocations instead of piling
+// more retries into one that risks getting killed mid-request.
+const RETRY_ATTEMPTS = 2
+const RETRY_DELAY_MS = 2000
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
+
+/** A fee payment already recorded as some pod's creation_fee_tx can't be reused for another pod. */
+async function isTxHashAlreadyUsed(supabase, txHash) {
+  const { count } = await supabase
+    .from('pods')
+    .select('id', { count: 'exact', head: true })
+    .eq('creation_fee_tx', txHash)
+  return (count ?? 0) > 0
+}
+
+/** Scans fromAddress's own recent payment history for any qualifying, not-already-used fee payment to toAddress. */
+async function findQualifyingFeePayment(supabase, fromAddress, toAddress, env) {
   const client = new Client(NODES[env] ?? NODES.dev)
   await client.connect()
 
   try {
-    const resp = await client.request({ command: 'tx', transaction: txHash })
-    const result = resp.result
-    if (!result?.validated) return false
+    const { result } = await client.request({ command: 'account_tx', account: fromAddress, limit: 50 })
 
-    const tx = result.tx_json ?? result
-    if (tx?.TransactionType !== 'Payment')       return false
-    if (tx?.Account !== fromAddress)             return false
-    if (tx?.Destination !== toAddress)           return false
-    if (result.meta?.TransactionResult !== 'tesSUCCESS') return false
+    for (const entry of result.transactions ?? []) {
+      const tx = entry.tx_json ?? entry.tx
+      if (
+        tx?.TransactionType !== 'Payment' ||
+        tx?.Destination !== toAddress ||
+        !entry.validated ||
+        entry.meta?.TransactionResult !== 'tesSUCCESS'
+      ) continue
 
-    return true
+      const candidateHash = entry.hash ?? tx.hash
+      if (!candidateHash) continue
+      if (await isTxHashAlreadyUsed(supabase, candidateHash)) continue
+
+      return candidateHash
+    }
+    return null
   } catch {
-    return false
+    return null
   } finally {
     await client.disconnect()
   }
+}
+
+async function findQualifyingFeePaymentWithRetries(supabase, fromAddress, toAddress, env) {
+  for (let attempt = 1; attempt <= RETRY_ATTEMPTS; attempt++) {
+    const found = await findQualifyingFeePayment(supabase, fromAddress, toAddress, env)
+    if (found) return found
+    if (attempt < RETRY_ATTEMPTS) await sleep(RETRY_DELAY_MS)
+  }
+  return null
 }
 
 export const handler = async (event) => {
@@ -64,9 +110,9 @@ export const handler = async (event) => {
   )
 
   try {
-    const { podId, txHash } = JSON.parse(event.body ?? '{}')
-    if (!podId || !txHash) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'podId and txHash are required' }) }
+    const { podId } = JSON.parse(event.body ?? '{}')
+    if (!podId) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'podId is required' }) }
     }
 
     const { data: pod } = await supabase
@@ -91,9 +137,9 @@ export const handler = async (event) => {
 
     if (!treasury?.address) return { statusCode: 400, body: JSON.stringify({ error: 'No active XRPL treasury wallet configured' }) }
 
-    const paid = await verifyFeePayment(txHash, organizerAddr, treasury.address, pod.env)
-    if (!paid) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Could not verify creation fee payment on-chain.' }) }
+    const foundTxHash = await findQualifyingFeePaymentWithRetries(supabase, organizerAddr, treasury.address, pod.env)
+    if (!foundTxHash) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Could not verify creation fee payment on-chain. If you already paid, it may still be confirming — wait a moment and try again rather than paying twice.' }) }
     }
 
     const { error: updateErr } = await supabase
@@ -101,7 +147,7 @@ export const handler = async (event) => {
       .update({
         status:             'OPEN',
         deployed_at:        new Date().toISOString(),
-        creation_fee_tx:    txHash,
+        creation_fee_tx:    foundTxHash,
         creation_fee_paid:  true,
       })
       .eq('id', podId)
@@ -110,7 +156,7 @@ export const handler = async (event) => {
       return { statusCode: 500, body: JSON.stringify({ error: `Fee verified but pod update failed: ${updateErr.message}` }) }
     }
 
-    console.log(`[confirm-pod-creation-fee] pod ${podId} fee confirmed | tx: ${txHash}`)
+    console.log(`[confirm-pod-creation-fee] pod ${podId} fee confirmed | tx: ${foundTxHash}`)
 
     return {
       statusCode: 200,

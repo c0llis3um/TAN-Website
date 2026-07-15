@@ -311,9 +311,17 @@ export async function scanEscrowAnomalies(escrowAddress, token, env, expectedSen
  *   the triggering click (see callers). Brave/iOS blocks `window.open` once
  *   any `await` has run, so opening fresh here is too late — we navigate the
  *   pre-opened tab instead and only fall back to a fresh `window.open`.
+ * @param {{ skipVerify?: boolean }} [opts] — skipVerify: true returns as soon as
+ *   Xaman confirms signing, without waiting up to 20s for ledger validation.
+ *   Only safe for callers with their own robust, retryable server-side
+ *   verification (e.g. confirm-pod-creation-fee.js) — mainnet confirmation can
+ *   occasionally take longer than the client-side poll window, and failing
+ *   the whole flow on a slow-but-successful payment is worse than a caller
+ *   that can re-check later. Join/pay flows keep the default (false) since
+ *   they still benefit from the fast-path check.
  * @returns {{ txHash: string }}
  */
-export async function sendXrplContribution(toAddress, amount, token, env, popup = null) {
+export async function sendXrplContribution(toAddress, amount, token, env, popup = null, { skipVerify = false } = {}) {
   const xumm = getXumm()
 
   const fromAddress = await getXummAddress()
@@ -376,9 +384,11 @@ export async function sendXrplContribution(toAddress, amount, token, env, popup 
   }
 
   const txHash = result.txid
-  // Signed != succeeded — confirm the ledger actually accepted it and
-  // delivered the full amount before telling the caller this payment happened.
-  await verifyXrplPayment(txHash, env, { expectedAmount: Number(amount) })
+  if (!skipVerify) {
+    // Signed != succeeded — confirm the ledger actually accepted it and
+    // delivered the full amount before telling the caller this payment happened.
+    await verifyXrplPayment(txHash, env, { expectedAmount: Number(amount) })
+  }
 
   return { txHash }
 }

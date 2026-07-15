@@ -312,7 +312,12 @@ export default function CreatePod() {
           if (!treasuryAddress) throw new Error('Treasury wallet not configured — contact support.')
           const xrpPrice = await fetchXrpUsdPrice()
           const feeXrp   = +(CREATION_FEE_USD / xrpPrice).toFixed(2)
-          const { txHash } = await sendContribution(treasuryAddress, feeXrp, 'XRP', 'XRPL', env)
+          // skipVerify: true — don't block here waiting up to 20s for mainnet
+          // confirmation. confirm-pod-creation-fee.js (below) independently
+          // re-verifies the payment itself, with its own retries, so a slow
+          // (but successful) confirmation no longer looks like a failure and
+          // triggers markFailed() on a pod whose fee was actually paid.
+          const { txHash } = await sendContribution(treasuryAddress, feeXrp, 'XRP', 'XRPL', env, null, { skipVerify: true })
           feeResult = { txHash, paid: true }
         } catch (feeErr) {
           await markFailed()
@@ -327,10 +332,13 @@ export default function CreatePod() {
         // dev: create-xrpl-escrow.js already finalized the pod (contract_address +
         // deployed_at) server-side. live: still needs the fee verified.
         if (env === 'live') {
+          // confirm-pod-creation-fee.js does its own scan-based verification with
+          // its own retries — this outer loop is just a safety net for a failed
+          // HTTP round-trip (network blip), not for confirmation timing.
           for (let i = 1; i <= 3; i++) {
             const res = await fetch('/.netlify/functions/confirm-pod-creation-fee', {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ podId, txHash: feeResult.txHash }),
+              body: JSON.stringify({ podId }),
             })
             const json = await safeJson(res)
             if (res.ok) { dbErr = null; break }
