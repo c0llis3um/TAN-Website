@@ -671,7 +671,7 @@ export default function PodView() {
                   const isComplete    = cyclePays.length > 0 && cyclePays.length >= (pod.pod_members?.filter(m => m.status === 'ACTIVE').length ?? pod.size)
                   const explorerBase  = pod.chain === 'Ethereum'
                     ? `https://${pod.env === 'dev' ? 'sepolia.' : ''}etherscan.io/tx/`
-                    : `https://${pod.env === 'dev' ? 'testnet.' : ''}xrpl.org/transactions/`
+                    : `https://${pod.env === 'dev' ? 'testnet' : 'livenet'}.xrpl.org/transactions/`
 
                   return (
                     <div key={cycle} className="px-6 py-5">
@@ -723,7 +723,7 @@ export default function PodView() {
                               </div>
                               <div className="flex items-center gap-3 flex-shrink-0 ml-2">
                                 <span className="dark:text-brand-muted text-slate-400">{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : '—'}</span>
-                                {p.tx_hash && (
+                                {p.tx_hash && !['self-recipient', 'already-sent'].includes(p.tx_hash) && (
                                   <a href={`${explorerBase}${p.tx_hash}`} target="_blank" rel="noopener noreferrer"
                                     className="font-mono text-brand-cyan hover:underline">
                                     {p.tx_hash.slice(0,8)}…↗
@@ -778,6 +778,16 @@ export default function PodView() {
                       className="text-xs px-2 py-1 rounded-lg bg-brand-blue/10 text-brand-cyan font-semibold hover:bg-brand-blue/20 transition-colors flex-shrink-0"
                     >
                       Etherscan ↗
+                    </a>
+                  )}
+                  {pod.chain === 'XRPL' && (
+                    <a
+                      href={`https://${pod.env === 'dev' ? 'testnet' : 'livenet'}.xrpl.org/accounts/${pod.contract_address}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs px-2 py-1 rounded-lg bg-brand-blue/10 text-brand-cyan font-semibold hover:bg-brand-blue/20 transition-colors flex-shrink-0"
+                    >
+                      XRPL Explorer ↗
                     </a>
                   )}
                 </div>
