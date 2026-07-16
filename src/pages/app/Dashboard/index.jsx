@@ -113,7 +113,7 @@ export default function Dashboard() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <h1 className="text-2xl font-extrabold dark:text-white text-slate-900">
-          {t('dashboard.greeting')} 👋
+          {t('dashboard.greeting')}
         </h1>
         {wallet ? (
           <p className="dark:text-brand-muted text-slate-500 text-sm mt-1 font-mono">
