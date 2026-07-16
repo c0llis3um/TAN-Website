@@ -116,7 +116,7 @@
     "exPot": "150 XRP",
     "exDuration": "6 weeks",
     "exReceives": "150 XRP once",
-    "feeValue": "$2, paid once"
+    "feeValue": "$5, paid once"
   },
   "why": {
     "title": "Why DeFi Tanda?",
@@ -470,7 +470,7 @@
     "deploy": {
       "saving": "Saving to database…",
       "escrow": "Creating escrow wallet…",
-      "fee": "Charging $2 creation fee…",
+      "fee": "Charging $5 creation fee…",
       "confirming": "Waiting for confirmation…",
       "done": "Pod created!"
     },

@@ -116,7 +116,7 @@
     "exPot": "150 XRP",
     "exDuration": "6 semanas",
     "exReceives": "150 XRP una vez",
-    "feeValue": "$2, pago único"
+    "feeValue": "$5, pago único"
   },
   "why": {
     "title": "¿Por qué DeFi Tanda?",
@@ -470,7 +470,7 @@
     "deploy": {
       "saving": "Guardando en la base de datos…",
       "escrow": "Creando billetera de garantía…",
-      "fee": "Cobrando cuota de creación de $2…",
+      "fee": "Cobrando cuota de creación de $5…",
       "confirming": "Esperando confirmación…",
       "done": "¡Tanda creada!"
     },

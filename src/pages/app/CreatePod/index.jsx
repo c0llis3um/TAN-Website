@@ -19,7 +19,7 @@ import {
 
 // Flat USD creation fee, charged in XRP at current market price. Only
 // charged for live XRPL pods — dev/testnet pods stay free.
-const CREATION_FEE_USD = 2
+const CREATION_FEE_USD = 5
 
 async function fetchXrpUsdPrice() {
   const res  = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd')
@@ -325,7 +325,7 @@ export default function CreatePod() {
         throw chainErr
       }
 
-      // ── Creation fee — $2 USD in XRP, live XRPL pods only ─────────
+      // ── Creation fee — $5 USD in XRP, live XRPL pods only ─────────
       let feeResult = { txHash: null, paid: false }
 
       if (form.chain === 'XRPL' && env === 'live') {

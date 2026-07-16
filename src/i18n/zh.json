@@ -116,7 +116,7 @@
     "exPot": "150 XRP",
     "exDuration": "6 周",
     "exReceives": "一次性 150 XRP",
-    "feeValue": "$2，一次性收取"
+    "feeValue": "$5，一次性收取"
   },
   "why": {
     "title": "为什么选择 DeFi Tanda？",
@@ -470,7 +470,7 @@
     "deploy": {
       "saving": "保存至数据库……",
       "escrow": "创建托管钱包……",
-      "fee": "扣除 2 美元创建费用……",
+      "fee": "扣除 5 美元创建费用……",
       "confirming": "等待确认……",
       "done": "圈子已创建！"
     },
