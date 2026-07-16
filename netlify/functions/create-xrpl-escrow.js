@@ -153,8 +153,9 @@ export const handler = async (event) => {
     let simulated = false
 
     if (tanda_type === 'yield' && yield_strategy === 'vault') {
+      const isXrpVault = token === 'XRP'
       const issuer = RLUSD_ISSUER[env]
-      if (!issuer) {
+      if (!isXrpVault && !issuer) {
         await client.disconnect()
         return { statusCode: 400, body: JSON.stringify({ error: 'RLUSD issuer not configured for VaultCreate' }) }
       }
@@ -162,10 +163,12 @@ export const handler = async (event) => {
       const vaultCreateTx = {
         TransactionType: 'VaultCreate',
         Account:         wallet.address,
-        Asset: {
-          currency: RLUSD_HEX,
-          issuer,
-        },
+        // Native XRP is represented as { currency: "XRP" } with no issuer in
+        // this STIssue-style Asset field — same convention as AMMCreate's
+        // Asset/Asset2. IOU vaults (RLUSD) need the issuer.
+        Asset: isXrpVault
+          ? { currency: 'XRP' }
+          : { currency: RLUSD_HEX, issuer },
         Flags: 0,
       }
 

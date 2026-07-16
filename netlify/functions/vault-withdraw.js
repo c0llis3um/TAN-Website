@@ -8,11 +8,13 @@
  * Two modes:
  *   full: true   — Withdraw 100 % of remaining LP shares (pod completion).
  *                  Sets vault_status = 'withdrawn'.
- *   amount: "N"  — Withdraw exactly N RLUSD worth of shares (slash coverage).
- *                  Subtracts proportional shares from vault_shares.
+ *   amount: "N"  — Withdraw exactly N of the pod's token worth of shares
+ *                  (slash coverage). Subtracts proportional shares from vault_shares.
  *
- * After withdrawal the RLUSD lands back in the escrow wallet where existing
- * release-xrpl-collateral / slash-xrpl-collateral functions handle disbursement.
+ * Works for both vault asset types: RLUSD (IOU) and native XRP — determined
+ * from pod.token. After withdrawal the funds land back in the escrow wallet
+ * where existing release-xrpl-collateral / slash-xrpl-collateral functions
+ * handle disbursement.
  *
  * Simulation fallback:
  *   If vault_id === 'SIMULATED' the function skips XRPL entirely and only
@@ -253,8 +255,9 @@ export const handler = async (event) => {
     }
 
     // ── 5. Live XRPL path ─────────────────────────────────────────────────
-    const issuer       = RLUSD_ISSUER[env]
-    if (!issuer) {
+    const isXrpVault = pod.token === 'XRP'
+    const issuer     = RLUSD_ISSUER[env]
+    if (!isXrpVault && !issuer) {
       await releaseWithdrawClaim()
       return { statusCode: 400, body: JSON.stringify({ error: 'RLUSD issuer not configured for this environment' }) }
     }
@@ -304,22 +307,38 @@ export const handler = async (event) => {
 
       const txHash = result.result.hash
 
-      // Determine actual RLUSD received by reading the escrow wallet's balance delta
-      // from AffectedNodes (IOU balance change on the escrow account).
+      // Determine the actual amount received by reading the escrow wallet's
+      // balance delta from AffectedNodes — an IOU balance change (RippleState)
+      // for RLUSD vaults, or the account's own native balance change
+      // (AccountRoot) for XRP vaults.
       let withdrawn = amount ?? totalShares // conservative fallback
-      const rlusdNode = result.result.meta?.AffectedNodes?.find(n => {
-        const node = n.ModifiedNode ?? n.CreatedNode
-        return (
-          node?.LedgerEntryType === 'RippleState' &&
-          (node.FinalFields ?? node.NewFields)?.HighLimit?.currency === RLUSD_HEX
-        )
-      })
-      if (rlusdNode) {
-        const fields      = rlusdNode.ModifiedNode ?? rlusdNode.CreatedNode
-        const finalBal    = parseFloat(fields.FinalFields?.Balance?.value ?? '0')
-        const prevBal     = parseFloat(fields.PreviousFields?.Balance?.value ?? '0')
-        const delta       = Math.abs(finalBal - prevBal)
-        if (delta > 0) withdrawn = delta.toFixed(6)
+      if (isXrpVault) {
+        const acctNode = result.result.meta?.AffectedNodes?.find(n => {
+          const entry = n.ModifiedNode ?? n.CreatedNode
+          return entry?.LedgerEntryType === 'AccountRoot' && entry.FinalFields?.Account === escrowWallet.address
+        })
+        if (acctNode) {
+          const fields   = acctNode.ModifiedNode ?? acctNode.CreatedNode
+          const finalBal = Number(fields.FinalFields?.Balance ?? 0)
+          const prevBal  = Number(fields.PreviousFields?.Balance ?? finalBal)
+          const delta    = Math.abs(finalBal - prevBal) / 1_000_000
+          if (delta > 0) withdrawn = delta.toFixed(6)
+        }
+      } else {
+        const rlusdNode = result.result.meta?.AffectedNodes?.find(n => {
+          const entry = n.ModifiedNode ?? n.CreatedNode
+          return (
+            entry?.LedgerEntryType === 'RippleState' &&
+            (entry.FinalFields ?? entry.NewFields)?.HighLimit?.currency === RLUSD_HEX
+          )
+        })
+        if (rlusdNode) {
+          const fields   = rlusdNode.ModifiedNode ?? rlusdNode.CreatedNode
+          const finalBal = parseFloat(fields.FinalFields?.Balance?.value ?? '0')
+          const prevBal  = parseFloat(fields.PreviousFields?.Balance?.value ?? '0')
+          const delta    = Math.abs(finalBal - prevBal)
+          if (delta > 0) withdrawn = delta.toFixed(6)
+        }
       }
 
       // ── 6. Update DB ────────────────────────────────────────────────────

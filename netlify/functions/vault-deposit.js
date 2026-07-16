@@ -5,13 +5,14 @@
  * Body: { podId: string, env: 'dev' | 'live' }
  * Headers: Authorization: Bearer <supabase_access_token>  (admin only)
  *
- * Moves the full RLUSD balance of the pod's escrow wallet into an XLS-66d Vault.
+ * Moves the pod's collateral (RLUSD or native XRP, whichever pod.token is)
+ * from the escrow wallet into an XLS-66d Vault denominated in that same asset.
  * Called once when the pod transitions to LOCKED (all members have deposited collateral).
  *
  * Flow:
  *   1. Validate admin session
  *   2. Fetch pod (must be yield/vault) + escrow row
- *   3. Read RLUSD balance of escrow wallet on-ledger
+ *   3. Read the escrow wallet's balance in the pod's token on-ledger
  *   4. If vault_id is null: submit VaultCreate (escrow wallet as owner)
  *   5. Submit VaultDeposit of the EXPECTED collateral (active members × 2×
  *      contribution) — not necessarily the full on-ledger balance. A stray
@@ -37,7 +38,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { Client, Wallet } from 'xrpl'
+import { Client, Wallet, xrpToDrops } from 'xrpl'
 import { decryptSeed } from './lib/crypto.js'
 
 const NODES = {
@@ -87,6 +88,23 @@ async function getRlusdBalance(client, address, issuer) {
       l => l.currency === RLUSD_HEX && l.account === issuer,
     )
     return line?.balance ?? '0'
+  } catch {
+    return '0'
+  }
+}
+
+/**
+ * Read the native XRP balance of `address` from the ledger, in whole XRP
+ * (not drops). Unlike RLUSD's trust-line balance, this IS the account's own
+ * spendable balance — it includes both the operational reserve the escrow
+ * wallet was funded with and any collateral received, so callers must be
+ * careful not to deposit the entire thing into the vault (see
+ * XRP_FEE_RESERVE_DROPS below).
+ */
+async function getXrpBalance(client, address) {
+  try {
+    const resp = await client.request({ command: 'account_info', account: address, ledger_index: 'validated' })
+    return (Number(resp.result.account_data.Balance) / 1_000_000).toString()
   } catch {
     return '0'
   }
@@ -167,8 +185,9 @@ export const handler = async (event) => {
     }
 
     const escrowWallet = Wallet.fromSeed(decryptSeed(escrowRow.escrow_seed))
-    const issuer       = RLUSD_ISSUER[env]
-    if (!issuer) {
+    const isXrpVault    = pod.token === 'XRP'
+    const issuer        = RLUSD_ISSUER[env]
+    if (!isXrpVault && !issuer) {
       return { statusCode: 400, body: JSON.stringify({ error: 'RLUSD issuer not configured for this environment' }) }
     }
 
@@ -224,12 +243,14 @@ export const handler = async (event) => {
     try {
       await xrplClient.connect()
 
-      const rlusdBalance = await getRlusdBalance(xrplClient, escrowWallet.address, issuer)
-      const balanceNum   = parseFloat(rlusdBalance)
+      const rawBalance = isXrpVault
+        ? await getXrpBalance(xrplClient, escrowWallet.address)
+        : await getRlusdBalance(xrplClient, escrowWallet.address, issuer)
+      const balanceNum = parseFloat(rawBalance)
 
       if (balanceNum <= 0) {
         await releaseDepositClaim()
-        return { statusCode: 400, body: JSON.stringify({ error: 'Escrow wallet has no RLUSD balance to deposit' }) }
+        return { statusCode: 400, body: JSON.stringify({ error: `Escrow wallet has no ${pod.token} balance to deposit` }) }
       }
 
       // ── 5b. Reconcile actual balance against expected member collateral ──
@@ -242,37 +263,45 @@ export const handler = async (event) => {
       const expectedTotal = (activeMemberCount ?? 0) * pod.contribution_amount * 2
       const EPSILON = 1e-6
 
-      if (balanceNum < expectedTotal - EPSILON) {
+      // XRP collateral shares the escrow wallet's own spendable balance with
+      // its operational reserve (funded separately at pod creation) — unlike
+      // RLUSD, which lives in an entirely separate trust-line balance. Require
+      // a small buffer on top of the expected collateral so the deposit can
+      // never leave the wallet unable to pay for its own future transactions
+      // (like the eventual VaultWithdraw).
+      const reserveBuffer = isXrpVault ? Number(XRP_FEE_RESERVE_DROPS) / 1_000_000 : 0
+      const requiredTotal = expectedTotal + reserveBuffer
+
+      if (balanceNum < requiredTotal - EPSILON) {
         await releaseDepositClaim()
         return {
           statusCode: 409,
           body: JSON.stringify({
-            error: `Escrow balance (${balanceNum} RLUSD) is less than expected collateral from ${activeMemberCount} active member(s) ` +
-              `(${expectedTotal} RLUSD). Something is missing — manual reconciliation required before vault deposit.`,
+            error: `Escrow balance (${balanceNum} ${pod.token}) is less than expected collateral from ${activeMemberCount} active member(s) ` +
+              `(${expectedTotal} ${pod.token}${reserveBuffer ? ` + ${reserveBuffer} reserve buffer` : ''}). Something is missing — manual reconciliation required before vault deposit.`,
           }),
         }
       }
       if (balanceNum > expectedTotal + EPSILON) {
         console.warn(
-          `[vault-deposit] Escrow balance (${balanceNum} RLUSD) exceeds expected collateral (${expectedTotal} RLUSD) ` +
-          `for pod ${podId} — depositing only the expected amount. The excess (${(balanceNum - expectedTotal).toFixed(6)} RLUSD) ` +
+          `[vault-deposit] Escrow balance (${balanceNum} ${pod.token}) exceeds expected collateral (${expectedTotal} ${pod.token}) ` +
+          `for pod ${podId} — depositing only the expected amount. The excess (${(balanceNum - expectedTotal).toFixed(6)} ${pod.token}) ` +
           `stays in the escrow wallet unswept; check the admin Anomalies panel to identify and refund its source.`,
         )
       }
 
       // Deposit exactly the expected amount, not the raw on-ledger balance.
-      const depositValue = expectedTotal > 0 ? expectedTotal.toFixed(6) : rlusdBalance
+      const depositValue = expectedTotal > 0 ? expectedTotal.toFixed(6) : rawBalance
 
       // ── 6. VaultCreate (if vault not yet registered) ─────────────────
       if (!vaultId) {
         const vaultCreateTx = {
           TransactionType: 'VaultCreate',
           Account:         escrowWallet.address,
-          // Asset is the RLUSD IOU this vault will hold
-          Asset: {
-            currency: RLUSD_HEX,
-            issuer,
-          },
+          // Native XRP uses { currency: "XRP" } with no issuer; RLUSD is an IOU.
+          Asset: isXrpVault
+            ? { currency: 'XRP' }
+            : { currency: RLUSD_HEX, issuer },
           // Data field is optional; omit to keep the vault minimal
           Flags: 0,
         }
@@ -331,11 +360,11 @@ export const handler = async (event) => {
           TransactionType: 'VaultDeposit',
           Account:         escrowWallet.address,
           VaultID:         vaultId,
-          Amount: {
-            currency: RLUSD_HEX,
-            issuer,
-            value:    depositValue,           // expected collateral, not necessarily the full balance
-          },
+          // Native XRP amounts are plain drop strings, same as a Payment;
+          // IOU amounts (RLUSD) are the {currency, issuer, value} object.
+          Amount: isXrpVault
+            ? xrpToDrops(depositValue)
+            : { currency: RLUSD_HEX, issuer, value: depositValue },  // expected collateral, not necessarily the full balance
         }
 
         try {
@@ -376,7 +405,7 @@ export const handler = async (event) => {
           }
         }
       } else {
-        // Simulation: shares equal the nominal RLUSD deposited
+        // Simulation: shares equal the nominal amount deposited
         sharesDeposited = depositValue
       }
 
