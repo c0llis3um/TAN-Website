@@ -979,7 +979,7 @@ export default function CreatePod() {
 
               {!isYield && (
                 <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4 mb-4">
-                  <p className="text-xs font-bold text-amber-400 mb-2">{t('create.cancelPolicy')}</p>
+                  <p className="text-xs font-bold text-amber-400 mb-2 inline-flex items-center gap-1"><IconWarning className="w-3.5 h-3.5" /> {t('create.cancelPolicy')}</p>
                   <ul className="text-xs dark:text-brand-muted text-slate-500 space-y-1">
                     <li>• {t('create.cancelPolicy1')}</li>
                     <li>• {t('create.cancelPolicy2')}</li>

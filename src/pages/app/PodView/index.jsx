@@ -431,11 +431,11 @@ export default function PodView() {
         </div>
         <div className="flex flex-col items-end gap-2">
           {pod.status === 'ACTIVE' && myMember && myMember.status === 'DEFAULTED' && (
-            <span className="text-sm font-semibold text-red-400 px-4 py-2 rounded-xl bg-red-500/10">{t('pod.defaultedBadge')}</span>
+            <span className="text-sm font-semibold text-red-400 px-4 py-2 rounded-xl bg-red-500/10 inline-flex items-center gap-1.5"><IconWarning className="w-4 h-4" /> {t('pod.defaultedBadge')}</span>
           )}
           {pod.status === 'ACTIVE' && myMember && myMember.status !== 'DEFAULTED' && (
             hasPaidThisCycle
-              ? <span className="text-sm font-semibold text-emerald-400 px-4 py-2 rounded-xl bg-emerald-500/10">{t('pod.paidBadge', { n: currentCycle })}</span>
+              ? <span className="text-sm font-semibold text-emerald-400 px-4 py-2 rounded-xl bg-emerald-500/10 inline-flex items-center gap-1.5"><IconCheck className="w-4 h-4" /> {t('pod.paidBadge', { n: currentCycle })}</span>
               : <Button onClick={() => navigate(`/app/pod/${id}/pay`)}>{t('pod.payNow', { amount: pod.contribution_amount })} {pod.token} →</Button>
           )}
           {pod.status === 'OPEN' && myMember && (
@@ -457,7 +457,7 @@ export default function PodView() {
                   className="w-[200px] px-3 py-2 rounded-xl text-xs text-right dark:bg-brand-dark bg-slate-50 dark:border-brand-border border border-slate-200 dark:text-white text-slate-900 dark:placeholder-brand-muted placeholder-slate-400 outline-none focus:border-brand-blue/60" />
               )}
               <Button onClick={handleJoin} disabled={joining || joinDone}>
-                {joining ? t('pod.joining') : joinDone ? t('pod.joinedDone') : t('pod.joinBtn')}
+                {joinDone && <IconCheck className="w-4 h-4" />} {joining ? t('pod.joining') : joinDone ? t('pod.joinedDone') : t('pod.joinBtn')}
               </Button>
               {joining && pod.chain === 'XRPL' && (
                 <p className="text-xs text-amber-400 max-w-[200px] text-right">
@@ -497,7 +497,7 @@ export default function PodView() {
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
           className="mb-6 px-5 py-4 rounded-2xl border dark:bg-brand-blue/5 bg-blue-50 dark:border-brand-blue/20 border-blue-200">
           <div className="flex items-start gap-3 mb-3">
-            <span className="text-lg">⏳</span>
+            <IconHourglass className="w-5 h-5 flex-shrink-0 text-brand-cyan" />
             <div>
               <p className="font-bold dark:text-white text-slate-900">{t('pod.waitingTitle')}</p>
               <p className="text-sm dark:text-brand-text text-slate-600 mt-0.5">{t('pod.waitingBody', { n: spotsLeft })}</p>
@@ -528,8 +528,8 @@ export default function PodView() {
               <TgIcon /> {t('pod.shareTg')}
             </Button>
             <button onClick={() => copyLink(podUrl)}
-              className="text-xs px-3 py-2 rounded-xl bg-brand-blue/10 text-brand-cyan font-semibold hover:bg-brand-blue/20 transition-colors">
-              {copied ? t('pod.linkCopied') : t('pod.copyLink')}
+              className="text-xs px-3 py-2 rounded-xl bg-brand-blue/10 text-brand-cyan font-semibold hover:bg-brand-blue/20 transition-colors inline-flex items-center gap-1">
+              {copied && <IconCheck className="w-3.5 h-3.5" />} {copied ? t('pod.linkCopied') : t('pod.copyLink')}
             </button>
           </div>
         </motion.div>
@@ -904,8 +904,8 @@ export default function PodView() {
               <input readOnly value={podUrl}
                 className="flex-1 text-xs px-3 py-2 rounded-xl dark:bg-brand-dark bg-slate-50 dark:border-brand-border border border-slate-200 dark:text-brand-muted text-slate-500 truncate" />
               <button onClick={() => copyLink(podUrl)}
-                className="text-xs px-3 py-2 rounded-xl bg-brand-blue/10 text-brand-cyan font-semibold hover:bg-brand-blue/20 transition-colors">
-                {copied ? t('pod.linkCopied') : t('common.copy', 'Copy')}
+                className="text-xs px-3 py-2 rounded-xl bg-brand-blue/10 text-brand-cyan font-semibold hover:bg-brand-blue/20 transition-colors inline-flex items-center gap-1">
+                {copied && <IconCheck className="w-3.5 h-3.5" />} {copied ? t('pod.linkCopied') : t('common.copy', 'Copy')}
               </button>
             </div>
           </Card>
