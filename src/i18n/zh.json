@@ -77,10 +77,16 @@
   "hero": {
     "headline1": "共同储蓄。",
     "headline2": "共同获益。",
-    "sub": "{{word}} 是你的社区世代相传的储蓄互助圈。我们让它无懈可击——安全、透明，完全上链。",
+    "sub": "{{word}} 是你的社区世代相传的储蓄互助圈。你不再需要信任组织者——每位成员的抵押品都锁定在链上，而不是握在他们手中。",
     "cta1": "进入应用",
     "cta2": "了解运作方式",
-    "testnetBadge": "测试网——不涉及真实资金"
+    "testnetBadge": "测试网——不涉及真实资金",
+    "statCustody": "非托管",
+    "statCustodyLabel": "私钥由你掌握",
+    "statCollateral": "2 倍抵押",
+    "statCollateralLabel": "付款前已锁定",
+    "statSpeed": "< 5 秒",
+    "statSpeedLabel": "结算时间"
   },
   "tanda": {
     "title": "什么是标会？",

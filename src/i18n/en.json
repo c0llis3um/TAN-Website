@@ -77,10 +77,16 @@
   "hero": {
     "headline1": "Save together.",
     "headline2": "Win together.",
-    "sub": "A {{word}} is a savings circle your community has run for generations. We made it unbreakable — secure, transparent, and fully on-chain.",
+    "sub": "A {{word}} is a savings circle your community has run for generations. You no longer have to trust the organizer — every member's collateral is locked on-chain, not in their hands.",
     "cta1": "Launch the App",
     "cta2": "See how it works",
-    "testnetBadge": "TESTNET — No real money"
+    "testnetBadge": "TESTNET — No real money",
+    "statCustody": "Non-custodial",
+    "statCustodyLabel": "You hold the keys",
+    "statCollateral": "2× collateral",
+    "statCollateralLabel": "Locked before payouts",
+    "statSpeed": "< 5 sec",
+    "statSpeedLabel": "Settlement"
   },
   "tanda": {
     "title": "What is a Tanda?",

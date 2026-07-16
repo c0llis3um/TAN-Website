@@ -131,7 +131,11 @@ export default function Landing() {
             className="flex flex-wrap gap-8 justify-center mt-16"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
           >
-            {[['Non-custodial','You hold the keys'],['$0 fees','During pilot'],['< 5 sec','Settlement']].map(([val, label]) => (
+            {[
+              [t('hero.statCustody'), t('hero.statCustodyLabel')],
+              [t('hero.statCollateral'), t('hero.statCollateralLabel')],
+              [t('hero.statSpeed'), t('hero.statSpeedLabel')],
+            ].map(([val, label]) => (
               <div key={val} className="text-center">
                 <div className="text-2xl font-extrabold gradient-text">{val}</div>
                 <div className="text-xs dark:text-brand-muted text-slate-500 mt-1">{label}</div>

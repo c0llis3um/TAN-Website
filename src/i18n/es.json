@@ -77,10 +77,16 @@
   "hero": {
     "headline1": "Ahorra juntos.",
     "headline2": "Gana juntos.",
-    "sub": "Una {{word}} es un círculo de ahorro que tu comunidad ha llevado por generaciones. Lo hicimos inquebrantable — seguro, transparente y completamente en cadena.",
+    "sub": "Una {{word}} es un círculo de ahorro que tu comunidad ha llevado por generaciones. Ya no tienes que confiar en el organizador — el colateral de cada miembro queda bloqueado en la cadena, no en sus manos.",
     "cta1": "Abrir la App",
     "cta2": "Ver cómo funciona",
-    "testnetBadge": "TESTNET — Sin dinero real"
+    "testnetBadge": "TESTNET — Sin dinero real",
+    "statCustody": "No custodial",
+    "statCustodyLabel": "Tú tienes las llaves",
+    "statCollateral": "2× colateral",
+    "statCollateralLabel": "Bloqueado antes de pagar",
+    "statSpeed": "< 5 seg",
+    "statSpeedLabel": "Liquidación"
   },
   "tanda": {
     "title": "¿Qué es una Tanda?",
