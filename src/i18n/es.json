@@ -99,7 +99,7 @@
     "title": "Cómo funciona",
     "sub": "Tres pasos. Con tu billetera o tarjeta.",
     "step1Title": "Crea o únete a una tanda",
-    "step1": "El organizador configura la tanda — tamaño del grupo, cantidad semanal y duración. Los miembros se unen con un depósito de seguridad reembolsable que te devolvemos cuando la tanda termina.",
+    "step1": "El organizador configura la tanda — tamaño del grupo, cantidad semanal y duración. Los miembros se unen con un depósito de seguridad reembolsable que puedes reclamar cuando la tanda termina.",
     "step2Title": "Contribuye cada ciclo",
     "step2": "Paga tu parte semanal, quincenal o mensualmente. Usa Apple Pay, Google Pay, tarjeta de débito — o conecta tu billetera cripto directamente.",
     "step3Title": "Recibe tu pago",
@@ -111,7 +111,12 @@
     "duration": "Duración",
     "receives": "Todos reciben",
     "fee": "Tarifa del protocolo",
-    "feeValue": "¡Gratis durante el piloto!"
+    "exMembers": "6",
+    "exContribution": "30 XRP / semana",
+    "exPot": "150 XRP",
+    "exDuration": "6 semanas",
+    "exReceives": "150 XRP una vez",
+    "feeValue": "$2, pago único"
   },
   "why": {
     "title": "¿Por qué DeFi Tanda?",

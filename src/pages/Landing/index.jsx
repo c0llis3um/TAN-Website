@@ -242,11 +242,11 @@ export default function Landing() {
                 {t('how.exampleTitle')}
               </div>
               {[
-                [t('how.members'), '10'],
-                [t('how.contribution'), '$100 / week'],
-                [t('how.pot'), '$1,000'],
-                [t('how.duration'), '10 weeks'],
-                [t('how.receives'), '$1,000 once'],
+                [t('how.members'), t('how.exMembers')],
+                [t('how.contribution'), t('how.exContribution')],
+                [t('how.pot'), t('how.exPot')],
+                [t('how.duration'), t('how.exDuration')],
+                [t('how.receives'), t('how.exReceives')],
                 [t('how.fee'), t('how.feeValue')],
               ].map(([label, val], i) => (
                 <div key={label} className={`flex justify-between items-center px-6 py-3.5 ${i % 2 === 0 ? 'dark:bg-brand-mid/50 bg-slate-50' : ''}`}>
