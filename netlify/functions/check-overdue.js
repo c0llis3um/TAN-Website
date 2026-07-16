@@ -66,7 +66,7 @@ async function isTxHashAlreadyUsed(supabase, txHash) {
  * time, without ever visiting the Pay page to register it) doesn't get wrongly
  * slashed just because no `payments` row exists yet for that cycle.
  */
-async function findQualifyingPayment(supabase, fromAddress, toAddress, expectedAmount, token, env) {
+async function findQualifyingPayment(supabase, fromAddress, toAddress, expectedAmount, token, env, sinceMs) {
   const client = new Client(NODES[env] ?? NODES.dev)
   await client.connect()
 
@@ -81,6 +81,12 @@ async function findQualifyingPayment(supabase, fromAddress, toAddress, expectedA
         !entry.validated ||
         entry.meta?.TransactionResult !== 'tesSUCCESS'
       ) continue
+
+      // XRPL close times are seconds since the Ripple Epoch (2000-01-01T00:00:00Z).
+      // A payment sent before this cycle started can't count toward it (e.g. an
+      // unrelated past transfer between the same two wallets) — see the matching
+      // note in pod-record-payment.js.
+      if (tx.date == null || (tx.date + 946684800) * 1000 < sinceMs) continue
 
       const delivered = entry.meta?.delivered_amount ?? entry.meta?.DeliveredAmount
       if (!deliveredMatchesToken(delivered, token, env)) continue
@@ -190,8 +196,9 @@ async function slashMember({ supabase, pod, member, escrowWallet, env }) {
   if (paid) return { skipped: true, reason: 'already paid' }
 
   if (member.user?.wallet_address) {
+    const sinceMs = new Date(pod.cycle_started_at).getTime()
     const found = await findQualifyingPayment(
-      supabase, member.user.wallet_address, recipient.user.wallet_address, pod.contribution_amount, pod.token, env,
+      supabase, member.user.wallet_address, recipient.user.wallet_address, pod.contribution_amount, pod.token, env, sinceMs,
     )
     if (found) {
       const { error: insertErr } = await supabase.from('payments').insert({

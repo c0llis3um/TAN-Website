@@ -84,11 +84,20 @@ async function isTxHashAlreadyUsed(supabase, txHash) {
  * verification even though the payment is real. Scanning for ANY qualifying,
  * not-already-used payment sidesteps that entirely.
  *
+ * A candidate payment must also have been sent at or after `sinceMs` (the
+ * current cycle's start, as a unix ms timestamp) — otherwise a wallet's
+ * unrelated past payment to the same destination (e.g. funding a brand-new
+ * account before it ever joined the pod) could retroactively satisfy a cycle
+ * obligation it was never meant for. Real incident: a treasury wallet's
+ * initial 10 XRP account-activation transfer to a member got picked up as
+ * that member's cycle-1 payment, because the scan had no notion of "when"
+ * (fixed July 2026).
+ *
  * @returns {Promise<{txHash: string, amount: number}|null>} the matching payment
  *   (with the amount it actually delivered, not just the expected minimum) if
  *   found, else null
  */
-async function findQualifyingPayment(supabase, fromAddress, toAddress, expectedAmount, token, env) {
+async function findQualifyingPayment(supabase, fromAddress, toAddress, expectedAmount, token, env, sinceMs) {
   const client = new Client(NODES[env] ?? NODES.dev)
   await client.connect()
 
@@ -103,6 +112,9 @@ async function findQualifyingPayment(supabase, fromAddress, toAddress, expectedA
         !entry.validated ||
         entry.meta?.TransactionResult !== 'tesSUCCESS'
       ) continue
+
+      // XRPL close times are seconds since the Ripple Epoch (2000-01-01T00:00:00Z).
+      if (tx.date == null || (tx.date + 946684800) * 1000 < sinceMs) continue
 
       const delivered = entry.meta?.delivered_amount ?? entry.meta?.DeliveredAmount
       if (!deliveredMatchesToken(delivered, token, env)) continue
@@ -146,7 +158,7 @@ export const handler = async (event) => {
     const { data: pod } = await supabase
       .from('pods')
       .select(`
-        id, chain, token, env, contribution_amount, size, current_cycle, total_cycles, status,
+        id, chain, token, env, contribution_amount, size, current_cycle, total_cycles, status, cycle_started_at,
         pod_members ( id, user_id, status, payout_slot, user:users ( id, wallet_address ) )
       `)
       .eq('id', podId)
@@ -183,7 +195,8 @@ export const handler = async (event) => {
     let confirmedAmount = pod.contribution_amount
 
     if (!isSelfRecipient) {
-      const found = await findQualifyingPayment(supabase, walletAddress, recipientAddr, pod.contribution_amount, pod.token, env)
+      const sinceMs = new Date(pod.cycle_started_at).getTime()
+      const found = await findQualifyingPayment(supabase, walletAddress, recipientAddr, pod.contribution_amount, pod.token, env, sinceMs)
       if (!found) {
         return { statusCode: 400, body: JSON.stringify({ error: 'Could not verify payment on-chain. Check your wallet before retrying — do not pay twice.' }) }
       }
