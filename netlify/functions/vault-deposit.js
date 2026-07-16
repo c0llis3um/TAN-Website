@@ -344,10 +344,18 @@ export const handler = async (event) => {
           }
 
         } catch (vaultCreateErr) {
-          if (!vaultCreatedButUnpersisted && isNotEnabledError(vaultCreateErr)) {
+          if (!vaultCreatedButUnpersisted && isNotEnabledError(vaultCreateErr) && env !== 'live') {
             console.warn('[vault-deposit] VaultCreate not enabled — falling back to simulation')
             simulated = true
             vaultId   = 'SIMULATED'
+          } else if (!vaultCreatedButUnpersisted && isNotEnabledError(vaultCreateErr)) {
+            // On live, a "not enabled" VaultCreate must hard-fail rather than simulate — silently
+            // faking a deposit of real collateral would later "withdraw" fabricated yield that was
+            // never actually earned. Refuse instead of pretending it worked.
+            throw new Error(
+              `XLS-66d Vaults are not enabled on XRPL mainnet yet (VaultCreate rejected: ${vaultCreateErr.message}). ` +
+              `Refusing to simulate a deposit of real collateral. Do not retry until the amendment is enabled network-wide.`,
+            )
           } else {
             throw vaultCreateErr
           }
@@ -394,12 +402,19 @@ export const handler = async (event) => {
           console.log(`[vault-deposit] VaultDeposit OK — shares: ${sharesDeposited} | vaultId: ${vaultId}`)
 
         } catch (vaultDepositErr) {
-          if (isNotEnabledError(vaultDepositErr)) {
+          if (isNotEnabledError(vaultDepositErr) && env !== 'live') {
             console.warn('[vault-deposit] VaultDeposit not enabled — falling back to simulation')
             simulated       = true
             vaultId         = 'SIMULATED'  // don't leave a real VaultID paired with a deposit that never happened
             sharesDeposited = depositValue
             depositTxHash   = null
+          } else if (isNotEnabledError(vaultDepositErr)) {
+            // See the matching VaultCreate check above — never simulate a real-collateral
+            // deposit on live just because the ledger rejected it as not-enabled.
+            throw new Error(
+              `XLS-66d Vaults are not enabled on XRPL mainnet yet (VaultDeposit rejected: ${vaultDepositErr.message}). ` +
+              `Refusing to simulate a deposit of real collateral. Do not retry until the amendment is enabled network-wide.`,
+            )
           } else {
             throw vaultDepositErr
           }

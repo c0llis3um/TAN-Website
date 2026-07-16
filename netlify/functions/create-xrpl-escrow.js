@@ -194,10 +194,22 @@ export const handler = async (event) => {
         console.log(`[create-xrpl-escrow] VaultCreate OK — VaultID: ${vaultId} for pod ${podId}`)
 
       } catch (vaultErr) {
-        if (isNotEnabledError(vaultErr)) {
+        if (isNotEnabledError(vaultErr) && env !== 'live') {
           console.warn(`[create-xrpl-escrow] VaultCreate not enabled on ${env} — using simulation`)
           vaultId   = 'SIMULATED'
           simulated = true
+        } else if (isNotEnabledError(vaultErr)) {
+          // On live, never fake a vault registration just because the ledger rejected it as
+          // not-enabled — vault-deposit.js would go on to "simulate" a deposit of real collateral
+          // and later fabricate yield that was never earned. Fail loudly instead.
+          await client.disconnect()
+          return {
+            statusCode: 503,
+            body: JSON.stringify({
+              error: `XLS-66d Vaults are not enabled on XRPL mainnet yet (VaultCreate rejected: ${vaultErr.message}). ` +
+                `Yield/vault pods cannot go live until this XRPL amendment is enabled network-wide.`,
+            }),
+          }
         } else {
           // Non-recoverable vault error — still disconnect before returning
           await client.disconnect()
