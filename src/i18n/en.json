@@ -105,7 +105,7 @@
     "duration": "Duration",
     "receives": "Everyone receives",
     "fee": "Protocol fee",
-    "feeValue": "None during pilot 🎉"
+    "feeValue": "None during pilot"
   },
   "why": {
     "title": "Why DeFi Tanda?",
@@ -138,9 +138,9 @@
   "pay": {
     "title": "Pay your way",
     "sub": "You do not need crypto to get started. Use what you already have on your phone.",
-    "fiatTitle": "💳 Buy with Debit or Bank Transfer",
+    "fiatTitle": "Buy with Debit or Bank Transfer",
     "fiatBody": "Use a debit card or bank transfer to get XRP — no exchange account needed. Coming soon.",
-    "walletTitle": "🔗 Connect your wallet",
+    "walletTitle": "Connect your wallet",
     "walletBody": "Already have XRP? Connect Xaman and pay directly from your wallet in seconds.",
     "chooseMethod": "Choose payment method",
     "googlePay": "Google Pay",
@@ -186,7 +186,7 @@
     "xrpl": {
       "token": "XRP · RLUSD",
       "body": "Settles in 3 seconds for a fraction of a cent. Perfect for weekly tanda payments and cross-border payouts.",
-      "best": "⭐ Live now · Recommended"
+      "best": "Live now · Recommended"
     }
   },
   "xrp": {
@@ -502,8 +502,8 @@
     "cancelPolicy2": "All members who joined get their collateral back.",
     "cancelPolicy3": "The gas fee to deploy is non-refundable.",
     "cancelPolicy4": "No one loses their contribution — the pod never started.",
-    "metaMaskNote": "🔒 MetaMask will ask you to confirm two transactions.",
-    "xamanNote": "🔒 Xaman will confirm the escrow creation.",
+    "metaMaskNote": "MetaMask will ask you to confirm two transactions.",
+    "xamanNote": "Xaman will confirm the escrow creation.",
     "connectPrompt": "Connect your wallet to deploy.",
     "deployBtn": "Deploy Tanda →",
     "tokenLabel": "What will your tanda use?",

@@ -5,6 +5,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, 
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import { adminGetAllPods, adminGetAllUsers, adminGetDisputes } from '@/lib/db'
+import { IconBadge, IconHouses, IconClipboard, IconCommunity, IconBolt, IconCoin, IconChart } from '@/components/ui/Icons'
 
 const stagger = { visible: { transition: { staggerChildren: 0.07 } } }
 const item    = { hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0, transition: { duration: 0.35 } } }
@@ -45,12 +46,12 @@ export default function AdminDash() {
 
   // KPIs
   const kpis = [
-    { label: 'Active Pods',   value: loading ? '…' : activePods.length,                      icon: '🏘️', color: 'blue'   },
-    { label: 'Open Pods',     value: loading ? '…' : pods.filter(p => p.status === 'OPEN').length, icon: '📋', color: 'cyan'  },
-    { label: 'Total Wallets', value: loading ? '…' : users.length,                            icon: '👥', color: 'blue'   },
-    { label: 'Open Disputes', value: loading ? '…' : openDisputes.length,                     icon: '⚡', color: openDisputes.length > 0 ? 'yellow' : 'muted' },
-    { label: 'Revenue (fees)',value: loading ? '…' : `$${totalFees}`,                         icon: '💰', color: 'green'  },
-    { label: 'Total Pods',    value: loading ? '…' : pods.length,                             icon: '📊', color: 'muted'  },
+    { label: 'Active Pods',   value: loading ? '…' : activePods.length,                      Icon: IconHouses,    color: 'blue'   },
+    { label: 'Open Pods',     value: loading ? '…' : pods.filter(p => p.status === 'OPEN').length, Icon: IconClipboard, color: 'cyan'  },
+    { label: 'Total Wallets', value: loading ? '…' : users.length,                            Icon: IconCommunity, color: 'blue'   },
+    { label: 'Open Disputes', value: loading ? '…' : openDisputes.length,                     Icon: IconBolt,      color: openDisputes.length > 0 ? 'yellow' : 'muted' },
+    { label: 'Revenue (fees)',value: loading ? '…' : `$${totalFees}`,                         Icon: IconCoin,      color: 'green'  },
+    { label: 'Total Pods',    value: loading ? '…' : pods.length,                             Icon: IconChart,     color: 'muted'  },
   ]
 
   // Chain split from real pods
@@ -82,11 +83,11 @@ export default function AdminDash() {
   // Alerts
   const alerts = []
   if (openDisputes.filter(d => d.priority === 'HIGH' || d.priority === 'CRITICAL').length > 0)
-    alerts.push({ level: 'red',    icon: '🔴', msg: `${openDisputes.filter(d => d.priority === 'HIGH' || d.priority === 'CRITICAL').length} high-priority dispute(s) need attention`, to: '/admin/disputes' })
+    alerts.push({ level: 'red',    msg: `${openDisputes.filter(d => d.priority === 'HIGH' || d.priority === 'CRITICAL').length} high-priority dispute(s) need attention`, to: '/admin/disputes' })
   if (openDisputes.length > 0)
-    alerts.push({ level: 'yellow', icon: '🟡', msg: `${openDisputes.length} open dispute(s)`, to: '/admin/disputes' })
+    alerts.push({ level: 'yellow', msg: `${openDisputes.length} open dispute(s)`, to: '/admin/disputes' })
   if (alerts.length === 0)
-    alerts.push({ level: 'blue', icon: '🔵', msg: 'No active alerts — platform healthy', to: null })
+    alerts.push({ level: 'blue', msg: 'No active alerts — platform healthy', to: null })
 
   const recentPods = pods.slice(0, 8)
 
@@ -103,7 +104,7 @@ export default function AdminDash() {
         {kpis.map(kpi => (
           <motion.div key={kpi.label} variants={item}>
             <Card hover={false} className="p-5">
-              <div className="text-2xl mb-3">{kpi.icon}</div>
+              <IconBadge size="sm" className="mb-3"><kpi.Icon /></IconBadge>
               <div className="text-xl font-extrabold dark:text-white text-slate-900">{kpi.value}</div>
               <div className="text-xs dark:text-brand-muted text-slate-500 mt-1">{kpi.label}</div>
             </Card>
@@ -206,7 +207,9 @@ export default function AdminDash() {
                       a.level === 'yellow' ? 'dark:bg-amber-500/10 bg-amber-50 dark:border-amber-500/20 border-amber-200' :
                       'dark:bg-brand-blue/10 bg-blue-50 dark:border-brand-blue/20 border-blue-200'}`}
                     onClick={() => a.to && navigate(a.to)}>
-                    <span>{a.icon}</span>
+                    <span className={`w-2 h-2 rounded-full mt-1 flex-shrink-0 ${
+                      a.level === 'red' ? 'bg-red-400' : a.level === 'yellow' ? 'bg-amber-400' : 'bg-brand-blue'
+                    }`} />
                     <span className="flex-1 dark:text-brand-text text-slate-700 leading-relaxed">{a.msg}</span>
                     {a.to && <span className="text-brand-cyan font-semibold flex-shrink-0">View →</span>}
                   </div>

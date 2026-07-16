@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import { IconBadge, IconBook } from '@/components/ui/Icons'
 
 const LESSONS = [
   { id: 'L-01', title: 'What is a Tanda?',           status: 'PUBLISHED', lang: ['ES','EN'], views: 142 },
@@ -52,7 +53,7 @@ export default function AdminContent() {
       </motion.div>
 
       <Card hover={false} className="p-6 text-center dark:bg-brand-blue/5 border dark:border-brand-blue/20 border-blue-200">
-        <p className="text-4xl mb-3">📚</p>
+        <IconBadge size="lg" className="mx-auto mb-3"><IconBook /></IconBadge>
         <p className="font-bold dark:text-white text-slate-900 mb-1">Akademia launching Sprint 4</p>
         <p className="text-sm dark:text-brand-muted text-slate-500">Full lesson editor with Markdown, video embeds, and quiz questions coming soon.</p>
       </Card>

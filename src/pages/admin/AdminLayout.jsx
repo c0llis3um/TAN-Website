@@ -5,20 +5,25 @@ import ThemeToggle from '@/components/ui/ThemeToggle'
 import useAppStore from '@/store/useAppStore'
 import supabase from '@/lib/supabase'
 import { cn } from '@/components/ui/cn'
+import {
+  IconBadge, IconChart, IconHouses, IconCommunity, IconStar, IconShield,
+  IconScale, IconCoin, IconClipboard, IconBook, IconBank, IconWarning,
+  IconGear, IconGlobe,
+} from '@/components/ui/Icons'
 
 const NAV = [
-  { to: '/admin',             icon: '📊', label: 'Dashboard',     end: true  },
-  { to: '/admin/pods',        icon: '🏘️', label: 'Pods'                       },
-  { to: '/admin/users',       icon: '👥', label: 'Users'                      },
-  { to: '/admin/ambassadors', icon: '🌟', label: 'Ambassadors'                },
-  { to: '/admin/insurance',   icon: '🛡️', label: 'Insurance'                  },
-  { to: '/admin/disputes',    icon: '⚖️', label: 'Disputes',      badge: 2   },
-  { to: '/admin/revenue',     icon: '💰', label: 'Revenue'                    },
-  { to: '/admin/waitlist',    icon: '📋', label: 'Waitlist',      badge: 47  },
-  { to: '/admin/content',     icon: '📚', label: 'Content'                    },
-  { to: '/admin/treasury',    icon: '🏦', label: 'Treasury'                   },
-  { to: '/admin/anomalies',   icon: '🚨', label: 'Anomalies'                  },
-  { to: '/admin/settings',    icon: '⚙️', label: 'Settings'                   },
+  { to: '/admin',             Icon: IconChart,     label: 'Dashboard',     end: true  },
+  { to: '/admin/pods',        Icon: IconHouses,    label: 'Pods'                       },
+  { to: '/admin/users',       Icon: IconCommunity, label: 'Users'                      },
+  { to: '/admin/ambassadors', Icon: IconStar,      label: 'Ambassadors'                },
+  { to: '/admin/insurance',   Icon: IconShield,    label: 'Insurance'                  },
+  { to: '/admin/disputes',    Icon: IconScale,     label: 'Disputes',      badge: 2   },
+  { to: '/admin/revenue',     Icon: IconCoin,      label: 'Revenue'                    },
+  { to: '/admin/waitlist',    Icon: IconClipboard, label: 'Waitlist',      badge: 47  },
+  { to: '/admin/content',     Icon: IconBook,      label: 'Content'                    },
+  { to: '/admin/treasury',    Icon: IconBank,      label: 'Treasury'                   },
+  { to: '/admin/anomalies',   Icon: IconWarning,   label: 'Anomalies'                  },
+  { to: '/admin/settings',    Icon: IconGear,      label: 'Settings'                   },
 ]
 
 export default function AdminLayout() {
@@ -69,7 +74,7 @@ export default function AdminLayout() {
 
         {/* Nav links */}
         <nav className="flex-1 py-3 overflow-y-auto">
-          {NAV.map(({ to, icon, label, badge, end }) => (
+          {NAV.map(({ to, Icon, label, badge, end }) => (
             <NavLink
               key={to} to={to} end={end}
               className={({ isActive }) => cn(
@@ -79,7 +84,7 @@ export default function AdminLayout() {
                   : 'dark:text-brand-muted text-slate-600 dark:hover:bg-brand-mid hover:bg-slate-100 dark:hover:text-white hover:text-slate-900'
               )}
             >
-              <span className="text-base flex-shrink-0">{icon}</span>
+              <Icon className="w-4 h-4 flex-shrink-0" />
               <AnimatePresence>
                 {sidebarOpen && (
                   <motion.span
@@ -118,7 +123,7 @@ export default function AdminLayout() {
               'dark:text-brand-muted text-slate-500 dark:hover:bg-brand-mid hover:bg-slate-100 transition-colors'
             )}
           >
-            <span>🌐</span>
+            <IconGlobe className="w-4 h-4" />
             {sidebarOpen && <span>Back to site</span>}
           </motion.button>
         </div>
@@ -236,7 +241,7 @@ function EnvToggle({ env, setEnv }) {
               onClick={e => e.stopPropagation()}
               className="dark:bg-brand-darker bg-white rounded-3xl border dark:border-brand-border border-slate-200 p-8 max-w-sm w-full shadow-glow"
             >
-              <div className="text-4xl text-center mb-4">⚠️</div>
+              <IconBadge size="lg" className="mx-auto mb-4"><IconWarning /></IconBadge>
               <h3 className="text-xl font-extrabold dark:text-white text-slate-900 text-center mb-3">Switch to LIVE?</h3>
               <ul className="text-sm dark:text-brand-muted text-slate-500 space-y-2 mb-6">
                 {['Real blockchain contracts will be used','Real user funds are at risk','Ensure contracts are audited','Ensure treasury wallets are configured','Insurance pool must be ≥ $25,000'].map(w => (

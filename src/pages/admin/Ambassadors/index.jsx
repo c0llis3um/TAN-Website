@@ -5,6 +5,7 @@ import Badge from '@/components/ui/Badge'
 import Pagination from '@/components/ui/Pagination'
 import usePagination from '@/lib/usePagination'
 import { adminGetAmbassadors } from '@/lib/db'
+import { IconBadge, IconStar } from '@/components/ui/Icons'
 
 const TIER_COLORS   = { Gold: 'yellow', Silver: 'muted', Bronze: 'muted' }
 const STATUS_COLORS = { ACTIVE: 'green', PENDING: 'yellow', PAUSED: 'muted', REMOVED: 'red' }
@@ -90,7 +91,7 @@ export default function AdminAmbassadors() {
           <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-20 rounded-2xl dark:bg-brand-mid bg-slate-100 animate-pulse" />)}</div>
         ) : active.length === 0 ? (
           <Card hover={false} className="p-8 text-center">
-            <p className="text-3xl mb-3">🤝</p>
+            <IconBadge className="mx-auto mb-3"><IconStar /></IconBadge>
             <p className="dark:text-brand-muted text-slate-400">No active ambassadors yet.</p>
           </Card>
         ) : (

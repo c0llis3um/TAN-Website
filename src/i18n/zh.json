@@ -105,7 +105,7 @@
     "duration": "周期",
     "receives": "每人收到",
     "fee": "协议手续费",
-    "feeValue": "试点期间免费 🎉"
+    "feeValue": "试点期间免费"
   },
   "why": {
     "title": "为什么选择 DeFi Tanda？",
@@ -138,9 +138,9 @@
   "pay": {
     "title": "按你的方式付款",
     "sub": "无需加密货币即可开始。使用手机上已有的支付方式。",
-    "fiatTitle": "💳 用借记卡或银行转账购买",
+    "fiatTitle": "用借记卡或银行转账购买",
     "fiatBody": "使用借记卡或银行转账获取 XRP——无需交易所账户。即将推出。",
-    "walletTitle": "🔗 连接你的钱包",
+    "walletTitle": "连接你的钱包",
     "walletBody": "已有 XRP？连接 Xaman，几秒内直接从钱包付款。",
     "chooseMethod": "选择付款方式",
     "googlePay": "Google Pay",
@@ -186,7 +186,7 @@
     "xrpl": {
       "token": "XRP · RLUSD",
       "body": "3 秒结算，费用极低。完美适配每周标会缴费和跨境分配款。",
-      "best": "⭐ 现已上线 · 推荐"
+      "best": "现已上线 · 推荐"
     }
   },
   "learn": {
@@ -390,8 +390,8 @@
     "cancelPolicy2": "所有已加入的成员将退还保证金。",
     "cancelPolicy3": "部署合约的 Gas 费不可退还。",
     "cancelPolicy4": "没有人损失缴费——圈子从未启动。",
-    "metaMaskNote": "🔒 MetaMask 将要求你确认两笔交易。",
-    "xamanNote": "🔒 Xaman 将确认托管创建。",
+    "metaMaskNote": "MetaMask 将要求你确认两笔交易。",
+    "xamanNote": "Xaman 将确认托管创建。",
     "connectPrompt": "连接钱包以部署。",
     "deployBtn": "部署标会 →",
     "tokenLabel": "你的标会使用什么代币？",

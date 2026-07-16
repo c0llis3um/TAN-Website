@@ -5,6 +5,7 @@ import Badge from '@/components/ui/Badge'
 import { adminGetPodsForAnomalyScan } from '@/lib/db'
 import { scanEscrowAnomalies } from '@/lib/xrpl'
 import { safeJson } from '@/lib/http'
+import { IconSearch } from '@/components/ui/Icons'
 
 export default function AdminAnomalies() {
   const [scanning,   setScanning]   = useState(false)
@@ -92,7 +93,7 @@ export default function AdminAnomalies() {
           disabled={scanning}
           className="shrink-0 px-5 py-2.5 rounded-xl bg-gradient-brand text-white text-sm font-bold shadow-glow-sm hover:shadow-glow transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {scanning ? 'Scanning…' : '🔍 Scan Escrows'}
+          {scanning ? 'Scanning…' : <span className="inline-flex items-center gap-1.5"><IconSearch className="w-4 h-4" /> Scan Escrows</span>}
         </button>
       </div>
 

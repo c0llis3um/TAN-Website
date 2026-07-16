@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import useAppStore from '@/store/useAppStore'
+import { IconBadge, IconCheck } from '@/components/ui/Icons'
 
 /**
  * Small "something wrong? contact us" modal. Emails support (via
@@ -88,7 +89,7 @@ export default function ContactSupportModal({ podId, podName, txHash, onClose })
           </>
         ) : (
           <div className="text-center py-6">
-            <div className="text-5xl mb-4">✅</div>
+            <IconBadge size="lg" className="mx-auto mb-4"><IconCheck /></IconBadge>
             <p className="text-sm dark:text-brand-text text-slate-700 mb-6">{t('pay.contactSent')}</p>
             <button onClick={onClose} className="px-8 py-3 rounded-2xl bg-gradient-brand text-white font-bold text-sm shadow-glow-sm">
               {t('common.back')}

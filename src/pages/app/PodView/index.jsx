@@ -10,6 +10,11 @@ import useAppStore from '@/store/useAppStore'
 import { getPod, joinPod, getUser, upsertUser, maybeActivatePod, cycleMs, updatePodStatus, getPodPayments, getVaultInfo, getPodMembership } from '@/lib/db'
 import { tandaPodJoin, cancelTandaPod, claimCollateral } from '@/lib/contracts'
 import { safeJson } from '@/lib/http'
+import {
+  IconBadge, IconWarning, IconCalendar, IconCoin, IconCheck, IconBolt,
+  IconSparkle, IconMedal, IconRefresh, IconClock, IconLock, IconKey,
+  IconCommunity, IconHourglass, IconFlag, IconQuestion, IconTrendUp, IconBank,
+} from '@/components/ui/Icons'
 
 function shareWa(text) { window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank') }
 function shareTg(url, text) { window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank') }
@@ -335,7 +340,7 @@ export default function PodView() {
   if (error || !pod) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-16 text-center">
-        <p className="text-4xl mb-4">⚠</p>
+        <IconBadge size="lg" className="mx-auto mb-4"><IconWarning /></IconBadge>
         <h2 className="text-xl font-bold dark:text-white text-slate-900 mb-2">{t('pod.notFound')}</h2>
         <p className="text-sm text-red-400 mb-6">{error}</p>
         <Button onClick={() => navigate('/app')}>{t('pod.back')}</Button>
@@ -349,7 +354,7 @@ export default function PodView() {
   if (pod.chain === 'Ethereum') {
     return (
       <div className="max-w-5xl mx-auto px-4 py-16 text-center">
-        <p className="text-4xl mb-4">🚧</p>
+        <IconBadge size="lg" className="mx-auto mb-4"><IconWarning /></IconBadge>
         <h2 className="text-xl font-bold dark:text-white text-slate-900 mb-2">Ethereum pods are temporarily unavailable</h2>
         <p className="text-sm dark:text-brand-muted text-slate-500 mb-6">This pod runs on Ethereum, which is paused for now. Check back soon.</p>
         <Button onClick={() => navigate('/app')}>{t('pod.back')}</Button>
@@ -539,7 +544,7 @@ export default function PodView() {
               : daysLeft <= 2
                 ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
                 : 'dark:bg-brand-blue/5 bg-blue-50 dark:border-brand-blue/20 border-blue-200 dark:text-brand-text text-slate-700'}`}>
-          <span className="text-lg">{isOverdue ? '🔴' : daysLeft <= 2 ? '⚠️' : '📅'}</span>
+          {isOverdue ? <IconWarning className="w-5 h-5 flex-shrink-0" /> : daysLeft <= 2 ? <IconWarning className="w-5 h-5 flex-shrink-0" /> : <IconCalendar className="w-5 h-5 flex-shrink-0" />}
           <div>
             <span className="font-bold">{t('pod.cycleDue', { n: cycleForDate })} </span>
             {dueDate.toLocaleDateString(i18n.language, { weekday: 'short', month: 'short', day: 'numeric' })}
@@ -581,7 +586,7 @@ export default function PodView() {
                       >
                         {current && <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-white animate-ping-slow" />}
                         <span>W{cycle}</span>
-                        {done && <span>✓</span>}
+                        {done && <IconCheck className="w-3 h-3" />}
                         {myPayout && !done && <span className="text-[9px] opacity-80">YOU</span>}
                       </motion.div>
                     )
@@ -675,7 +680,7 @@ export default function PodView() {
                       <div className="flex items-center gap-3 mb-4">
                         <span className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0
                           ${isComplete ? 'bg-emerald-500/20 text-emerald-400' : 'dark:bg-brand-dark bg-slate-100 dark:text-brand-muted text-slate-400'}`}>
-                          {isComplete ? '✓' : cycle}
+                          {isComplete ? <IconCheck className="w-3.5 h-3.5" /> : cycle}
                         </span>
                         <span className="font-bold dark:text-white text-slate-900">{t('pod.cycle')} {cycle}</span>
                         {isComplete
@@ -689,7 +694,7 @@ export default function PodView() {
                         : 'dark:bg-brand-dark bg-slate-50 dark:border-brand-border border-slate-200'}`}>
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-xs dark:text-brand-muted text-slate-500 font-semibold uppercase tracking-wider">{t('pod.potRecipient')}</p>
-                          {isComplete && <span className="text-xs text-emerald-400">💰 {t('pod.paidOut')}</span>}
+                          {isComplete && <span className="text-xs text-emerald-400 inline-flex items-center gap-1"><IconCoin className="w-3.5 h-3.5" /> {t('pod.paidOut')}</span>}
                         </div>
                         <div className="flex items-center justify-between">
                           <div>
@@ -819,8 +824,12 @@ export default function PodView() {
                     </div>
                     <div className="flex justify-between text-xs">
                       <span className="dark:text-brand-muted text-slate-400">{t('pod.statusLabel')}</span>
-                      <span className={`font-bold ${alreadyPaid ? 'text-emerald-400' : thisCycle ? 'text-brand-cyan' : 'dark:text-white text-slate-900'}`}>
-                        {alreadyPaid ? `✓ ${t('pod.paidOut')}` : thisCycle ? `⚡ ${t('pod.thisCycle')}` : t('pod.daysAway', { n: daysUntil })}
+                      <span className={`font-bold inline-flex items-center gap-1 ${alreadyPaid ? 'text-emerald-400' : thisCycle ? 'text-brand-cyan' : 'dark:text-white text-slate-900'}`}>
+                        {alreadyPaid
+                          ? <><IconCheck className="w-3.5 h-3.5" /> {t('pod.paidOut')}</>
+                          : thisCycle
+                            ? <><IconBolt className="w-3.5 h-3.5" /> {t('pod.thisCycle')}</>
+                            : t('pod.daysAway', { n: daysUntil })}
                       </span>
                     </div>
                   </div>
@@ -839,7 +848,7 @@ export default function PodView() {
 
               {(claimTx || claimedPayment) ? (
                 <div className="p-3 rounded-xl dark:bg-emerald-500/10 bg-emerald-50 border dark:border-emerald-500/30 border-emerald-200">
-                  <p className="text-xs font-bold dark:text-emerald-300 text-emerald-700 mb-1">✓ {t('pod.claimed')}</p>
+                  <p className="text-xs font-bold dark:text-emerald-300 text-emerald-700 mb-1 inline-flex items-center gap-1"><IconCheck className="w-3.5 h-3.5" /> {t('pod.claimed')}</p>
                   {(() => {
                     const hash = claimTx ?? claimedPayment?.tx_hash
                     return (
@@ -928,10 +937,10 @@ function HowItWorksCard({ pod, t }) {
   const steps = Array.isArray(rawSteps) ? rawSteps : []
 
   const icons = status === 'COMPLETED'
-    ? ['🎉', '💰', '🏅', '🔄']
+    ? [IconSparkle, IconCoin, IconMedal, IconRefresh]
     : status === 'ACTIVE'
-    ? ['⏰', '🔒', '💸', '✅']
-    : ['🔑', '👥', '⏳', '🔄', '🏁']
+    ? [IconClock, IconLock, IconCoin, IconCheck]
+    : [IconKey, IconCommunity, IconHourglass, IconRefresh, IconFlag]
 
   return (
     <Card hover={false} className="overflow-hidden">
@@ -939,7 +948,7 @@ function HowItWorksCard({ pod, t }) {
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between px-5 py-4 text-left group">
         <div className="flex items-center gap-2">
-          <span className="text-base">❓</span>
+          <IconQuestion className="w-4 h-4 dark:text-brand-muted text-slate-500" />
           <span className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 group-hover:text-brand-cyan transition-colors">
             {t('pod.howToggle')}
           </span>
@@ -962,19 +971,22 @@ function HowItWorksCard({ pod, t }) {
             transition={{ duration: 0.25, ease: 'easeInOut' }}>
             <div className="px-5 pb-5 border-t dark:border-brand-border/40 border-slate-100 pt-4 space-y-3">
 
-              {steps.map((step, i) => (
-                <div key={i} className="flex gap-3">
-                  <div className="w-7 h-7 rounded-xl dark:bg-brand-dark bg-slate-100 flex items-center justify-center text-sm flex-shrink-0 mt-0.5">
-                    {icons[i] ?? '•'}
+              {steps.map((step, i) => {
+                const StepIcon = icons[i]
+                return (
+                  <div key={i} className="flex gap-3">
+                    <div className="w-7 h-7 rounded-xl dark:bg-brand-dark bg-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      {StepIcon && <StepIcon className="w-3.5 h-3.5 dark:text-brand-text text-slate-600" />}
+                    </div>
+                    <p className="text-xs dark:text-brand-text text-slate-600 leading-relaxed pt-1">{step}</p>
                   </div>
-                  <p className="text-xs dark:text-brand-text text-slate-600 leading-relaxed pt-1">{step}</p>
-                </div>
-              ))}
+                )
+              })}
 
               {/* Slash warning — always shown for active/open pods */}
               {status !== 'COMPLETED' && (
                 <div className="mt-2 p-3 rounded-xl dark:bg-red-500/10 bg-red-50 border dark:border-red-500/20 border-red-100 flex gap-2">
-                  <span className="text-sm flex-shrink-0">⚡</span>
+                  <IconBolt className="w-3.5 h-3.5 flex-shrink-0 text-red-400" />
                   <p className="text-xs text-red-400 leading-relaxed">{t('pod.howSlashWarning')}</p>
                 </div>
               )}
@@ -982,7 +994,7 @@ function HowItWorksCard({ pod, t }) {
               {/* Yield extra note */}
               {isYield && (
                 <div className="p-3 rounded-xl dark:bg-emerald-500/10 bg-emerald-50 border dark:border-emerald-500/20 border-emerald-100 flex gap-2">
-                  <span className="text-sm flex-shrink-0">🌱</span>
+                  <IconTrendUp className="w-3.5 h-3.5 flex-shrink-0 text-emerald-500" />
                   <p className="text-xs text-emerald-500 leading-relaxed">{t('pod.howYieldExtra')}</p>
                 </div>
               )}
@@ -1031,7 +1043,7 @@ function YieldVaultCard({ pod, vaultInfo, t }) {
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <span className="text-lg">🌱</span>
+              <IconTrendUp className="w-4 h-4 text-emerald-500" />
               <h3 className="text-xs font-bold uppercase tracking-widest dark:text-emerald-400 text-emerald-600">
                 {t('pod.vaultCardTitle')}
               </h3>
@@ -1112,7 +1124,7 @@ function YieldVaultCard({ pod, vaultInfo, t }) {
           ) : (
             /* Not yet deposited */
             <div className="text-center py-4">
-              <div className="text-4xl mb-3">🏦</div>
+              <IconBadge size="md" className="mx-auto mb-3"><IconBank /></IconBadge>
               <p className="text-sm font-bold dark:text-white text-slate-900 mb-1">{principal} {pod.token}</p>
               <p className="text-xs dark:text-brand-muted text-slate-400">{t('pod.vaultPending')}</p>
               <div className="mt-3 flex items-center justify-center gap-1.5">

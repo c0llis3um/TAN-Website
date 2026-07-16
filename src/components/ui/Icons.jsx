@@ -245,3 +245,234 @@ export function IconXrp({ className = 'w-full h-full' }) {
     </svg>
   )
 }
+
+export function IconPlus({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  )
+}
+
+export function IconSearch({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M19.5 19.5l-4.3-4.3" />
+    </svg>
+  )
+}
+
+export function IconWarning({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M12 3.5 21.5 20h-19L12 3.5z" />
+      <path d="M12 9.5v5" />
+      <circle cx="12" cy="17.2" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+export function IconBell({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M6 10a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 14 6 10z" />
+      <path d="M10 19a2 2 0 0 0 4 0" />
+    </svg>
+  )
+}
+
+export function IconCalendar({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <rect x="3.5" y="5" width="17" height="16" rx="2" />
+      <path d="M3.5 10h17" />
+      <path d="M8 3v4M16 3v4" />
+    </svg>
+  )
+}
+
+export function IconClock({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3.5 2" />
+    </svg>
+  )
+}
+
+export function IconRefresh({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M4 12a8 8 0 0 1 13.7-5.7L20 8.5" />
+      <path d="M20 4v4.5h-4.5" />
+      <path d="M20 12a8 8 0 0 1-13.7 5.7L4 15.5" />
+      <path d="M4 20v-4.5h4.5" />
+    </svg>
+  )
+}
+
+export function IconKey({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="7.5" cy="14.5" r="3.5" />
+      <path d="M10 12l8.5-8.5M15 5l2 2M18 2l2 2" />
+    </svg>
+  )
+}
+
+export function IconHourglass({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M6 3h12M6 21h12" />
+      <path d="M7 3c0 4 3 5.5 5 6.5C9.5 10.5 7 12 7 21M17 3c0 4-3 5.5-5 6.5 2.5 1 5 2.5 5 11.5" />
+    </svg>
+  )
+}
+
+export function IconFlag({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M6 3v18" />
+      <path d="M6 4.5h11l-2.5 4L17 12.5H6" />
+    </svg>
+  )
+}
+
+export function IconQuestion({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9.3a2.5 2.5 0 1 1 3.8 2.1c-.9.6-1.3 1.1-1.3 2.1" />
+      <circle cx="12" cy="17" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+export function IconBan({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M6.5 6.5l11 11" />
+    </svg>
+  )
+}
+
+export function IconX({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M6 6l12 12M18 6L6 18" />
+    </svg>
+  )
+}
+
+export function IconTarget({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+export function IconMegaphone({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M3 10v4h3l6 4V6l-6 4H3z" />
+      <path d="M15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12" />
+    </svg>
+  )
+}
+
+export function IconBuilding({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <rect x="6" y="3" width="12" height="18" rx="1" />
+      <path d="M9 7h.01M9 11h.01M9 15h.01M15 7h.01M15 11h.01M15 15h.01" />
+      <path d="M10 21v-3h4v3" />
+    </svg>
+  )
+}
+
+export function IconLaptop({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <rect x="4" y="4.5" width="16" height="11" rx="1.5" />
+      <path d="M2 19.5h20" />
+    </svg>
+  )
+}
+
+export function IconBook({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M4 4.5A2 2 0 0 1 6 3h10.5v16H6a2 2 0 0 0-2 1.5z" />
+      <path d="M4 19V4.5" />
+      <path d="M8 8h6" />
+    </svg>
+  )
+}
+
+export function IconCoin({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9a2.5 2 0 0 1 2.5-1.3c1.4 0 2.5.9 2.5 2s-1.1 1.6-2.5 2-2.5.9-2.5 2 1.1 2 2.5 2S15 15 15 15" />
+      <path d="M12 6.5v11" />
+    </svg>
+  )
+}
+
+export function IconMedal({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="15" r="5" />
+      <path d="M9.5 12 7 3h3l2 6M14.5 12 17 3h-3l-2 6" />
+      <path d="M10.3 13.5 12 15l1.7-1.5" />
+    </svg>
+  )
+}
+
+export function IconScale({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M12 3v17M8 20h8" />
+      <path d="M5 7h6M13 7h6" />
+      <path d="M5 7 2.5 12a2.5 2.5 0 0 0 5 0L5 7zM19 7l-2.5 5a2.5 2.5 0 0 0 5 0L19 7z" />
+    </svg>
+  )
+}
+
+export function IconHouses({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M3 11.5 8 7l5 4.5V19H3v-7.5z" />
+      <path d="M13 19v-5.5l4-3.5 4 3.5V19h-8z" />
+    </svg>
+  )
+}
+
+export function IconStar({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M12 3l2.6 5.8 6.2.6-4.7 4.2 1.4 6.2L12 16.8 6.5 19.8l1.4-6.2-4.7-4.2 6.2-.6L12 3z" />
+    </svg>
+  )
+}
+
+export function IconArrowUpRight({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M7 17 17 7M9 7h8v8" />
+    </svg>
+  )
+}
+
+export function IconArrowDownLeft({ className = 'w-full h-full' }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M17 7 7 17M15 17H7V9" />
+    </svg>
+  )
+}

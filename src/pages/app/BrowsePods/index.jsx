@@ -7,6 +7,7 @@ import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import useAppStore from '@/store/useAppStore'
 import { getOpenPods } from '@/lib/db'
+import { IconBadge, IconSearch } from '@/components/ui/Icons'
 
 const CHAIN_VARIANT = { XRPL: 'blue', Ethereum: 'muted' }
 
@@ -167,7 +168,7 @@ export default function BrowsePods() {
 
           {filtered.length === 0 && (
             <div className="col-span-3 text-center py-16">
-              <p className="text-3xl mb-3">🔍</p>
+              <IconBadge className="mx-auto mb-3"><IconSearch /></IconBadge>
               <p className="dark:text-brand-muted text-slate-400 mb-4">{t('browse.noOpen')}</p>
               <Button size="sm" onClick={() => navigate('/app/create')}>{t('browse.createOne')}</Button>
             </div>

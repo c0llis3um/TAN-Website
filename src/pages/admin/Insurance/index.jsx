@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import { IconShield } from '@/components/ui/Icons'
 
 const HISTORY = [
   { month: 'Oct', balance: 28000 },
@@ -42,7 +43,7 @@ export default function AdminInsurance() {
         className="p-5 rounded-2xl border bg-red-500/8 border-red-500/30 flex flex-wrap items-center justify-between gap-4"
       >
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-red-500/15 flex items-center justify-center text-2xl">🛡️</div>
+          <div className="w-12 h-12 rounded-xl bg-red-500/15 flex items-center justify-center"><IconShield className="w-6 h-6 text-red-400" /></div>
           <div>
             <p className="font-bold dark:text-white text-slate-900">Pool below minimum floor</p>
             <p className="text-sm dark:text-brand-muted text-slate-500">Current balance is ${(floor - current).toLocaleString()} below the $25K requirement</p>

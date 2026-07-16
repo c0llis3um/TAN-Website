@@ -9,7 +9,7 @@ import Badge from '@/components/ui/Badge'
 import useAppStore from '@/store/useAppStore'
 import { getUser, getOrganizerPods, getMemberPods, getOpenPods } from '@/lib/db'
 import { isPushSupported, enablePushNotifications } from '@/lib/push'
-import { IconBadge, IconLock } from '@/components/ui/Icons'
+import { IconBadge, IconLock, IconPlus, IconSearch, IconWallet, IconCard, IconBell, IconBolt } from '@/components/ui/Icons'
 
 const stagger = { visible: { transition: { staggerChildren: 0.08 } } }
 const item    = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }
@@ -28,10 +28,10 @@ export default function Dashboard() {
     CANCELLED: t('dashboard.statusCancelled'), EXPIRED: t('dashboard.statusExpired'),
   }
   const QUICK = [
-    { label: t('dashboard.createPod'), icon: '➕', to: '/app/create', highlight: true,  disabled: false },
-    { label: t('dashboard.browsePods'), icon: '🔍', to: '/app/pods',  highlight: false, disabled: false },
-    { label: t('walletPage.title'),     icon: '👛', to: '/app/wallet',highlight: false, disabled: false },
-    { label: t('dashboard.buyUsdc'),    icon: '🍎', to: null,         highlight: false, disabled: true  },
+    { label: t('dashboard.createPod'), Icon: IconPlus,   to: '/app/create', highlight: true,  disabled: false },
+    { label: t('dashboard.browsePods'), Icon: IconSearch, to: '/app/pods',  highlight: false, disabled: false },
+    { label: t('walletPage.title'),     Icon: IconWallet, to: '/app/wallet',highlight: false, disabled: false },
+    { label: t('dashboard.buyUsdc'),    Icon: IconCard,   to: null,         highlight: false, disabled: true  },
   ]
 
   const [user,        setUser]        = useState(null)
@@ -130,7 +130,7 @@ export default function Dashboard() {
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
           className="mb-6 p-4 rounded-2xl flex items-center justify-between gap-4 flex-wrap dark:bg-brand-blue/5 bg-blue-50 border dark:border-brand-blue/20 border-blue-200">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🔔</span>
+            <IconBadge size="sm"><IconBell /></IconBadge>
             <div>
               <p className="font-bold dark:text-white text-slate-900 text-sm">{t('dashboard.notifTitle')}</p>
               <p className="text-xs dark:text-brand-muted text-slate-500">{t('dashboard.notifBody')}</p>
@@ -154,7 +154,7 @@ export default function Dashboard() {
         <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
           className="mb-6 p-4 rounded-2xl flex items-center justify-between gap-4 bg-amber-500/10 border border-amber-500/30">
           <div className="flex items-center gap-3">
-            <span className="text-2xl animate-pulse">⚡</span>
+            <IconBolt className="w-6 h-6 text-amber-500 animate-pulse" />
             <div>
               <p className="font-bold dark:text-white text-slate-900 text-sm">{t('dashboard.activePod', { name: duePod.name })}</p>
               <p className="text-xs dark:text-brand-muted text-slate-500">
@@ -358,7 +358,7 @@ export default function Dashboard() {
           <Card hover={false} className="p-4">
             <p className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-3">{t('dashboard.quickActions')}</p>
             <div className="grid grid-cols-2 gap-2">
-              {QUICK.map(({ label, icon, to, highlight, disabled }) => (
+              {QUICK.map(({ label, Icon, to, highlight, disabled }) => (
                 <motion.button key={label}
                   onClick={() => !disabled && to && navigate(to)}
                   whileHover={disabled ? {} : { scale: 1.04, y: -1 }}
@@ -372,7 +372,7 @@ export default function Dashboard() {
                         : 'dark:bg-brand-dark bg-slate-50 dark:text-brand-text text-slate-600 dark:hover:bg-brand-border hover:bg-slate-100 dark:border-brand-border border border-slate-200'
                     }`}
                 >
-                  <span className="text-xl">{icon}</span>
+                  <Icon className="w-5 h-5" />
                   {label}
                   {disabled && <span className="text-[9px] uppercase tracking-wider opacity-70">{t('common.soon')}</span>}
                 </motion.button>

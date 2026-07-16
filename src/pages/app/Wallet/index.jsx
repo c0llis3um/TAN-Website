@@ -7,13 +7,14 @@ import { getTokenBalances, getSwapQuote, swapEthForUsdc } from '@/lib/contracts'
 import XrplDashboard from './XrplDashboard'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
+import { IconBadge, IconChainLink, IconCoin, IconCheck, IconWallet } from '@/components/ui/Icons'
 
 const ETH_FAUCETS = [
   { label: 'Sepolia ETH',   url: 'https://sepoliafaucet.com',  note: 'Gas fees'     },
   { label: 'USDC (Circle)', url: 'https://faucet.circle.com',  note: 'Creation fee' },
 ]
 
-function BalanceCard({ symbol, icon, balance, usdRate, loading, decimals = 2 }) {
+function BalanceCard({ symbol, Icon, balance, usdRate, loading, decimals = 2 }) {
   const usdValue = balance != null && usdRate ? (balance * usdRate).toFixed(2) : null
   return (
     <motion.div
@@ -21,7 +22,7 @@ function BalanceCard({ symbol, icon, balance, usdRate, loading, decimals = 2 }) 
       className="flex-1 dark:bg-brand-darker bg-white rounded-3xl border dark:border-brand-border border-slate-200 p-5"
     >
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-2xl">{icon}</span>
+        <IconBadge size="sm"><Icon /></IconBadge>
         <span className="text-xs font-bold dark:text-brand-muted text-slate-500 uppercase tracking-wider">{symbol}</span>
       </div>
       {loading ? (
@@ -122,8 +123,8 @@ function EthWalletView({ wallet, env }) {
       </div>
 
       <div className="flex gap-3 mb-6">
-        <BalanceCard symbol="ETH"  icon="🔷" balance={balances?.eth}  usdRate={quote?.rate ?? null} loading={balLoading} decimals={5} />
-        <BalanceCard symbol="USDC" icon="💵" balance={balances?.usdc} usdRate={1}                  loading={balLoading} decimals={2} />
+        <BalanceCard symbol="ETH"  Icon={IconChainLink} balance={balances?.eth}  usdRate={quote?.rate ?? null} loading={balLoading} decimals={5} />
+        <BalanceCard symbol="USDC" Icon={IconCoin}      balance={balances?.usdc} usdRate={1}                  loading={balLoading} decimals={2} />
       </div>
 
       {balError && <p className="text-xs text-red-400 text-center mb-4">{balError}</p>}
@@ -146,7 +147,7 @@ function EthWalletView({ wallet, env }) {
             </button>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🔷</span>
+            <IconBadge size="sm"><IconChainLink /></IconBadge>
             <input type="number" min="0" step="0.001" placeholder="0.00" value={amountIn}
               onChange={e => setAmountIn(e.target.value)}
               className="flex-1 bg-transparent text-xl font-bold dark:text-white text-slate-900 outline-none placeholder:dark:text-brand-muted placeholder:text-slate-300 min-w-0" />
@@ -161,7 +162,7 @@ function EthWalletView({ wallet, env }) {
         <div className="dark:bg-brand-dark bg-slate-50 rounded-2xl p-4 mb-4">
           <span className="text-xs dark:text-brand-muted text-slate-400 font-semibold block mb-1.5">{t('walletPage.youReceive')}</span>
           <div className="flex items-center gap-3">
-            <span className="text-2xl">💵</span>
+            <IconBadge size="sm"><IconCoin /></IconBadge>
             <div className="flex-1 text-xl font-bold dark:text-white text-slate-900">
               {quoteLoading ? <span className="dark:text-brand-muted text-slate-300 animate-pulse">…</span>
                 : quote ? <>{quote.usdcOut.toFixed(2)}{quote.isEstimate && <span className="text-xs text-amber-400 ml-1">~est</span>}</>
@@ -182,7 +183,7 @@ function EthWalletView({ wallet, env }) {
           {swapDone ? (
             <motion.div key="done" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
               className="py-3 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-sm text-center">
-              ✓ {t('walletPage.swapComplete')}{swapOut ? ` ~${swapOut.toFixed(2)} USDC received.` : ''}
+              <span className="inline-flex items-center gap-1.5"><IconCheck className="w-4 h-4" /> {t('walletPage.swapComplete')}{swapOut ? ` ~${swapOut.toFixed(2)} USDC received.` : ''}</span>
             </motion.div>
           ) : (
             <motion.div key="btn" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -238,7 +239,7 @@ export default function WalletPage() {
   if (!wallet) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        <p className="text-5xl mb-4">👛</p>
+        <IconBadge size="lg" className="mx-auto mb-4"><IconWallet /></IconBadge>
         <h2 className="text-xl font-bold dark:text-white text-slate-900 mb-2">{t('walletPage.noWallet')}</h2>
         <p className="text-sm dark:text-brand-muted text-slate-500 mb-6">{t('walletPage.connectDesc')}</p>
         <Button onClick={() => navigate('/app')}>{t('walletPage.back')}</Button>

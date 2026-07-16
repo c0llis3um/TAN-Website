@@ -8,6 +8,7 @@ import { adminGetAllPods } from '@/lib/db'
 import { releaseCollateral } from '@/lib/contracts'
 import { safeJson } from '@/lib/http'
 import useAppStore from '@/store/useAppStore'
+import { IconCheck, IconBolt, IconX } from '@/components/ui/Icons'
 
 const STATUS_COLORS = { ACTIVE: 'green', COMPLETED: 'blue', DEFAULTED: 'red', OPEN: 'yellow', LOCKED: 'yellow', CANCELLED: 'muted', EXPIRED: 'red' }
 const CHAIN_COLORS  = { XRPL: 'blue', Solana: 'muted', Ethereum: 'muted' }
@@ -98,7 +99,7 @@ export default function AdminPods() {
                     <td className="px-5 py-4"><Badge variant={STATUS_COLORS[pod.status] ?? 'muted'}>{pod.status}</Badge></td>
                     <td className="px-5 py-4 dark:text-brand-text text-slate-700">{members}/{pod.size}</td>
                     <td className="px-5 py-4 font-bold dark:text-white text-slate-900">{pot} {pod.token}</td>
-                    <td className="px-5 py-4 text-center">{pod.creation_fee_paid ? <span className="text-emerald-400 font-bold">✓</span> : <span className="dark:text-brand-muted text-slate-300">—</span>}</td>
+                    <td className="px-5 py-4 text-center">{pod.creation_fee_paid ? <IconCheck className="w-4 h-4 text-emerald-400 inline-block" /> : <span className="dark:text-brand-muted text-slate-300">—</span>}</td>
                     <td className="px-5 py-4 text-xs dark:text-brand-muted text-slate-400 truncate max-w-[160px]">{organizer}</td>
                     <td className="px-5 py-4 text-xs dark:text-brand-muted text-slate-400 whitespace-nowrap">{timeAgo(pod.created_at)}</td>
                     <td className="px-5 py-4">
@@ -428,8 +429,8 @@ function PodDetail({ pod, onClose }) {
                 </p>
                 {depositErr && <p className="text-xs text-red-400 mb-2 break-all">{depositErr}</p>}
                 {depositResult ? (
-                  <p className="text-xs text-emerald-400 font-semibold break-all">
-                    Deposited ✓ vaultId: {depositResult.vaultId}{depositResult.simulated ? ' (simulated)' : ''}
+                  <p className="text-xs text-emerald-400 font-semibold break-all inline-flex items-center gap-1">
+                    <IconCheck className="w-3.5 h-3.5 flex-shrink-0" /> Deposited vaultId: {depositResult.vaultId}{depositResult.simulated ? ' (simulated)' : ''}
                   </p>
                 ) : (
                   <button onClick={handleVaultDeposit} disabled={depositing}
@@ -447,8 +448,8 @@ function PodDetail({ pod, onClose }) {
                 </p>
                 {withdrawErr && <p className="text-xs text-red-400 mb-2 break-all">{withdrawErr}</p>}
                 {withdrawResult ? (
-                  <p className="text-xs text-emerald-400 font-semibold break-all">
-                    Withdrawn ✓ {withdrawResult.withdrawn} {pod.token}{withdrawResult.simulated ? ' (simulated)' : ''}
+                  <p className="text-xs text-emerald-400 font-semibold break-all inline-flex items-center gap-1">
+                    <IconCheck className="w-3.5 h-3.5 flex-shrink-0" /> Withdrawn {withdrawResult.withdrawn} {pod.token}{withdrawResult.simulated ? ' (simulated)' : ''}
                   </p>
                 ) : (
                   <button onClick={handleVaultWithdraw} disabled={withdrawing}
@@ -529,12 +530,16 @@ function PodDetail({ pod, onClose }) {
                         )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
+                        <span className={`text-xs font-bold px-2 py-1 rounded-lg inline-flex items-center gap-1 ${
                           payStatus === 'paid'    ? 'bg-emerald-500/20 text-emerald-400' :
                           payStatus === 'slashed' ? 'bg-orange-500/20 text-orange-400' :
                                                     'bg-red-500/20 text-red-400'
                         }`}>
-                          {payStatus === 'paid' ? '✓ PAID' : payStatus === 'slashed' ? '⚡ SLASHED' : '✗ UNPAID'}
+                          {payStatus === 'paid'
+                            ? <><IconCheck className="w-3 h-3" /> PAID</>
+                            : payStatus === 'slashed'
+                              ? <><IconBolt className="w-3 h-3" /> SLASHED</>
+                              : <><IconX className="w-3 h-3" /> UNPAID</>}
                         </span>
                         {canSlash && (
                           <button onClick={() => handleSlash(m)} disabled={slashingId === m.user_id}
@@ -614,7 +619,7 @@ function PodDetail({ pod, onClose }) {
         {/* Release success */}
         {releaseTx && (
           <div className="mt-4 p-4 rounded-xl dark:bg-emerald-500/10 bg-emerald-50 border dark:border-emerald-500/30 border-emerald-300">
-            <p className="text-xs font-bold dark:text-emerald-300 text-emerald-700 mb-2">Collateral Released ✓</p>
+            <p className="text-xs font-bold dark:text-emerald-300 text-emerald-700 mb-2 inline-flex items-center gap-1">Collateral Released <IconCheck className="w-3.5 h-3.5" /></p>
             {pod.chain === 'XRPL'
               ? releaseTx.split(',').map(h => h.trim()).filter(Boolean).map(hash => (
                   <a key={hash} href={`${xrplBase}${hash}`} target="_blank" rel="noopener noreferrer"

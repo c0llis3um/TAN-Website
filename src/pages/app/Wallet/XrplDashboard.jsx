@@ -13,6 +13,7 @@ import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
 import { Client, xrpToDrops } from 'xrpl'
 import Card from '@/components/ui/Card'
 import MoonPayButton from '@/components/MoonPayButton'
+import { IconArrowDownLeft, IconArrowUpRight, IconRefresh } from '@/components/ui/Icons'
 
 const BITSO_XRP_URL = 'https://bitso.com/mx/prices/xrp'
 
@@ -151,16 +152,16 @@ function TxRow({ tx }) {
   }[tx.type] ?? tx.type
 
   const color = !success ? 'text-red-400' : isIn ? 'text-emerald-400' : isOut ? 'text-brand-cyan' : 'dark:text-brand-muted text-slate-400'
-  const arrow = isIn ? '↙' : isOut ? '↗' : '↔'
+  const ArrowIcon = isIn ? IconArrowDownLeft : isOut ? IconArrowUpRight : IconRefresh
 
   return (
     <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
       className="flex items-center gap-3 px-4 py-3 border-b dark:border-brand-border/30 border-slate-100 last:border-0 hover:dark:bg-brand-mid/30 hover:bg-slate-50 transition-colors">
-      <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0
+      <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0
         ${isIn ? 'dark:bg-emerald-500/15 bg-emerald-50 text-emerald-400'
                : isOut ? 'dark:bg-brand-blue/15 bg-blue-50 text-brand-cyan'
                : 'dark:bg-brand-dark bg-slate-100 dark:text-brand-muted text-slate-400'}`}>
-        {arrow}
+        <ArrowIcon className="w-4 h-4" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
@@ -251,8 +252,8 @@ export default function XrplDashboard({ wallet, env }) {
           </p>
         </div>
         <button onClick={loadAccount} disabled={acctLoading}
-          className="p-2.5 rounded-xl dark:hover:bg-brand-mid hover:bg-slate-100 transition-colors dark:text-brand-muted text-slate-400 disabled:opacity-40 text-lg">
-          {acctLoading ? '⟳' : '↻'}
+          className="p-2.5 rounded-xl dark:hover:bg-brand-mid hover:bg-slate-100 transition-colors dark:text-brand-muted text-slate-400 disabled:opacity-40">
+          <IconRefresh className={`w-4 h-4 ${acctLoading ? 'animate-spin' : ''}`} />
         </button>
       </div>
 

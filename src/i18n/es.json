@@ -105,7 +105,7 @@
     "duration": "Duración",
     "receives": "Todos reciben",
     "fee": "Tarifa del protocolo",
-    "feeValue": "¡Gratis durante el piloto! 🎉"
+    "feeValue": "¡Gratis durante el piloto!"
   },
   "why": {
     "title": "¿Por qué DeFi Tanda?",
@@ -138,9 +138,9 @@
   "pay": {
     "title": "Paga como quieras",
     "sub": "No necesitas cripto para empezar. Usa lo que ya tienes en tu teléfono.",
-    "fiatTitle": "💳 Compra con Tarjeta o Transferencia",
+    "fiatTitle": "Compra con Tarjeta o Transferencia",
     "fiatBody": "Usa tarjeta de débito o transferencia bancaria para obtener XRP — sin cuenta de exchange. Próximamente.",
-    "walletTitle": "🔗 Conecta tu billetera",
+    "walletTitle": "Conecta tu billetera",
     "walletBody": "¿Ya tienes XRP? Conecta Xaman y paga directo desde tu billetera en segundos.",
     "chooseMethod": "Elige método de pago",
     "googlePay": "Google Pay",
@@ -186,7 +186,7 @@
     "xrpl": {
       "token": "XRP · RLUSD",
       "body": "Liquidación en 3 segundos por una fracción de centavo. Perfecto para pagos semanales de tanda y cobros internacionales.",
-      "best": "⭐ Disponible ahora · Recomendado"
+      "best": "Disponible ahora · Recomendado"
     }
   },
   "xrp": {
@@ -502,8 +502,8 @@
     "cancelPolicy2": "Todos los miembros que se unieron recuperan su depósito.",
     "cancelPolicy3": "El gas para desplegar el contrato no es reembolsable.",
     "cancelPolicy4": "Nadie pierde su contribución — la tanda nunca comenzó.",
-    "metaMaskNote": "🔒 MetaMask te pedirá confirmar dos transacciones.",
-    "xamanNote": "🔒 Xaman confirmará la creación de la garantía.",
+    "metaMaskNote": "MetaMask te pedirá confirmar dos transacciones.",
+    "xamanNote": "Xaman confirmará la creación de la garantía.",
     "connectPrompt": "Conecta tu billetera para crear.",
     "deployBtn": "Crear Tanda →",
     "tokenLabel": "¿Qué usará tu tanda?",

@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import WalletModal from '@/components/WalletModal'
 import useAppStore from '@/store/useAppStore'
 import { onAccountChanged, onChainChanged, removeWalletListeners, disconnectWallet as disconnectProvider } from '@/lib/wallets'
+import { IconWallet, IconChainLink } from '@/components/ui/Icons'
 
 export default function Navbar() {
   const { t, i18n } = useTranslation()
@@ -169,7 +170,7 @@ const handleDisconnect = async () => {
                           onClick={() => { navigate('/app/wallet'); setDropdownOpen(false) }}
                           className="w-full text-left px-4 py-3 text-sm dark:text-brand-text text-slate-700 dark:hover:bg-brand-mid hover:bg-slate-50 transition-colors flex items-center gap-2"
                         >
-                          <span>👛</span> {t('nav.wallet')}
+                          <IconWallet className="w-4 h-4" /> {t('nav.wallet')}
                         </button>
                         <button
                           onClick={() => { navigator.clipboard.writeText(wallet.address); setDropdownOpen(false) }}
@@ -255,11 +256,8 @@ const handleDisconnect = async () => {
 }
 
 function WalletProviderDot({ provider }) {
-  if (provider === 'metamask') {
-    return <span className="text-sm">🦊</span>
-  }
-  if (provider === 'phantom') {
-    return <span className="text-sm">👻</span>
+  if (provider === 'metamask' || provider === 'phantom') {
+    return <IconChainLink className="w-3.5 h-3.5 dark:text-brand-muted text-slate-500" />
   }
   return <span className="w-2 h-2 rounded-full bg-emerald-400" />
 }

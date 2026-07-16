@@ -9,6 +9,11 @@ import useAppStore from '@/store/useAppStore'
 import { createPod, upsertUser, updatePodContract, getUserKycStatus, getPlatformSetting, getTreasuryWallet } from '@/lib/db'
 import { deployPodEVM, sendContribution } from '@/lib/contracts'
 import { safeJson } from '@/lib/http'
+import {
+  IconBadge, IconXrp, IconChainLink, IconCoin, IconBank, IconRefresh,
+  IconClock, IconLock, IconBolt, IconBan, IconCommunity, IconTrendUp,
+  IconCheck, IconWarning,
+} from '@/components/ui/Icons'
 
 // ── Config ───────────────────────────────────────────────────
 
@@ -28,25 +33,25 @@ async function fetchXrpUsdPrice() {
 // Re-add { id: 'Ethereum', label: 'Ethereum', icon: '🔷', note: 'Secure · Widely supported' }
 // once contracts are audited and deployed (see src/contracts/live.json).
 const CHAINS = [
-  { id: 'XRPL',    label: 'XRP Ledger', icon: '🔵', note: 'Very low fees · Fast · RLUSD'   },
+  { id: 'XRPL',    label: 'XRP Ledger', Icon: IconXrp, note: 'Very low fees · Fast · RLUSD'   },
 ]
 
 const CHAIN_TOKENS = {
   Ethereum: [
-    { id: 'ETH',  label: 'ETH',   icon: '🔷', note: 'Native — no approval needed. Price moves together.' },
-    { id: 'USDC', label: 'USDC',  icon: '💵', note: 'Stablecoin — $1 always. No price risk.' },
-    { id: 'USDT', label: 'USDT',  icon: '💚', note: 'Stablecoin — widely accepted.' },
+    { id: 'ETH',  label: 'ETH',   Icon: IconChainLink, note: 'Native — no approval needed. Price moves together.' },
+    { id: 'USDC', label: 'USDC',  Icon: IconCoin,      note: 'Stablecoin — $1 always. No price risk.' },
+    { id: 'USDT', label: 'USDT',  Icon: IconCoin,      note: 'Stablecoin — widely accepted.' },
   ],
   XRPL: [
-    { id: 'RLUSD', label: 'RLUSD', icon: '🔵', note: 'Ripple stablecoin — pegged to USD.' },
-    { id: 'XRP',   label: 'XRP',   icon: '💧', note: 'Native XRP — low fees.' },
+    { id: 'RLUSD', label: 'RLUSD', Icon: IconCoin, note: 'Ripple stablecoin — pegged to USD.' },
+    { id: 'XRP',   label: 'XRP',   Icon: IconXrp,  note: 'Native XRP — low fees.' },
   ],
 }
 
 const YIELD_STRATEGIES = [
   {
     id:      'vault',
-    icon:    '🏦',
+    Icon:    IconBank,
     label:   'Vault (XLS-66d)',
     apy:     '~4–8% APY',
     risk:    'low',
@@ -56,7 +61,7 @@ const YIELD_STRATEGIES = [
   },
   {
     id:      'amm',
-    icon:    '🔁',
+    Icon:    IconRefresh,
     label:   'AMM Pool (XLS-30)',
     apy:     '~5–15% APY',
     risk:    'medium',
@@ -414,7 +419,7 @@ export default function CreatePod() {
               transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
               <motion.div className="w-20 h-20 rounded-full bg-gradient-brand mx-auto flex items-center justify-center mb-6 shadow-glow"
                 initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 15 }}>
-                <span className="text-4xl text-white">✓</span>
+                <IconCheck className="w-9 h-9 text-white" />
               </motion.div>
               <h2 className="text-2xl font-extrabold dark:text-white text-slate-900 mb-2">{t('create.created')}</h2>
               {result.simulated && <p className="text-xs text-amber-400 mb-2">{t('create.simulated')}</p>}
@@ -425,7 +430,7 @@ export default function CreatePod() {
           ) : error ? (
             <motion.div key="error" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
               <div className="w-16 h-16 rounded-full bg-red-500/20 border-2 border-red-500/40 mx-auto flex items-center justify-center mb-5">
-                <span className="text-3xl">⚠</span>
+                <IconWarning className="w-7 h-7 text-red-400" />
               </div>
               <h2 className="text-xl font-extrabold dark:text-white text-slate-900 mb-3">{t('create.error')}</h2>
               <div className="p-4 rounded-2xl dark:bg-red-500/10 bg-red-50 border border-red-500/20 text-sm text-red-400 text-left mb-5">
@@ -441,7 +446,7 @@ export default function CreatePod() {
             <motion.div key="progress" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <motion.div className="w-20 h-20 rounded-full bg-gradient-brand mx-auto flex items-center justify-center mb-8 shadow-glow"
                 animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}>
-                <span className="text-3xl">⚡</span>
+                <IconBolt className="w-7 h-7 text-white" />
               </motion.div>
               <div className="space-y-3 text-left max-w-xs mx-auto">
                 {DEPLOY_STEPS.filter(s => s.key !== 'done').map((s, i) => {
@@ -457,7 +462,7 @@ export default function CreatePod() {
                         done   ? 'bg-emerald-400 border-emerald-400 text-white'
                         : active ? 'border-brand-blue animate-pulse'
                         : 'dark:border-brand-border border-slate-300'}`}>
-                        {done ? '✓' : i + 1}
+                        {done ? <IconCheck className="w-3 h-3" /> : i + 1}
                       </span>
                       {s.label}
                     </div>
@@ -499,7 +504,7 @@ export default function CreatePod() {
               : 'dark:text-brand-muted text-slate-400'}`}>
               <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${
                 i === step ? 'bg-white/20' : i < step ? 'bg-emerald-400 text-white' : 'dark:bg-brand-border bg-slate-200'}`}>
-                {i < step ? '✓' : i + 1}
+                {i < step ? <IconCheck className="w-3 h-3" /> : i + 1}
               </span>
               <span className="hidden sm:inline">{STEP_LABEL_MAP[id]}</span>
             </div>
@@ -519,13 +524,13 @@ export default function CreatePod() {
 
               <div className="space-y-4 mb-6">
                 {[
-                  { title: t('create.rules.rule1Title'), body: t('create.rules.rule1Body'), icon: '⏰' },
-                  { title: t('create.rules.rule2Title'), body: t('create.rules.rule2Body'), icon: '🔒' },
-                  { title: t('create.rules.rule3Title'), body: t('create.rules.rule3Body'), icon: '⚡' },
-                  { title: t('create.rules.rule4Title'), body: t('create.rules.rule4Body'), icon: '🚫' },
+                  { title: t('create.rules.rule1Title'), body: t('create.rules.rule1Body'), Icon: IconClock },
+                  { title: t('create.rules.rule2Title'), body: t('create.rules.rule2Body'), Icon: IconLock },
+                  { title: t('create.rules.rule3Title'), body: t('create.rules.rule3Body'), Icon: IconBolt },
+                  { title: t('create.rules.rule4Title'), body: t('create.rules.rule4Body'), Icon: IconBan },
                 ].map(r => (
                   <div key={r.title} className="flex gap-3 p-3 rounded-xl dark:bg-brand-dark bg-slate-50 border dark:border-brand-border border-slate-200">
-                    <span className="text-xl flex-shrink-0 mt-0.5">{r.icon}</span>
+                    <r.Icon className="w-5 h-5 flex-shrink-0 mt-0.5 dark:text-brand-text text-slate-600" />
                     <div>
                       <p className="text-sm font-bold dark:text-white text-slate-900 mb-0.5">{r.title}</p>
                       <p className="text-xs dark:text-brand-muted text-slate-500">{r.body}</p>
@@ -597,7 +602,7 @@ export default function CreatePod() {
                     className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
                       form.chain === c.id ? 'border-brand-blue/60 dark:bg-brand-blue/10 bg-blue-50'
                       : 'dark:bg-brand-darker dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
-                    <span className="text-2xl">{c.icon}</span>
+                    <IconBadge size="sm"><c.Icon /></IconBadge>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold dark:text-white text-slate-900">{c.label}</span>
@@ -633,7 +638,7 @@ export default function CreatePod() {
                         disabled ? 'dark:bg-brand-darker/50 bg-slate-50 dark:border-brand-border/50 border-slate-200 opacity-50 cursor-not-allowed'
                         : form.token === tok.id ? 'border-brand-blue/60 dark:bg-brand-blue/10 bg-blue-50'
                         : 'dark:bg-brand-darker dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
-                      <span className="text-2xl">{tok.icon}</span>
+                      <IconBadge size="sm"><tok.Icon /></IconBadge>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className="font-bold dark:text-white text-slate-900">{tok.label}</span>
@@ -674,13 +679,13 @@ export default function CreatePod() {
                 {[
                   {
                     id:    'standard',
-                    icon:  '🤝',
+                    Icon:  IconCommunity,
                     label: t('create.typeStandard'),
                     note:  t('create.typeStandardNote'),
                   },
                   {
                     id:    'yield',
-                    icon:  '📈',
+                    Icon:  IconTrendUp,
                     label: t('create.typeYield'),
                     note:  t('create.typeYieldNote'),
                     badges: [{ label: 'Min 12 months', variant: 'blue' }, { label: 'XRPL only', variant: 'muted' }],
@@ -695,7 +700,7 @@ export default function CreatePod() {
                         disabled ? 'dark:bg-brand-darker/50 bg-slate-50 dark:border-brand-border/50 border-slate-200 opacity-50 cursor-not-allowed'
                         : form.tandaType === opt.id ? 'border-brand-blue/60 dark:bg-brand-blue/10 bg-blue-50'
                         : 'dark:bg-brand-darker dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
-                      <span className="text-2xl">{opt.icon}</span>
+                      <IconBadge size="sm"><opt.Icon /></IconBadge>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <span className="font-bold dark:text-white text-slate-900">{opt.label}</span>
@@ -731,7 +736,7 @@ export default function CreatePod() {
                     className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
                       form.yieldStrategy === s.id ? 'border-brand-blue/60 dark:bg-brand-blue/10 bg-blue-50'
                       : 'dark:bg-brand-darker dark:border-brand-border border-slate-200 dark:hover:border-brand-blue/30 hover:border-brand-blue/30'}`}>
-                    <span className="text-2xl">{s.icon}</span>
+                    <IconBadge size="sm"><s.Icon /></IconBadge>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <span className="font-bold dark:text-white text-slate-900">{s.label}</span>
@@ -984,8 +989,9 @@ export default function CreatePod() {
                 </div>
               )}
 
-              <div className="p-3 rounded-xl dark:bg-brand-blue/5 bg-blue-50 border dark:border-brand-blue/20 border-blue-200 text-xs dark:text-brand-text text-slate-700">
-                {form.chain === 'Ethereum' ? t('create.metaMaskNote') : t('create.xamanNote')}
+              <div className="p-3 rounded-xl dark:bg-brand-blue/5 bg-blue-50 border dark:border-brand-blue/20 border-blue-200 text-xs dark:text-brand-text text-slate-700 flex items-start gap-1.5">
+                <IconLock className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                <span>{form.chain === 'Ethereum' ? t('create.metaMaskNote') : t('create.xamanNote')}</span>
               </div>
             </Card>
 

@@ -5,11 +5,12 @@ import Badge from '@/components/ui/Badge'
 import { adminGetTreasuryWallets, adminGetTreasuryProposals, adminCreateTreasuryProposal, adminUpsertTreasuryWallet } from '@/lib/db'
 import { setFactoryTreasury } from '@/lib/contracts'
 import useAppStore from '@/store/useAppStore'
+import { IconBadge, IconXrp, IconChainLink, IconLock, IconCheck, IconWarning } from '@/components/ui/Icons'
 
 const CHAIN_META = {
-  XRPL:     { label: 'XRP Ledger',      icon: '🔵', color: '#006aff' },
-  Ethereum: { label: 'Ethereum',        icon: '🟣', color: '#627EEA' },
-  Solana:   { label: 'Solana',          icon: '💜', color: '#9945FF' },
+  XRPL:     { label: 'XRP Ledger',      Icon: IconXrp,       color: '#006aff' },
+  Ethereum: { label: 'Ethereum',        Icon: IconChainLink, color: '#627EEA' },
+  Solana:   { label: 'Solana',          Icon: IconChainLink, color: '#9945FF' },
 }
 
 const stagger = { visible: { transition: { staggerChildren: 0.08 } } }
@@ -63,7 +64,7 @@ export default function AdminTreasury() {
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
         className="p-4 rounded-2xl border dark:bg-brand-blue/5 bg-blue-50 dark:border-brand-blue/20 border-blue-200 flex items-start gap-3"
       >
-        <span className="text-xl mt-0.5">🔒</span>
+        <IconLock className="w-5 h-5 mt-0.5 text-brand-cyan flex-shrink-0" />
         <div className="text-sm dark:text-brand-text text-slate-700">
           <span className="font-bold">These are the wallets where pod creation fees are collected.</span>{' '}
           Each chain has one active wallet. Changes are recorded in the proposal log below.
@@ -79,13 +80,13 @@ export default function AdminTreasury() {
         <motion.div variants={stagger} initial="hidden" animate="visible" className="grid lg:grid-cols-3 gap-5">
           {/* Show existing wallets */}
           {wallets.map(w => {
-            const meta = CHAIN_META[w.chain] ?? { label: w.chain, icon: '🔗', color: '#5a8a9f' }
+            const meta = CHAIN_META[w.chain] ?? { label: w.chain, Icon: IconChainLink, color: '#5a8a9f' }
             return (
               <motion.div key={w.chain} variants={item}>
                 <Card hover={false} className="p-6">
                   <div className="flex items-center gap-3 mb-5">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style={{ background: `${meta.color}20` }}>
-                      {meta.icon}
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${meta.color}20`, color: meta.color }}>
+                      <meta.Icon className="w-5 h-5" />
                     </div>
                     <div>
                       <p className="font-bold dark:text-white text-slate-900 text-sm">{meta.label}</p>
@@ -109,7 +110,7 @@ export default function AdminTreasury() {
                       onClick={() => handleCopy(w.address, w.chain)}
                       className="flex-1 py-2 rounded-xl dark:bg-brand-mid bg-slate-100 dark:text-brand-text text-slate-700 text-xs font-semibold hover:opacity-80 transition-opacity"
                     >
-                      {copied === w.chain ? '✓ Copied' : 'Copy Address'}
+                      {copied === w.chain ? <span className="inline-flex items-center gap-1"><IconCheck className="w-3.5 h-3.5" /> Copied</span> : 'Copy Address'}
                     </button>
                     <button
                       onClick={() => setChangeModal({ mode: 'change', chain: w.chain, currentAddress: w.address, label: meta.label })}
@@ -131,8 +132,8 @@ export default function AdminTreasury() {
                 <Card hover={false} className="p-6 border-dashed opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
                   onClick={() => setChangeModal({ mode: 'add', chain, currentAddress: '', label: meta.label })}>
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg" style={{ background: `${meta.color}20` }}>
-                      {meta.icon}
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${meta.color}20`, color: meta.color }}>
+                      <meta.Icon className="w-5 h-5" />
                     </div>
                     <div>
                       <p className="font-bold dark:text-white text-slate-900 text-sm">{meta.label}</p>
@@ -301,8 +302,9 @@ function WalletModal({ mode, chain, chainLabel, currentAddress, adminId, onClose
               {error && <p className="text-xs text-red-400 dark:bg-red-500/10 bg-red-50 p-3 rounded-xl">{error}</p>}
             </div>
 
-            <div className="p-3 rounded-xl dark:bg-amber-500/10 bg-amber-50 dark:border-amber-500/20 border border-amber-200 text-xs dark:text-amber-400 text-amber-600 mb-5">
-              ⚠ This address will receive all {chain} creation fees immediately after saving.
+            <div className="p-3 rounded-xl dark:bg-amber-500/10 bg-amber-50 dark:border-amber-500/20 border border-amber-200 text-xs dark:text-amber-400 text-amber-600 mb-5 flex items-start gap-1.5">
+              <IconWarning className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+              <span>This address will receive all {chain} creation fees immediately after saving.</span>
             </div>
 
             <div className="flex gap-3">
@@ -320,7 +322,7 @@ function WalletModal({ mode, chain, chainLabel, currentAddress, adminId, onClose
           </>
         ) : (
           <div className="text-center py-6">
-            <div className="text-5xl mb-4">✅</div>
+            <IconBadge size="lg" className="mx-auto mb-4"><IconCheck /></IconBadge>
             <h2 className="text-xl font-extrabold dark:text-white text-slate-900 mb-2">Wallet Saved</h2>
             <p className="text-sm dark:text-brand-muted text-slate-500 mb-2">
               The {chain} treasury wallet has been updated. All future fees will go to the new address.

@@ -9,6 +9,7 @@ import useAppStore from '@/store/useAppStore'
 import { getPod, getPodPayments, recordPayment, maybeAdvanceCycle, getUser } from '@/lib/db'
 import { sendContribution, tandaPodContribute } from '@/lib/contracts'
 import { safeJson } from '@/lib/http'
+import { IconBadge, IconWarning, IconCheck, IconChainLink, IconBolt } from '@/components/ui/Icons'
 
 function shareWa(text) { window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank') }
 function shareTg(url, text) { window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank') }
@@ -216,7 +217,7 @@ export default function Pay() {
   if (!pod) {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
-        <p className="text-4xl mb-4">⚠</p>
+        <IconBadge size="lg" className="mx-auto mb-4"><IconWarning /></IconBadge>
         <h2 className="text-xl font-bold dark:text-white text-slate-900 mb-2">{t('pay.notFound')}</h2>
         <Button onClick={() => navigate('/app')}>{t('common.back')}</Button>
       </div>
@@ -240,7 +241,7 @@ export default function Pay() {
           <motion.div key="defaulted" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}>
             <Card hover={false} className="p-8 text-center">
               <div className="w-20 h-20 rounded-full bg-red-500/15 border border-red-500/30 mx-auto flex items-center justify-center mb-5">
-                <span className="text-4xl">⚠</span>
+                <IconWarning className="w-9 h-9 text-red-400" />
               </div>
               <h2 className="text-2xl font-extrabold dark:text-white text-slate-900 mb-2">
                 {t('pay.defaulted')}
@@ -261,7 +262,7 @@ export default function Pay() {
           <motion.div key="already-paid" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}>
             <Card hover={false} className="p-8 text-center">
               <div className="w-20 h-20 rounded-full bg-emerald-500/15 border border-emerald-500/30 mx-auto flex items-center justify-center mb-5">
-                <span className="text-4xl">✓</span>
+                <IconCheck className="w-9 h-9 text-emerald-400" />
               </div>
               <h2 className="text-2xl font-extrabold dark:text-white text-slate-900 mb-2">
                 {t('pay.alreadyPaid')}
@@ -304,7 +305,7 @@ export default function Pay() {
                 <motion.button whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}
                   onClick={() => handlePay('wallet')}
                   className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-brand-blue/50 text-brand-cyan font-bold text-base hover:bg-brand-blue/10 hover:border-brand-blue transition-all">
-                  🔗 {t('pay.payFromWallet')}
+                  <IconChainLink className="w-4 h-4" /> {t('pay.payFromWallet')}
                   <span className="text-xs font-normal dark:text-brand-muted text-slate-400">{shortAddr}</span>
                 </motion.button>
 
@@ -333,7 +334,7 @@ export default function Pay() {
             className="text-center py-20">
             <motion.div className="w-24 h-24 rounded-full bg-gradient-brand mx-auto flex items-center justify-center shadow-glow mb-8"
               animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}>
-              <span className="text-4xl">⚡</span>
+              <IconBolt className="w-9 h-9 text-white" />
             </motion.div>
             <h2 className="text-2xl font-extrabold dark:text-white text-slate-900 mb-2">{t('pay.processing')}</h2>
             <p className="dark:text-brand-muted text-slate-500 text-sm">{t('pay.confirming', { chain: pod.chain })}</p>
@@ -356,9 +357,9 @@ export default function Pay() {
               <motion.div className="w-24 h-24 rounded-full bg-gradient-brand mx-auto flex items-center justify-center mb-6 shadow-glow"
                 initial={{ scale: 0 }} animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.1 }}>
-                <motion.span className="text-5xl"
+                <motion.span
                   initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3 }}>✓</motion.span>
+                  transition={{ delay: 0.3 }}><IconCheck className="w-11 h-11 text-white" /></motion.span>
               </motion.div>
 
               <motion.h2 className="text-3xl font-extrabold dark:text-white text-slate-900 mb-2"

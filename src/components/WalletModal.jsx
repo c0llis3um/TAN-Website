@@ -6,6 +6,7 @@ import {
   disconnectWallet as disconnectProvider,
 } from '@/lib/wallets'
 import useAppStore from '@/store/useAppStore'
+import { IconCheck } from '@/components/ui/Icons'
 
 // MetaMask/Ethereum hidden for now — no TandaFactory/TandaPod contracts deployed to
 // mainnet yet. Re-add once contracts are audited and deployed.
@@ -80,7 +81,7 @@ export default function WalletModal({ onClose }) {
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 15 }}
               >
-                <span className="text-3xl">✓</span>
+                <IconCheck className="w-8 h-8 text-white" />
               </motion.div>
               <h3 className="text-lg font-extrabold dark:text-white text-slate-900 mb-1">Connected!</h3>
               <p className="font-mono text-xs dark:text-brand-muted text-slate-400">

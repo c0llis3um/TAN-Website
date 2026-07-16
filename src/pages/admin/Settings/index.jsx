@@ -4,6 +4,7 @@ import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import useAppStore from '@/store/useAppStore'
 import { getPlatformSetting, setPlatformSetting } from '@/lib/db'
+import { IconCheck } from '@/components/ui/Icons'
 
 const ADMINS = [
   { email: 'alice@defitanda.app', role: 'super_admin', name: 'Alice V.',  added: '2025-11-01', active: true  },
@@ -75,7 +76,7 @@ export default function AdminSettings() {
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
               className="px-6 py-2.5 rounded-xl bg-gradient-brand text-white font-bold text-sm shadow-glow-sm hover:shadow-glow transition-all"
             >
-              {saved ? '✓ Saved' : 'Save Changes'}
+              {saved ? <span className="inline-flex items-center gap-1.5"><IconCheck className="w-4 h-4" /> Saved</span> : 'Save Changes'}
             </motion.button>
             <p className="text-xs dark:text-brand-muted text-slate-400">Changes require super_admin confirmation.</p>
           </div>

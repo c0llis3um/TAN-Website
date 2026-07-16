@@ -1,6 +1,11 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import Timeline from '@/components/Timeline'
+import {
+  IconBadge, IconBolt, IconCoin, IconLock, IconGlobe, IconCheck, IconLaptop,
+  IconBuilding, IconScale, IconMegaphone, IconWarning, IconBan, IconClipboard,
+  IconShield, IconPhone, IconRefresh, IconTarget, IconChart, IconShare,
+} from '@/components/ui/Icons'
 
 /* ── animation helpers ── */
 const fadeUp = (delay = 0) => ({
@@ -59,7 +64,7 @@ function RoadmapItem({ phase, title, items, done = false, active = false, delay 
           active ? 'bg-brand-blue border-brand-blue text-white shadow-glow-sm' :
                    'dark:bg-brand-mid bg-slate-100 dark:border-brand-border border-slate-300 dark:text-brand-muted text-slate-400'
         }`}>
-          {done ? '✓' : phase}
+          {done ? <IconCheck className="w-4 h-4" /> : phase}
         </div>
         <div className="w-0.5 flex-1 dark:bg-brand-border bg-slate-200 mt-2" />
       </div>
@@ -83,10 +88,10 @@ function RoadmapItem({ phase, title, items, done = false, active = false, delay 
   )
 }
 
-function UseCard({ icon, title, amount, pct, delay = 0 }) {
+function UseCard({ Icon, title, amount, pct, delay = 0 }) {
   return (
     <FadeUp delay={delay} className="dark:bg-brand-mid/60 bg-white rounded-2xl border dark:border-brand-border border-slate-200 p-5 shadow-glow-sm">
-      <div className="text-3xl mb-3">{icon}</div>
+      <IconBadge className="mb-3"><Icon /></IconBadge>
       <div className="font-bold dark:text-white text-slate-900 mb-1">{title}</div>
       <div className="text-2xl font-black bg-gradient-brand bg-clip-text text-transparent mb-3">{amount}</div>
       <div className="w-full dark:bg-brand-border/40 bg-slate-200 rounded-full h-1.5">
@@ -166,13 +171,13 @@ export default function Pitch() {
             className="flex flex-wrap justify-center gap-4 text-sm"
           >
             {[
-              { label: 'Live on XRPL Testnet', icon: '⚡' },
-              { label: 'RLUSD + XRP', icon: '🪙' },
-              { label: 'Smart Contract Secured', icon: '🔒' },
-              { label: 'Chicago · Global', icon: '🌎' },
+              { label: 'Live on XRPL Testnet', Icon: IconBolt },
+              { label: 'RLUSD + XRP', Icon: IconCoin },
+              { label: 'Smart Contract Secured', Icon: IconLock },
+              { label: 'Chicago · Global', Icon: IconGlobe },
             ].map((b, i) => (
               <span key={i} className="flex items-center gap-2 px-4 py-2 rounded-xl dark:bg-brand-mid/60 bg-white border dark:border-brand-border border-slate-200 dark:text-brand-text text-slate-700 shadow-sm">
-                <span>{b.icon}</span> {b.label}
+                <b.Icon className="w-4 h-4" /> {b.label}
               </span>
             ))}
           </motion.div>
@@ -231,13 +236,13 @@ export default function Pitch() {
 
           <div className="grid sm:grid-cols-3 gap-6">
             {[
-              { icon: '🚨', title: 'Organizer fraud', body: 'The organizer holds all the money. One bad actor wipes out the entire group. No contract, no recourse.' },
-              { icon: '👻', title: 'Ghost members', body: 'Members collect their payout then disappear. No enforcement mechanism. Trust is the only guarantee — and it fails.' },
-              { icon: '📓', title: 'Paper records', body: 'Disputes with no proof. No payment history. No transparency. Communities lose billions to informal record-keeping.' },
+              { Icon: IconWarning, title: 'Organizer fraud', body: 'The organizer holds all the money. One bad actor wipes out the entire group. No contract, no recourse.' },
+              { Icon: IconBan, title: 'Ghost members', body: 'Members collect their payout then disappear. No enforcement mechanism. Trust is the only guarantee — and it fails.' },
+              { Icon: IconClipboard, title: 'Paper records', body: 'Disputes with no proof. No payment history. No transparency. Communities lose billions to informal record-keeping.' },
             ].map((p, i) => (
               <FadeUp key={i} delay={i * 0.1}>
                 <div className="dark:bg-brand-mid/60 bg-white rounded-2xl border dark:border-brand-border border-slate-200 p-6 h-full shadow-sm">
-                  <div className="text-4xl mb-4">{p.icon}</div>
+                  <IconBadge className="mb-4"><p.Icon /></IconBadge>
                   <div className="font-bold dark:text-white text-slate-900 mb-2">{p.title}</div>
                   <div className="text-sm dark:text-brand-muted text-slate-600">{p.body}</div>
                 </div>
@@ -266,16 +271,16 @@ export default function Pitch() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
-              { icon: '🔒', title: 'No one holds the money', body: 'Smart contract custody. The organizer manages the group — but never touches funds.' },
-              { icon: '⚡', title: 'Settles in 3 seconds', body: 'Built on XRP Ledger. $0.001 per transaction. Perfect for weekly savings circles.' },
-              { icon: '💵', title: 'RLUSD stable payouts', body: 'Members can contribute and receive in RLUSD — Ripple\'s stablecoin, no crypto volatility.' },
-              { icon: '🛡️', title: 'Collateral enforcement', body: '2× security deposit locked on-chain. Members can\'t collect and disappear.' },
-              { icon: '🌐', title: 'Borderless payouts', body: 'Send your payout to family anywhere in seconds. No Western Union. Near-zero fees.' },
-              { icon: '📱', title: 'WhatsApp + Xaman native', body: 'Invite members via WhatsApp. Pay via Xaman. Works where your community already lives.' },
+              { Icon: IconLock, title: 'No one holds the money', body: 'Smart contract custody. The organizer manages the group — but never touches funds.' },
+              { Icon: IconBolt, title: 'Settles in 3 seconds', body: 'Built on XRP Ledger. $0.001 per transaction. Perfect for weekly savings circles.' },
+              { Icon: IconCoin, title: 'RLUSD stable payouts', body: 'Members can contribute and receive in RLUSD — Ripple\'s stablecoin, no crypto volatility.' },
+              { Icon: IconShield, title: 'Collateral enforcement', body: '2× security deposit locked on-chain. Members can\'t collect and disappear.' },
+              { Icon: IconGlobe, title: 'Borderless payouts', body: 'Send your payout to family anywhere in seconds. No Western Union. Near-zero fees.' },
+              { Icon: IconPhone, title: 'WhatsApp + Xaman native', body: 'Invite members via WhatsApp. Pay via Xaman. Works where your community already lives.' },
             ].map((s, i) => (
               <FadeUp key={i} delay={i * 0.08}>
                 <div className="dark:bg-brand-mid/40 bg-white rounded-2xl border dark:border-brand-border border-slate-200 p-5 shadow-sm h-full">
-                  <div className="text-3xl mb-3">{s.icon}</div>
+                  <IconBadge className="mb-3"><s.Icon /></IconBadge>
                   <div className="font-bold dark:text-white text-slate-900 mb-1 text-sm">{s.title}</div>
                   <div className="text-xs dark:text-brand-muted text-slate-600">{s.body}</div>
                 </div>
@@ -316,14 +321,14 @@ export default function Pitch() {
 
             <div className="space-y-4">
               {[
-                { icon: '🇲🇽', stat: '#2', label: 'US city for Mexican-Americans', sub: 'After Los Angeles' },
-                { icon: '🏙️', stat: '2.7M', label: 'Chicago city population', sub: '29% Latino, growing' },
-                { icon: '🇨🇳', stat: 'Chinatown', label: 'One of the Midwest\'s largest Chinese communities', sub: 'Pilsen · Bridgeport · suburban clusters' },
-                { icon: '💸', stat: '$8B+', label: 'Estimated annual tanda volume', sub: 'Illinois alone, informal & uncaptured' },
+                { flag: '🇲🇽', stat: '#2', label: 'US city for Mexican-Americans', sub: 'After Los Angeles' },
+                { Icon: IconBuilding, stat: '2.7M', label: 'Chicago city population', sub: '29% Latino, growing' },
+                { flag: '🇨🇳', stat: 'Chinatown', label: 'One of the Midwest\'s largest Chinese communities', sub: 'Pilsen · Bridgeport · suburban clusters' },
+                { Icon: IconCoin, stat: '$8B+', label: 'Estimated annual tanda volume', sub: 'Illinois alone, informal & uncaptured' },
               ].map((c, i) => (
                 <FadeUp key={i} delay={i * 0.1}>
                   <div className="flex items-center gap-4 dark:bg-brand-mid/60 bg-white rounded-2xl border dark:border-brand-border border-slate-200 p-4 shadow-sm">
-                    <div className="text-3xl">{c.icon}</div>
+                    {c.flag ? <div className="text-3xl">{c.flag}</div> : <IconBadge size="sm"><c.Icon /></IconBadge>}
                     <div>
                       <div className="font-black text-xl bg-gradient-brand bg-clip-text text-transparent">{c.stat}</div>
                       <div className="text-sm font-bold dark:text-white text-slate-900">{c.label}</div>
@@ -424,16 +429,16 @@ export default function Pitch() {
 
           <div className="grid sm:grid-cols-2 gap-6 mb-12">
             {[
-              { icon: '✅', title: 'XRPL Testnet Live', body: 'Full tanda lifecycle deployed — create, join, pay, payout, claim collateral. Real smart contract logic on XRPL devnet.' },
-              { icon: '✅', title: 'RLUSD + XRP Support', body: 'Dual-token system live. Members can save and receive payouts in Ripple\'s regulated stablecoin or native XRP.' },
-              { icon: '✅', title: 'Xaman Wallet Integration', body: 'One-tap payments via Xaman (XUMM). Native XRPL wallet, 10M+ users globally.' },
-              { icon: '✅', title: 'Full Web App', body: 'Dashboard, pod creation, payout tracking, collateral flow, WhatsApp/Telegram sharing — all built and live.' },
-              { icon: '✅', title: 'Multilingual (ES · EN · 中文)', body: 'Full Spanish, English, and Mandarin support — targeting our three core communities from day one.' },
-              { icon: '🔄', title: 'Waitlist Growing', body: 'Community members signing up daily. Chicago-first launch strategy targeting existing tanda organizers.' },
+              { Icon: IconCheck, title: 'XRPL Testnet Live', body: 'Full tanda lifecycle deployed — create, join, pay, payout, claim collateral. Real smart contract logic on XRPL devnet.' },
+              { Icon: IconCheck, title: 'RLUSD + XRP Support', body: 'Dual-token system live. Members can save and receive payouts in Ripple\'s regulated stablecoin or native XRP.' },
+              { Icon: IconCheck, title: 'Xaman Wallet Integration', body: 'One-tap payments via Xaman (XUMM). Native XRPL wallet, 10M+ users globally.' },
+              { Icon: IconCheck, title: 'Full Web App', body: 'Dashboard, pod creation, payout tracking, collateral flow, WhatsApp/Telegram sharing — all built and live.' },
+              { Icon: IconCheck, title: 'Multilingual (ES · EN · 中文)', body: 'Full Spanish, English, and Mandarin support — targeting our three core communities from day one.' },
+              { Icon: IconRefresh, title: 'Waitlist Growing', body: 'Community members signing up daily. Chicago-first launch strategy targeting existing tanda organizers.' },
             ].map((t, i) => (
               <FadeUp key={i} delay={i * 0.08}>
                 <div className="flex gap-4 dark:bg-brand-mid/50 bg-white rounded-2xl border dark:border-brand-border border-slate-200 p-5 shadow-sm">
-                  <div className="text-2xl">{t.icon}</div>
+                  <IconBadge size="sm"><t.Icon /></IconBadge>
                   <div>
                     <div className="font-bold dark:text-white text-slate-900 text-sm mb-1">{t.title}</div>
                     <div className="text-xs dark:text-brand-muted text-slate-600">{t.body}</div>
@@ -468,21 +473,21 @@ export default function Pitch() {
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-14">
-            <UseCard icon="👩‍💻" title="Engineering & Product" amount="$400K" pct="40%" delay={0.1} />
-            <UseCard icon="📣" title="Community & Growth" amount="$250K" pct="25%" delay={0.2} />
-            <UseCard icon="⚖️" title="Legal & Compliance" amount="$150K" pct="15%" delay={0.3} />
-            <UseCard icon="🏗️" title="Ops & Infrastructure" amount="$200K" pct="20%" delay={0.4} />
+            <UseCard Icon={IconLaptop} title="Engineering & Product" amount="$400K" pct="40%" delay={0.1} />
+            <UseCard Icon={IconMegaphone} title="Community & Growth" amount="$250K" pct="25%" delay={0.2} />
+            <UseCard Icon={IconScale} title="Legal & Compliance" amount="$150K" pct="15%" delay={0.3} />
+            <UseCard Icon={IconBuilding} title="Ops & Infrastructure" amount="$200K" pct="20%" delay={0.4} />
           </div>
 
           <div className="grid sm:grid-cols-3 gap-5">
             {[
-              { icon: '🎯', title: '18-month runway', body: 'From seed close to Series A readiness — mainnet live, first cohort of active users, revenue model validated.' },
-              { icon: '📊', title: 'Milestones unlocked', body: '1,000 active tanda groups · $5M total value locked · 10,000 registered users · 3 city markets.' },
-              { icon: '🤝', title: 'Strategic fit', body: 'Fenbushi\'s portfolio and reach in the Chinese and Asian DeFi ecosystem is the exact distribution channel DeFi Tanda needs to scale in Singapore and SE Asia.' },
+              { Icon: IconTarget, title: '18-month runway', body: 'From seed close to Series A readiness — mainnet live, first cohort of active users, revenue model validated.' },
+              { Icon: IconChart, title: 'Milestones unlocked', body: '1,000 active tanda groups · $5M total value locked · 10,000 registered users · 3 city markets.' },
+              { Icon: IconShare, title: 'Strategic fit', body: 'Fenbushi\'s portfolio and reach in the Chinese and Asian DeFi ecosystem is the exact distribution channel DeFi Tanda needs to scale in Singapore and SE Asia.' },
             ].map((m, i) => (
               <FadeUp key={i} delay={i * 0.1}>
                 <div className="dark:bg-brand-mid/60 bg-white rounded-2xl border dark:border-brand-border border-slate-200 p-6 shadow-sm h-full">
-                  <div className="text-3xl mb-3">{m.icon}</div>
+                  <IconBadge className="mb-3"><m.Icon /></IconBadge>
                   <div className="font-bold dark:text-white text-slate-900 mb-2">{m.title}</div>
                   <div className="text-sm dark:text-brand-muted text-slate-600">{m.body}</div>
                 </div>
@@ -508,13 +513,13 @@ export default function Pitch() {
           </FadeUp>
           <div className="grid sm:grid-cols-3 gap-6">
             {[
-              { icon: '🌏', title: 'Asia distribution', body: 'Direct access to the Chinese and SE Asian communities DeFi Tanda is built for.' },
-              { icon: '🏗️', title: 'DeFi expertise', body: 'Protocol-level knowledge to accelerate our XRPL integration and cross-chain roadmap.' },
-              { icon: '🤝', title: 'Ecosystem network', body: 'Portfolio synergies for on-ramp partners, stablecoin integrations, and cross-border payment rails.' },
+              { Icon: IconGlobe, title: 'Asia distribution', body: 'Direct access to the Chinese and SE Asian communities DeFi Tanda is built for.' },
+              { Icon: IconBuilding, title: 'DeFi expertise', body: 'Protocol-level knowledge to accelerate our XRPL integration and cross-chain roadmap.' },
+              { Icon: IconShare, title: 'Ecosystem network', body: 'Portfolio synergies for on-ramp partners, stablecoin integrations, and cross-border payment rails.' },
             ].map((w, i) => (
               <FadeUp key={i} delay={i * 0.1}>
                 <div className="dark:bg-brand-mid/40 bg-white rounded-2xl border dark:border-brand-border border-slate-200 p-5 shadow-sm">
-                  <div className="text-3xl mb-3">{w.icon}</div>
+                  <IconBadge className="mb-3"><w.Icon /></IconBadge>
                   <div className="font-bold dark:text-white text-slate-900 mb-1 text-sm">{w.title}</div>
                   <div className="text-xs dark:text-brand-muted text-slate-600">{w.body}</div>
                 </div>
@@ -534,7 +539,7 @@ export default function Pitch() {
             transition={{ duration: 0.7 }}
             viewport={{ once: true }}
           >
-            <div className="text-6xl mb-6">🤝</div>
+            <IconBadge size="lg" className="mx-auto mb-6"><IconShare /></IconBadge>
             <h2 className="text-5xl font-black dark:text-white text-slate-900 mb-6">
               Let's build the future of<br />
               <span className="bg-gradient-brand bg-clip-text text-transparent">community finance.</span>

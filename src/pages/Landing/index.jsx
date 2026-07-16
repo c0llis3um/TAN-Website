@@ -9,7 +9,7 @@ import Timeline from '@/components/Timeline'
 import {
   IconBadge, IconCommunity, IconCard, IconSparkle, IconShield, IconPhone,
   IconGlobe, IconClipboard, IconChat, IconLock, IconBolt, IconChart, IconBank,
-  IconDownload, IconWallet, IconShare, IconXrp,
+  IconDownload, IconWallet, IconShare, IconXrp, IconChainLink, IconStar,
 } from '@/components/ui/Icons'
 
 const WORDS = ['Tanda','Osusu','Hui','Juntas','Arisan','Stokvel','Pandeiros','Pollas']
@@ -293,6 +293,7 @@ export default function Landing() {
           <div className="grid md:grid-cols-2 gap-6">
             <FadeUp delay={0.15}>
               <Card className="p-8 text-left h-full">
+                <IconBadge className="mb-3"><IconCard /></IconBadge>
                 <h4 className="text-lg font-bold dark:text-white text-slate-900 mb-3">{t('pay.fiatTitle')}</h4>
                 <p className="dark:text-brand-muted text-slate-500 text-sm mb-6 leading-relaxed">{t('pay.fiatBody')}</p>
                 <div className="flex flex-wrap gap-2">
@@ -306,6 +307,7 @@ export default function Landing() {
             </FadeUp>
             <FadeUp delay={0.2}>
               <Card className="p-8 text-left h-full">
+                <IconBadge className="mb-3"><IconChainLink /></IconBadge>
                 <h4 className="text-lg font-bold dark:text-white text-slate-900 mb-3">{t('pay.walletTitle')}</h4>
                 <p className="dark:text-brand-muted text-slate-500 text-sm mb-6 leading-relaxed">{t('pay.walletBody')}</p>
                 <div className="flex flex-wrap gap-2">
@@ -342,7 +344,7 @@ export default function Landing() {
                     {t(`chains.${key}.token`)}
                   </span>
                   <p className="text-sm dark:text-brand-muted text-slate-500 leading-relaxed mb-3">{t(`chains.${key}.body`)}</p>
-                  <p className="text-xs font-bold text-brand-blue">{t(`chains.${key}.best`)}</p>
+                  <p className="text-xs font-bold text-brand-blue inline-flex items-center gap-1"><IconStar className="w-3.5 h-3.5" /> {t(`chains.${key}.best`)}</p>
                 </Card>
               </FadeUp>
             ))}
