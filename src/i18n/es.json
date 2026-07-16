@@ -337,6 +337,7 @@
     "filled": "{{n}}/{{total}} ocupados",
     "you": "Tú",
     "totalPot": "Pozo total",
+    "totalPerCycle": "{{amount}} {{token}} total/ciclo",
     "contribution": "Contribución",
     "members": "Miembros",
     "duration": "Duración",

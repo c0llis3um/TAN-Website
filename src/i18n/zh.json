@@ -337,6 +337,7 @@
     "filled": "{{n}}/{{total}} 人",
     "you": "你",
     "totalPot": "总款项",
+    "totalPerCycle": "每期共 {{amount}} {{token}}",
     "contribution": "每期缴费",
     "members": "成员",
     "duration": "周期",

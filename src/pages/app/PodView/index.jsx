@@ -421,7 +421,10 @@ export default function PodView() {
             className="text-sm dark:text-brand-muted text-slate-400 hover:text-brand-cyan mb-2 flex items-center gap-1">
             {t('common.back')}
           </button>
-          <h1 className="text-3xl font-extrabold dark:text-white text-slate-900">{pod.name}</h1>
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-3xl font-extrabold dark:text-white text-slate-900">{pod.name}</h1>
+            <Badge variant="blue">{t('pod.totalPerCycle', { amount: pod.contribution_amount * (pod.size - 1), token: pod.token })}</Badge>
+          </div>
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             <Badge variant={STATUS_VARIANT[pod.status] ?? 'muted'}>● {pod.status}</Badge>
             <span className="text-sm dark:text-brand-muted text-slate-500">{pod.chain} · {pod.token}</span>
