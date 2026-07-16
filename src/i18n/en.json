@@ -1,5 +1,6 @@
 {
   "nav": {
+    "getStarted": "Get Started",
     "howItWorks": "How it works",
     "chains": "Chains",
     "learn": "Learn",
@@ -242,6 +243,9 @@
     "greeting": "Welcome back",
     "noWallet": "Connect your wallet to get started",
     "activePods": "Active Tandas",
+    "liveOnPlatform": "Live on DeFi Tanda right now",
+    "tvlTitle": "Total Value Locked",
+    "tvlSub": "Verified on-chain across {{n}} live pods",
     "nextPayment": "Next payment",
     "reputation": "Reputation",
     "payNow": "Pay Now",
@@ -635,7 +639,7 @@
     "f2027a_title": "Singapore & SE Asia",
     "f2027a_body": "Full push into Chinese diaspora markets — Singapore, Malaysia, Taiwan. The Hui goes on-chain. Mandarin-first onboarding, local ambassador network, Fenbushi distribution.",
     "f2027b_title": "Cross-Chain + Reputation",
-    "f2027b_body": "Solana and Ethereum deployments. On-chain reputation passport — your payment history becomes a portable credit score. B2B API for credit unions and community banks.",
+    "f2027b_body": "Additional chain deployments. On-chain reputation passport — your payment history becomes a portable credit score. B2B API for credit unions and community banks.",
     "f2028_title": "The Protocol",
     "f2028_body": "DeFi Tanda becomes infrastructure. 100,000 active members. $50M+ TVL. DAO governance. Any community, any chain, any currency — one protocol."
   }

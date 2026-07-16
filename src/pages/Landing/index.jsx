@@ -9,7 +9,7 @@ import Timeline from '@/components/Timeline'
 import {
   IconBadge, IconCommunity, IconCard, IconSparkle, IconShield, IconPhone,
   IconGlobe, IconClipboard, IconChat, IconLock, IconBolt, IconChart, IconBank,
-  IconDownload, IconWallet, IconShare,
+  IconDownload, IconWallet, IconShare, IconXrp,
 } from '@/components/ui/Icons'
 
 const WORDS = ['Tanda','Osusu','Hui','Juntas','Arisan','Stokvel','Pandeiros','Pollas']
@@ -131,7 +131,7 @@ export default function Landing() {
             className="flex flex-wrap gap-8 justify-center mt-16"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
           >
-            {[['2 networks','ETH · XRPL'],['$0 fees','During pilot'],['< 5 sec','Settlement']].map(([val, label]) => (
+            {[['Non-custodial','You hold the keys'],['$0 fees','During pilot'],['< 5 sec','Settlement']].map(([val, label]) => (
               <div key={val} className="text-center">
                 <div className="text-2xl font-extrabold gradient-text">{val}</div>
                 <div className="text-xs dark:text-brand-muted text-slate-500 mt-1">{label}</div>
@@ -309,7 +309,7 @@ export default function Landing() {
                 <h4 className="text-lg font-bold dark:text-white text-slate-900 mb-3">{t('pay.walletTitle')}</h4>
                 <p className="dark:text-brand-muted text-slate-500 text-sm mb-6 leading-relaxed">{t('pay.walletBody')}</p>
                 <div className="flex flex-wrap gap-2">
-                  {['MetaMask','Xaman'].map(w => (
+                  {['Xaman'].map(w => (
                     <span key={w} className="px-3 py-1.5 rounded-xl text-xs font-bold border dark:bg-brand-mid bg-slate-100 dark:border-brand-border border-slate-200 dark:text-brand-text text-slate-600">{w}</span>
                   ))}
                 </div>
@@ -326,18 +326,16 @@ export default function Landing() {
           <FadeUp delay={0.05}><div className="w-14 h-1 bg-gradient-brand rounded-full mx-auto mb-4" /></FadeUp>
           <FadeUp delay={0.1}><p className="dark:text-brand-muted text-slate-500 text-lg mb-14">{t('chains.sub')}</p></FadeUp>
 
-          {/* Ethereum card hidden for now — no contracts deployed to mainnet yet. */}
           <div className="grid gap-6 max-w-sm mx-auto">
             {[
-              { key: 'xrpl', logo: '/media/logou.webp', name: 'XRP Ledger', star: true  },
-            ].map(({ key, logo, name, star }, i) => (
+              { key: 'xrpl', name: 'XRP Ledger', star: true  },
+            ].map(({ key, name, star }, i) => (
               <FadeUp key={key} delay={0.1 * i}>
                 <Card className="p-8 text-center" glow={star}>
                   <div className="h-12 flex items-center justify-center mb-4">
-                    {logo
-                      ? <img src={logo} alt={name} className="h-10 object-contain dark:brightness-100 brightness-100" style={key === 'sol' ? { filter: 'brightness(1.4)' } : {}} />
-                      : <EthLogo />
-                    }
+                    <div className="w-11 h-11 rounded-full bg-gradient-brand flex items-center justify-center shadow-glow-sm">
+                      <IconXrp className="w-6 h-6 text-white" />
+                    </div>
                   </div>
                   <h4 className="font-bold dark:text-white text-slate-900 mb-2">{name}</h4>
                   <span className="inline-block px-3 py-1 rounded-lg text-xs font-bold bg-brand-blue/10 text-brand-cyan border border-brand-blue/30 mb-3">
@@ -446,18 +444,5 @@ export default function Landing() {
       </Section>
 
     </div>
-  )
-}
-
-function EthLogo() {
-  return (
-    <svg width="28" height="44" viewBox="0 0 256 417" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="127.9,0 125.2,9.5 125.2,285.2 127.9,287.8 255.8,212.3" fill="#5a8a9f"/>
-      <polygon points="127.9,0 0,212.3 127.9,287.8 127.9,154.1" fill="#a0c4d8"/>
-      <polygon points="127.9,312.6 126.3,314.6 126.3,411.6 127.9,416.3 255.9,237.5" fill="#5a8a9f"/>
-      <polygon points="127.9,416.3 127.9,312.6 0,237.5" fill="#a0c4d8"/>
-      <polygon points="127.9,287.8 255.8,212.3 127.9,154.1" fill="#006aff"/>
-      <polygon points="0,212.3 127.9,287.8 127.9,154.1" fill="#00c1ff"/>
-    </svg>
   )
 }

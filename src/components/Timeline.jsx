@@ -1,6 +1,19 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
+import {
+  IconBulb, IconPalette, IconChainLink, IconBolt, IconWallet, IconLock,
+  IconGlobe, IconGear, IconShield, IconRocket, IconTrendUp, IconPhone,
+  IconShare, IconCheck,
+} from '@/components/ui/Icons'
+
+const BADGE_META = {
+  done:   { Icon: IconCheck,   label: 'Shipped' },
+  live:   { Icon: IconBolt,    label: 'Live' },
+  yield:  { Icon: IconTrendUp, label: 'Yield' },
+  mobile: { Icon: IconPhone,   label: 'Mobile' },
+  global: { Icon: IconGlobe,   label: 'Global' },
+}
 
 function TimelineItem({ item, side, index }) {
   const ref    = useRef(null)
@@ -44,20 +57,25 @@ function TimelineItem({ item, side, index }) {
                 }`}>
                 {item.date}
               </span>
-              {item.badge && (
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full
-                  ${item.badge === 'done'    ? 'bg-emerald-500/15 text-emerald-400' :
-                    item.badge === 'live'    ? 'bg-brand-cyan/15 text-brand-cyan animate-pulse' :
-                    item.badge === 'yield'   ? 'bg-purple-500/15 text-purple-400' :
-                    item.badge === 'mobile'  ? 'bg-pink-500/15 text-pink-400' :
-                    item.badge === 'global'  ? 'bg-amber-500/15 text-amber-400' :
-                                              'bg-brand-blue/15 text-brand-blue'}`}>
-                  {item.badge === 'done' ? '✓ Shipped' : item.badge === 'live' ? '⚡ Live' : item.badge === 'yield' ? '📈 Yield' : item.badge === 'mobile' ? '📱 Mobile' : item.badge === 'global' ? '🌍 Global' : item.badge}
-                </span>
-              )}
+              {item.badge && (() => {
+                const meta = BADGE_META[item.badge]
+                return (
+                  <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full
+                    ${item.badge === 'done'    ? 'bg-emerald-500/15 text-emerald-400' :
+                      item.badge === 'live'    ? 'bg-brand-cyan/15 text-brand-cyan animate-pulse' :
+                      item.badge === 'yield'   ? 'bg-purple-500/15 text-purple-400' :
+                      item.badge === 'mobile'  ? 'bg-pink-500/15 text-pink-400' :
+                      item.badge === 'global'  ? 'bg-amber-500/15 text-amber-400' :
+                                                'bg-brand-blue/15 text-brand-blue'}`}>
+                    {meta && <meta.Icon className="w-3 h-3" />}
+                    {meta?.label ?? item.badge}
+                  </span>
+                )
+              })()}
             </div>
-            <div className={`font-bold mb-1 text-sm ${isPast ? 'dark:text-brand-text text-slate-700' : 'dark:text-white text-slate-900'}`}>
-              {item.icon} {item.title}
+            <div className={`flex items-center gap-1.5 font-bold mb-1 text-sm ${side === 'left' ? 'md:justify-end' : 'md:justify-start'} ${isPast ? 'dark:text-brand-text text-slate-700' : 'dark:text-white text-slate-900'}`}>
+              {item.Icon && <item.Icon className="w-3.5 h-3.5 text-brand-blue flex-shrink-0" />}
+              <span>{item.title}</span>
             </div>
             <div className={`text-xs leading-relaxed ${isPast ? 'dark:text-brand-muted/80 text-slate-500' : 'dark:text-brand-muted text-slate-600'}`}>
               {item.body}
@@ -92,7 +110,7 @@ export default function Timeline() {
     {
       era: 'past',
       date: '2022',
-      icon: '💡',
+      Icon: IconBulb,
       title: t('timeline.y2022_title'),
       body:  t('timeline.y2022_body'),
       badge: 'done',
@@ -100,7 +118,7 @@ export default function Timeline() {
     {
       era: 'past',
       date: 'Early 2023',
-      icon: '🎨',
+      Icon: IconPalette,
       title: t('timeline.y2023a_title'),
       body:  t('timeline.y2023a_body'),
       badge: 'done',
@@ -108,7 +126,7 @@ export default function Timeline() {
     {
       era: 'past',
       date: 'Mid 2023',
-      icon: '⛓️',
+      Icon: IconChainLink,
       title: t('timeline.y2023b_title'),
       body:  t('timeline.y2023b_body'),
       badge: 'done',
@@ -116,7 +134,7 @@ export default function Timeline() {
     {
       era: 'past',
       date: 'Late 2023',
-      icon: '⚡',
+      Icon: IconBolt,
       title: t('timeline.y2023c_title'),
       body:  t('timeline.y2023c_body'),
       badge: 'done',
@@ -124,7 +142,7 @@ export default function Timeline() {
     {
       era: 'past',
       date: 'Early 2024',
-      icon: '🔗',
+      Icon: IconWallet,
       title: t('timeline.y2024a_title'),
       body:  t('timeline.y2024a_body'),
       badge: 'done',
@@ -132,7 +150,7 @@ export default function Timeline() {
     {
       era: 'past',
       date: 'Mid 2024',
-      icon: '🛡️',
+      Icon: IconLock,
       title: t('timeline.y2024b_title'),
       body:  t('timeline.y2024b_body'),
       badge: 'done',
@@ -140,7 +158,7 @@ export default function Timeline() {
     {
       era: 'past',
       date: 'Late 2024',
-      icon: '🌐',
+      Icon: IconGlobe,
       title: t('timeline.y2024c_title'),
       body:  t('timeline.y2024c_body'),
       badge: 'done',
@@ -148,7 +166,7 @@ export default function Timeline() {
     {
       era: 'past',
       date: 'Early 2025',
-      icon: '⚙️',
+      Icon: IconGear,
       title: t('timeline.y2025a_title'),
       body:  t('timeline.y2025a_body'),
       badge: 'done',
@@ -156,7 +174,7 @@ export default function Timeline() {
     {
       era: 'past',
       date: 'Late 2025',
-      icon: '🔒',
+      Icon: IconShield,
       title: t('timeline.y2025b_title'),
       body:  t('timeline.y2025b_body'),
       badge: 'done',
@@ -170,7 +188,7 @@ export default function Timeline() {
     {
       era: 'future',
       date: 'Q2 2026',
-      icon: '🚀',
+      Icon: IconRocket,
       title: t('timeline.f2026a_title'),
       body:  t('timeline.f2026a_body'),
       badge: 'live',
@@ -178,7 +196,7 @@ export default function Timeline() {
     {
       era: 'future',
       date: 'Q3 2026',
-      icon: '📈',
+      Icon: IconTrendUp,
       title: t('timeline.f2026b_title'),
       body:  t('timeline.f2026b_body'),
       badge: 'yield',
@@ -186,7 +204,7 @@ export default function Timeline() {
     {
       era: 'future',
       date: 'Q4 2026',
-      icon: '📱',
+      Icon: IconPhone,
       title: t('timeline.f2026c_title'),
       body:  t('timeline.f2026c_body'),
       badge: 'mobile',
@@ -194,7 +212,7 @@ export default function Timeline() {
     {
       era: 'future',
       date: 'Q1 2027',
-      icon: '🌏',
+      Icon: IconGlobe,
       title: t('timeline.f2027a_title'),
       body:  t('timeline.f2027a_body'),
       badge: 'global',
@@ -202,14 +220,14 @@ export default function Timeline() {
     {
       era: 'future',
       date: 'Q3 2027',
-      icon: '🏗️',
+      Icon: IconShare,
       title: t('timeline.f2027b_title'),
       body:  t('timeline.f2027b_body'),
     },
     {
       era: 'future',
       date: '2028',
-      icon: '🌍',
+      Icon: IconChainLink,
       title: t('timeline.f2028_title'),
       body:  t('timeline.f2028_body'),
     },

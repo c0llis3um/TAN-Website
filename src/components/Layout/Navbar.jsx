@@ -100,6 +100,7 @@ const handleDisconnect = async () => {
           <div className="hidden md:flex items-center gap-1">
             {isLanding && (
               <>
+                <NavLink href="#get-started">{t('nav.getStarted')}</NavLink>
                 <NavLink href="#how">{t('nav.howItWorks')}</NavLink>
                 <NavLink href="#chains">{t('nav.chains')}</NavLink>
                 <NavLink href="#learn">{t('nav.learn')}</NavLink>
@@ -217,6 +218,7 @@ const handleDisconnect = async () => {
               <div className="flex flex-col gap-1 pt-3">
                 {isLanding && (
                   <>
+                    <MobileLink href="#get-started" onClick={() => setMobileOpen(false)}>{t('nav.getStarted')}</MobileLink>
                     <MobileLink href="#how" onClick={() => setMobileOpen(false)}>{t('nav.howItWorks')}</MobileLink>
                     <MobileLink href="#chains" onClick={() => setMobileOpen(false)}>{t('nav.chains')}</MobileLink>
                     <MobileLink href="#learn" onClick={() => setMobileOpen(false)}>{t('nav.learn')}</MobileLink>

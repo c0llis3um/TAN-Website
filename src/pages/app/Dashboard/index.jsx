@@ -7,8 +7,9 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import useAppStore from '@/store/useAppStore'
-import { getUser, getOrganizerPods, getMemberPods } from '@/lib/db'
+import { getUser, getOrganizerPods, getMemberPods, getOpenPods } from '@/lib/db'
 import { isPushSupported, enablePushNotifications } from '@/lib/push'
+import { IconBadge, IconLock } from '@/components/ui/Icons'
 
 const stagger = { visible: { transition: { staggerChildren: 0.08 } } }
 const item    = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }
@@ -37,6 +38,9 @@ export default function Dashboard() {
   const [pods,        setPods]        = useState([])
   const [joinedPods,  setJoinedPods]  = useState([])
   const [loading,     setLoading]     = useState(false)
+  const [publicPods,     setPublicPods]     = useState([])
+  const [publicLoading,  setPublicLoading]  = useState(false)
+  const [tvl,            setTvl]            = useState(null)
 
   const [notifPrompt,   setNotifPrompt]   = useState(false)
   const [notifDismissed,setNotifDismissed]= useState(false)
@@ -75,8 +79,33 @@ export default function Dashboard() {
     })
   }, [wallet?.address])
 
+  // No wallet connected — show real, live tandas from across the platform
+  // instead of an empty personal state, so a first-time visitor sees an
+  // active platform rather than a blank page before they've connected.
+  useEffect(() => {
+    if (wallet?.address) return
+    setPublicLoading(true)
+    getOpenPods().then(({ data }) => {
+      setPublicPods(data ?? [])
+      setPublicLoading(false)
+    })
+  }, [wallet?.address])
+
   const activePods = pods.filter(p => ['OPEN', 'LOCKED', 'ACTIVE'].includes(p.status))
   const duePod     = activePods.find(p => p.status === 'ACTIVE')
+
+  const displayPods    = wallet ? activePods : publicPods
+  const displayLoading = wallet ? loading    : publicLoading
+
+  // Platform-wide, not personal — fetched once regardless of wallet
+  // connection. Verified against real escrow balances server-side rather
+  // than summed from the DB, so it can't drift from what's actually locked.
+  useEffect(() => {
+    fetch('/.netlify/functions/get-tvl')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => data && setTvl(data))
+      .catch(() => {})
+  }, [])
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -140,21 +169,20 @@ export default function Dashboard() {
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
 
-          {/* Active pods */}
+          {/* Active pods (or, if not connected, a live feed of real platform activity) */}
           <div>
             <h2 className="text-sm font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-3">
-              {t('dashboard.activePods')}
+              {t(wallet ? 'dashboard.activePods' : 'dashboard.liveOnPlatform')}
             </h2>
 
-            {loading ? (
+            {displayLoading ? (
               <div className="space-y-3">
                 {[1,2].map(i => (
                   <div key={i} className="h-24 rounded-2xl dark:bg-brand-mid bg-slate-100 animate-pulse" />
                 ))}
               </div>
-            ) : activePods.length === 0 ? (
-              <Card hover={false} className="p-8 text-center">
-                <p className="text-3xl mb-3">🤝</p>
+            ) : displayPods.length === 0 ? (
+              <Card hover={false} className="p-5 text-center">
                 <p className="font-bold dark:text-white text-slate-900 mb-1">{t('dashboard.noActivePods')}</p>
                 <p className="text-sm dark:text-brand-muted text-slate-400 mb-4">{t('dashboard.noActiveDesc')}</p>
                 <div className="flex gap-3 justify-center">
@@ -164,7 +192,7 @@ export default function Dashboard() {
               </Card>
             ) : (
               <motion.div variants={stagger} initial="hidden" animate="visible" className="space-y-3">
-                {activePods.map(pod => {
+                {displayPods.map(pod => {
                   const pct     = pod.total_cycles > 0 ? Math.round((pod.current_cycle / pod.total_cycles) * 100) : 0
                   const members = pod.pod_members?.length ?? 0
                   return (
@@ -258,6 +286,20 @@ export default function Dashboard() {
 
         {/* Sidebar */}
         <div className="space-y-5">
+
+          {/* Total Value Locked */}
+          {tvl && tvl.podCount > 0 && (
+            <Card hover={false} className="p-5">
+              <div className="flex items-center gap-3">
+                <IconBadge size="sm"><IconLock /></IconBadge>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500">{t('dashboard.tvlTitle')}</p>
+                  <p className="text-xl font-extrabold gradient-text">{tvl.totalXrp.toFixed(2)} XRP</p>
+                </div>
+              </div>
+              <p className="text-xs dark:text-brand-muted text-slate-400 mt-2">{t('dashboard.tvlSub', { n: tvl.podCount })}</p>
+            </Card>
+          )}
 
           {/* Pod Status Donut */}
           <Card hover={false} className="p-5">

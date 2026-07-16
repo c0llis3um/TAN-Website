@@ -1,5 +1,6 @@
 {
   "nav": {
+    "getStarted": "Empieza",
     "howItWorks": "Cómo funciona",
     "chains": "Redes",
     "learn": "Aprender",
@@ -242,6 +243,9 @@
     "greeting": "Bienvenido",
     "noWallet": "Conecta tu billetera para empezar",
     "activePods": "Tandas Activas",
+    "liveOnPlatform": "En vivo en DeFi Tanda ahora mismo",
+    "tvlTitle": "Valor Total Bloqueado",
+    "tvlSub": "Verificado en cadena en {{n}} tandas en vivo",
     "nextPayment": "Próximo pago",
     "reputation": "Reputación",
     "payNow": "Pagar Ahora",
@@ -635,7 +639,7 @@
     "f2027a_title": "Singapur y Sureste Asiático",
     "f2027a_body": "Expansión completa a los mercados de la diáspora china — Singapur, Malasia, Taiwán. La Hui se sube a la blockchain. Integración en mandarín y red local de embajadores.",
     "f2027b_title": "Multicadena + Reputación",
-    "f2027b_body": "Despliegues en Solana y Ethereum. Pasaporte de reputación en cadena — tu historial de pagos se convierte en un score de crédito portátil. API B2B para cooperativas de crédito.",
+    "f2027b_body": "Despliegues en cadenas adicionales. Pasaporte de reputación en cadena — tu historial de pagos se convierte en un score de crédito portátil. API B2B para cooperativas de crédito.",
     "f2028_title": "El Protocolo",
     "f2028_body": "DeFi Tanda se convierte en infraestructura. 100,000 miembros activos. $50M+ en valor bloqueado. Gobernanza DAO. Cualquier comunidad, cualquier cadena, cualquier moneda — un protocolo."
   }
