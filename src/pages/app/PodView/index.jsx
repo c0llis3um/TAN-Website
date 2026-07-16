@@ -14,6 +14,18 @@ import { safeJson } from '@/lib/http'
 function shareWa(text) { window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank') }
 function shareTg(url, text) { window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank') }
 
+// Adaptive d/h/m breakdown of a duration in ms — drops the largest unit once
+// it hits zero so a sub-day deadline reads "4h 12m" instead of "0d 4h 12m".
+function formatCountdown(ms) {
+  const totalMinutes = Math.floor(ms / 60000)
+  const d = Math.floor(totalMinutes / 1440)
+  const h = Math.floor((totalMinutes % 1440) / 60)
+  const m = totalMinutes % 60
+  if (d > 0) return `${d}d ${h}h`
+  if (h > 0) return `${h}h ${m}m`
+  return `${m}m`
+}
+
 const STATUS_VARIANT = { OPEN: 'blue', LOCKED: 'yellow', ACTIVE: 'green', COMPLETED: 'muted', DEFAULTED: 'red', CANCELLED: 'red', EXPIRED: 'red' }
 
 export default function PodView() {
@@ -38,6 +50,14 @@ export default function PodView() {
   const [joinEmail,   setJoinEmail]   = useState('')
   const [copied,      setCopied]      = useState(false)
   const [showContact, setShowContact] = useState(false)
+  const [now,         setNow]         = useState(Date.now())
+
+  // Live countdown next to the due-date banner — ticks every 30s, precise
+  // enough for a multi-day deadline without re-rendering every second.
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     if (!id) return
@@ -364,6 +384,8 @@ export default function PodView() {
     : null
   const daysLeft = dueDate ? Math.ceil((dueDate - Date.now()) / 864e5) : null
   const isOverdue = daysLeft !== null && daysLeft < 0
+  const msLeft = dueDate ? dueDate.getTime() - now : null
+  const countdown = msLeft !== null ? formatCountdown(Math.abs(msLeft)) : null
 
   const spotsLeft = Math.max(0, pod.size - members.length)
   const expiryDate = pod.expires_at ? new Date(pod.expires_at) : null
@@ -513,8 +535,8 @@ export default function PodView() {
             <span className="font-bold">{t('pod.cycleDue', { n: cycleForDate })} </span>
             {dueDate.toLocaleDateString(i18n.language, { weekday: 'short', month: 'short', day: 'numeric' })}
             {isOverdue
-              ? <span className="ml-2 font-bold">· {t('pod.overdueBy', { n: Math.abs(daysLeft) })}</span>
-              : <span className="ml-2 dark:text-brand-muted text-slate-500">· {t('pod.daysLeft', { n: daysLeft })}</span>
+              ? <span className="ml-2 font-bold">· {t('pod.overdueByTime', { time: countdown })}</span>
+              : <span className="ml-2 dark:text-brand-muted text-slate-500">· {t('pod.timeLeft', { time: countdown })}</span>
             }
           </div>
         </motion.div>

@@ -130,14 +130,9 @@ const handleDisconnect = async () => {
             <ThemeToggle />
 
             {isLanding && (
-              <>
-                <Button size="sm" variant="outline" onClick={() => navigate('/app')}>
-                  {t('nav.launchApp')}
-                </Button>
-                <Button size="sm" onClick={() => document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth' })}>
-                  {t('nav.joinWaitlist')}
-                </Button>
-              </>
+              <Button size="sm" onClick={() => navigate('/app')}>
+                {t('nav.launchApp')}
+              </Button>
             )}
 
             {isApp && (

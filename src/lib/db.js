@@ -13,16 +13,6 @@ export function cycleMs(pod, env) {
   return env === 'dev' ? n * 36e5 : n * 864e5   // hours vs days in ms
 }
 
-// ── Waitlist ─────────────────────────────────────────────────
-
-export async function joinWaitlist({ email, name, source, chain_pref, lang }) {
-  return supabase
-    .from('waitlist')
-    .insert({ email, name, source, chain_pref, lang })
-    .select('id')
-    .single()
-}
-
 // ── Users ────────────────────────────────────────────────────
 
 export async function getUser(walletAddress) {

@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react'
-import { joinWaitlist } from '@/lib/db'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Timeline from '@/components/Timeline'
+import {
+  IconBadge, IconCommunity, IconCard, IconSparkle, IconShield, IconPhone,
+  IconGlobe, IconClipboard, IconChat, IconLock, IconBolt, IconChart, IconBank,
+  IconDownload, IconWallet, IconShare,
+} from '@/components/ui/Icons'
 
 const WORDS = ['Tanda','Osusu','Hui','Juntas','Arisan','Stokvel','Pandeiros','Pollas']
 
@@ -41,11 +46,8 @@ function shareTg(url, text) { window.open(`https://t.me/share/url?url=${encodeUR
 
 export default function Landing() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [wordIdx, setWordIdx] = useState(0)
-  const [email, setEmail]         = useState('')
-  const [submitted, setSubmitted] = useState(false)
-  const [wlError, setWlError]     = useState(null)
-  const [wlLoading, setWlLoading] = useState(false)
 
   useEffect(() => {
     const id = setInterval(() => setWordIdx(i => (i + 1) % WORDS.length), 2200)
@@ -116,7 +118,7 @@ export default function Landing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
           >
-            <Button size="xl" onClick={() => document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth' })}>
+            <Button size="xl" onClick={() => navigate('/app')}>
               {t('hero.cta1')}
             </Button>
             <Button size="xl" variant="outline" onClick={() => document.getElementById('how')?.scrollIntoView({ behavior: 'smooth' })}>
@@ -138,6 +140,47 @@ export default function Landing() {
           </motion.div>
         </div>
       </section>
+
+      {/* ══ GET STARTED ══ */}
+      <Section id="get-started">
+        <div className="max-w-5xl mx-auto text-center">
+          <FadeUp><h2 className="text-4xl font-extrabold dark:text-white text-slate-900 mb-3">{t('getStarted.title')}</h2></FadeUp>
+          <FadeUp delay={0.05}><div className="w-14 h-1 bg-gradient-brand rounded-full mx-auto mb-4" /></FadeUp>
+          <FadeUp delay={0.1}><p className="dark:text-brand-muted text-slate-500 text-lg mb-16">{t('getStarted.sub')}</p></FadeUp>
+
+          <div className="relative grid md:grid-cols-3 gap-10 md:gap-6">
+            {/* Connecting glow line — desktop only */}
+            <div className="hidden md:block absolute top-8 left-[16.6%] right-[16.6%] h-0.5 bg-gradient-to-r from-brand-blue via-brand-cyan to-brand-blue opacity-40" />
+
+            {[
+              { n: '1', title: t('getStarted.step1Title'), body: t('getStarted.step1Body'), Icon: IconDownload },
+              { n: '2', title: t('getStarted.step2Title'), body: t('getStarted.step2Body'), Icon: IconWallet },
+              { n: '3', title: t('getStarted.step3Title'), body: t('getStarted.step3Body'), Icon: IconShare },
+            ].map(({ n, title, body, Icon }, i) => (
+              <FadeUp key={n} delay={0.15 * i}>
+                <div className="relative flex flex-col items-center">
+                  <motion.div
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
+                    className="relative z-10"
+                  >
+                    <IconBadge size="lg" pulse><Icon /></IconBadge>
+                  </motion.div>
+                  <div className="mt-6 text-xs font-bold tracking-widest gradient-text">STEP {n}</div>
+                  <h3 className="text-lg font-bold dark:text-white text-slate-900 mt-2 mb-3">{title}</h3>
+                  <p className="dark:text-brand-muted text-slate-500 text-sm leading-relaxed max-w-xs">{body}</p>
+                </div>
+              </FadeUp>
+            ))}
+          </div>
+
+          <FadeUp delay={0.5}>
+            <Button size="lg" className="mt-14" onClick={() => navigate('/app')}>
+              {t('getStarted.cta')} →
+            </Button>
+          </FadeUp>
+        </div>
+      </Section>
 
       {/* ══ WHAT IS A TANDA ══ */}
       <Section id="tanda" className="dark:bg-brand-darker bg-slate-100">
@@ -173,15 +216,13 @@ export default function Landing() {
 
           <div className="grid md:grid-cols-3 gap-6 mb-16">
             {[
-              { n: '1', title: t('how.step1Title'), body: t('how.step1'), icon: '🏘️' },
-              { n: '2', title: t('how.step2Title'), body: t('how.step2'), icon: '💳' },
-              { n: '3', title: t('how.step3Title'), body: t('how.step3'), icon: '🎉' },
-            ].map(({ n, title, body, icon }, i) => (
+              { n: '1', title: t('how.step1Title'), body: t('how.step1'), Icon: IconCommunity },
+              { n: '2', title: t('how.step2Title'), body: t('how.step2'), Icon: IconCard },
+              { n: '3', title: t('how.step3Title'), body: t('how.step3'), Icon: IconSparkle },
+            ].map(({ n, title, body, Icon }, i) => (
               <FadeUp key={n} delay={0.1 * i}>
                 <Card className="p-8 text-center h-full" glow={n === '3'}>
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-brand flex items-center justify-center text-2xl mx-auto mb-5 shadow-glow-sm">
-                    {icon}
-                  </div>
+                  <IconBadge className="mx-auto mb-5" pulse={n === '3'}><Icon /></IconBadge>
                   <div className="text-xs font-bold tracking-widest gradient-text mb-2">STEP {n}</div>
                   <h3 className="text-lg font-bold dark:text-white text-slate-900 mb-3">{title}</h3>
                   <p className="dark:text-brand-muted text-slate-500 text-sm leading-relaxed">{body}</p>
@@ -223,16 +264,16 @@ export default function Landing() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
-              { key: 'fraud',   icon: '🔒' },
-              { key: 'bank',    icon: '📱' },
-              { key: 'remit',   icon: '🌎' },
-              { key: 'record',  icon: '📋' },
-              { key: 'whatsapp',icon: '💬' },
-              { key: 'yield',   icon: '📈' },
-            ].map(({ key, icon }, i) => (
+              { key: 'fraud',      Icon: IconShield },
+              { key: 'bank',       Icon: IconPhone },
+              { key: 'remit',      Icon: IconGlobe },
+              { key: 'record',     Icon: IconClipboard },
+              { key: 'whatsapp',   Icon: IconChat },
+              { key: 'collateral', Icon: IconLock },
+            ].map(({ key, Icon }, i) => (
               <FadeUp key={key} delay={0.05 * i}>
                 <Card className="p-6 text-left">
-                  <div className="text-3xl mb-4">{icon}</div>
+                  <IconBadge className="mb-4"><Icon /></IconBadge>
                   <h4 className="font-bold dark:text-white text-slate-900 mb-2">{t(`why.${key}.title`)}</h4>
                   <p className="text-sm dark:text-brand-muted text-slate-500 leading-relaxed">{t(`why.${key}.body`)}</p>
                 </Card>
@@ -336,14 +377,14 @@ export default function Landing() {
               <FadeUp><h3 className="text-xs font-bold uppercase tracking-widest gradient-text mb-5">{t('xrp.longTermLabel')}</h3></FadeUp>
               <div className="space-y-3">
                 {[
-                  { key: 'utility',   icon: '🌎' },
-                  { key: 'speed',     icon: '⚡' },
-                  { key: 'supply',    icon: '📊' },
-                  { key: 'adoption',  icon: '🏦' },
-                ].map(({ key, icon }, i) => (
+                  { key: 'utility',   Icon: IconGlobe },
+                  { key: 'speed',     Icon: IconBolt },
+                  { key: 'supply',    Icon: IconChart },
+                  { key: 'adoption',  Icon: IconBank },
+                ].map(({ key, Icon }, i) => (
                   <FadeUp key={key} delay={0.08 * i}>
                     <Card className="p-5 text-left flex gap-4 items-start" hover={false}>
-                      <span className="text-2xl flex-shrink-0">{icon}</span>
+                      <IconBadge size="sm"><Icon /></IconBadge>
                       <div>
                         <h4 className="font-bold dark:text-white text-slate-900 mb-1 text-sm">{t(`xrp.${key}.title`)}</h4>
                         <p className="text-sm dark:text-brand-muted text-slate-500 leading-relaxed">{t(`xrp.${key}.body`)}</p>
@@ -369,7 +410,7 @@ export default function Landing() {
             <FadeUp delay={0.1}><p className="dark:text-brand-text text-slate-600 leading-relaxed mb-4">{t('learn.body1')}</p></FadeUp>
             <FadeUp delay={0.15}><p className="dark:text-brand-text text-slate-600 leading-relaxed mb-8">{t('learn.body2')}</p></FadeUp>
             <FadeUp delay={0.2}>
-              <Button onClick={() => document.getElementById('waitlist')?.scrollIntoView({ behavior: 'smooth' })}>
+              <Button onClick={() => navigate('/app')}>
                 {t('learn.cta')} →
               </Button>
             </FadeUp>
@@ -402,72 +443,6 @@ export default function Landing() {
       {/* ══ TIMELINE ══ */}
       <Section className="dark:bg-brand-darker bg-slate-50">
         <Timeline />
-      </Section>
-
-      {/* ══ WAITLIST ══ */}
-      <Section id="waitlist" className="dark:bg-brand-darker bg-slate-100">
-        <div className="max-w-xl mx-auto text-center">
-          <FadeUp>
-            <motion.div
-              className="relative p-10 rounded-3xl dark:bg-brand-mid bg-white dark:border-brand-border border-slate-200 border"
-              whileInView={{ boxShadow: ['0 0 0px rgba(0,106,255,0)', '0 0 60px rgba(0,106,255,0.25)', '0 0 30px rgba(0,106,255,0.15)'] }}
-              transition={{ duration: 2, ease: 'easeOut' }}
-              viewport={{ once: true }}
-            >
-              <div className="absolute -inset-[1px] rounded-3xl bg-gradient-to-br from-brand-blue/30 via-transparent to-brand-cyan/20 -z-10" />
-              <motion.img
-                src="/media/tlogo.png"
-                alt=""
-                className="w-14 h-14 mx-auto mb-6 dark:brightness-[10] brightness-0"
-                animate={{ rotate: [0, 5, -5, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-              />
-              <h2 className="text-3xl font-extrabold dark:text-white text-slate-900 mb-3">{t('waitlist.title')}</h2>
-              <p className="dark:text-brand-muted text-slate-500 mb-8 leading-relaxed">{t('waitlist.body')}</p>
-
-              {submitted ? (
-                <motion.p
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="text-lg font-bold gradient-text"
-                >
-                  {t('waitlist.success')}
-                </motion.p>
-              ) : (
-                <>
-                  <form onSubmit={async (e) => {
-                      e.preventDefault()
-                      setWlLoading(true)
-                      setWlError(null)
-                      const { error } = await joinWaitlist({ email, source: 'landing' })
-                      setWlLoading(false)
-                      if (error && error.code !== '23505') {
-                        setWlError('Something went wrong. Try again.')
-                      } else {
-                        setSubmitted(true)
-                      }
-                    }} className="flex gap-3 flex-wrap justify-center">
-                    <input
-                      type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                      placeholder={t('waitlist.placeholder')}
-                      className="flex-1 min-w-[200px] px-4 py-3 rounded-2xl text-sm
-                        dark:bg-brand-dark bg-slate-50
-                        dark:border-brand-border border-slate-300 border
-                        dark:text-white text-slate-900
-                        dark:placeholder-brand-border placeholder-slate-400
-                        focus:outline-none focus:ring-2 focus:ring-brand-blue/50"
-                    />
-                    <Button type="submit" size="md" disabled={wlLoading}>
-                      {wlLoading ? '…' : t('waitlist.cta')}
-                    </Button>
-                  </form>
-                  {wlError && <p className="text-xs text-red-400 mt-2">{wlError}</p>}
-                </>
-              )}
-              <p className="text-xs dark:text-brand-border text-slate-400 mt-4">{t('waitlist.note')}</p>
-            </motion.div>
-          </FadeUp>
-        </div>
       </Section>
 
     </div>

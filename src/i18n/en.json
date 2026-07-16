@@ -4,7 +4,6 @@
     "chains": "Chains",
     "learn": "Learn",
     "docs": "Docs",
-    "joinWaitlist": "Join Waitlist",
     "launchApp": "Launch App",
     "dashboard": "Dashboard",
     "myPods": "My Tandas",
@@ -78,7 +77,7 @@
     "headline1": "Save together.",
     "headline2": "Win together.",
     "sub": "A {{word}} is a savings circle your community has run for generations. We made it unbreakable — secure, transparent, and fully on-chain.",
-    "cta1": "Join the Waitlist",
+    "cta1": "Launch the App",
     "cta2": "See how it works",
     "testnetBadge": "TESTNET — No real money"
   },
@@ -220,7 +219,7 @@
     "title": "Never done crypto before?",
     "body1": "That's okay — most of our users haven't either. Akademia is our free education center, built for people who grew up with tandas but are new to the digital side.",
     "body2": "Short videos in Spanish and English. No jargon. From 'what is crypto' to 'how to send money to Mexico for free.'",
-    "cta": "Get notified when we launch",
+    "cta": "Launch the app",
     "courseLabel": "Akademia — Free Course",
     "l1": "¿Qué es una tanda? — You already know this",
     "l2": "¿Qué es crypto? — Digital money explained",
@@ -228,13 +227,16 @@
     "l4": "How to join your first tanda — step by step",
     "l5": "Send your payout to Mexico for free"
   },
-  "waitlist": {
-    "title": "Be the first to join",
-    "body": "We're launching with a small group of community members first. Leave your email and we'll reach out when your spot is ready.",
-    "placeholder": "your@email.com",
-    "cta": "Notify me",
-    "success": "✓ You're on the list! We'll be in touch.",
-    "note": "No spam. No sharing. Just a heads-up when we open."
+  "getStarted": {
+    "title": "Get started in 3 steps",
+    "sub": "From zero to your first tanda in minutes.",
+    "step1Title": "Download Xaman",
+    "step1Body": "Grab the free Xaman wallet from the App Store or Google Play — it's your key to the XRP Ledger, and takes under a minute to set up.",
+    "step2Title": "Fund your wallet",
+    "step2Body": "Add a little XRP right in the app with a card via MoonPay or Bitso, or transfer in from an exchange you already use.",
+    "step3Title": "Create or share a tanda",
+    "step3Body": "Start your own pod in seconds, or join a friend's with one link. No bank, no paperwork — just your wallet.",
+    "cta": "Get Started"
   },
   "dashboard": {
     "greeting": "Welcome back",
@@ -354,6 +356,8 @@
     "cycleDue": "Cycle {{n}} payment due:",
     "overdueBy": "OVERDUE by {{n}} day(s)",
     "daysLeft": "{{n}} day(s) left",
+    "overdueByTime": "OVERDUE by {{time}}",
+    "timeLeft": "{{time}} left",
     "yourPayoutSlot": "Your payout: Week {{slot}} — {{amount}} {{token}}",
     "toJoinHint": "~{{amount}} {{token}} needed to join",
     "collateralHint": "(2× collateral + 1st payment)",

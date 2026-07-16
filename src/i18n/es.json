@@ -4,7 +4,6 @@
     "chains": "Redes",
     "learn": "Aprender",
     "docs": "Documentación",
-    "joinWaitlist": "Unirse a la Lista",
     "launchApp": "Abrir App",
     "dashboard": "Inicio",
     "myPods": "Mis Tandas",
@@ -78,7 +77,7 @@
     "headline1": "Ahorra juntos.",
     "headline2": "Gana juntos.",
     "sub": "Una {{word}} es un círculo de ahorro que tu comunidad ha llevado por generaciones. Lo hicimos inquebrantable — seguro, transparente y completamente en cadena.",
-    "cta1": "Únete a la Lista",
+    "cta1": "Abrir la App",
     "cta2": "Ver cómo funciona",
     "testnetBadge": "TESTNET — Sin dinero real"
   },
@@ -220,7 +219,7 @@
     "title": "¿Nunca usaste cripto?",
     "body1": "Está bien — la mayoría de nuestros usuarios tampoco. Akademia es nuestro centro de educación gratuito, hecho para personas que crecieron con tandas pero son nuevas en el mundo digital.",
     "body2": "Videos cortos en español e inglés. Sin jerga técnica. Desde '¿qué es cripto?' hasta 'cómo enviar dinero a México gratis'.",
-    "cta": "Avísame cuando lancemos",
+    "cta": "Abrir la app",
     "courseLabel": "Akademia — Curso Gratuito",
     "l1": "¿Qué es una tanda? — Ya lo sabes",
     "l2": "¿Qué es crypto? — Dinero digital explicado",
@@ -228,13 +227,16 @@
     "l4": "Cómo unirte a tu primera tanda — paso a paso",
     "l5": "Envía tu pago a México sin comisión"
   },
-  "waitlist": {
-    "title": "Sé el primero en unirte",
-    "body": "Estamos lanzando con un pequeño grupo de miembros de la comunidad primero. Deja tu correo y te avisamos cuando tu lugar esté listo.",
-    "placeholder": "tucorreo@email.com",
-    "cta": "Notificarme",
-    "success": "✓ ¡Estás en la lista! Te contactaremos pronto.",
-    "note": "Sin spam. Sin compartir. Solo un aviso cuando abramos."
+  "getStarted": {
+    "title": "Empieza en 3 pasos",
+    "sub": "De cero a tu primera tanda en minutos.",
+    "step1Title": "Descarga Xaman",
+    "step1Body": "Consigue la billetera gratuita Xaman en App Store o Google Play — es tu llave al XRP Ledger, y tarda menos de un minuto en configurarse.",
+    "step2Title": "Fondea tu billetera",
+    "step2Body": "Agrega un poco de XRP directo en la app con tarjeta vía MoonPay o Bitso, o transfiere desde un exchange que ya uses.",
+    "step3Title": "Crea o comparte una tanda",
+    "step3Body": "Inicia tu propia tanda en segundos, o únete a la de un amigo con un solo enlace. Sin banco, sin papeleo — solo tu billetera.",
+    "cta": "Comenzar"
   },
   "dashboard": {
     "greeting": "Bienvenido",
@@ -354,6 +356,8 @@
     "cycleDue": "Pago del ciclo {{n}} vence:",
     "overdueBy": "VENCIDO hace {{n}} día(s)",
     "daysLeft": "{{n}} día(s) restante(s)",
+    "overdueByTime": "VENCIDO hace {{time}}",
+    "timeLeft": "{{time}} restante",
     "yourPayoutSlot": "Tu pago: Semana {{slot}} — {{amount}} {{token}}",
     "toJoinHint": "~{{amount}} {{token}} necesarios para unirse",
     "collateralHint": "(2× garantía + 1er pago)",
