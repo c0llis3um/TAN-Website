@@ -167,6 +167,11 @@ export default function CreatePod() {
 
   const isYield    = form.chain === 'XRPL' && form.tandaType === 'yield'
   const strategy   = YIELD_STRATEGIES.find(s => s.id === form.yieldStrategy)
+  // Real yield tandas need enough members for the yield to be worthwhile — but
+  // that's a UI guardrail, not a backend rule (nothing server-side enforces
+  // it). On testnet, relax it so a yield pod can actually be tested without
+  // needing 12 real members.
+  const yieldMinSize = env === 'dev' ? 2 : 12
 
   const TOKEN_CONFIG = {
     ETH:   { min: 0.001, max: 10,   step: 0.001, decimals: 3 },
@@ -207,7 +212,7 @@ export default function CreatePod() {
       tandaType,
       yieldStrategy: null,
       frequencyDays: tandaType === 'yield' ? 30 : f.frequencyDays,
-      size:          tandaType === 'yield' ? Math.max(f.size, 12) : f.size,
+      size:          tandaType === 'yield' ? Math.max(f.size, yieldMinSize) : f.size,
       riskAck:       false,
       ilAck:         false,
     }))
@@ -791,12 +796,12 @@ export default function CreatePod() {
               <div>
                 <label className="text-xs font-bold dark:text-brand-muted text-slate-500 block mb-2">
                   {t('create.groupSize', { n: form.size })}
-                  {isYield && <span className="ml-2 text-brand-cyan normal-case font-normal">(min 12)</span>}
+                  {isYield && <span className="ml-2 text-brand-cyan normal-case font-normal">(min {yieldMinSize})</span>}
                 </label>
-                <input type="range" min={isYield ? 12 : 3} max="20" step="1" value={form.size}
+                <input type="range" min={isYield ? yieldMinSize : 3} max="20" step="1" value={form.size}
                   onChange={e => upd('size', Number(e.target.value))} className="w-full accent-brand-blue" />
                 <div className="flex justify-between text-xs dark:text-brand-muted text-slate-400 mt-1">
-                  <span>{isYield ? 12 : 3}</span><span>20</span>
+                  <span>{isYield ? yieldMinSize : 3}</span><span>20</span>
                 </div>
               </div>
               <div>

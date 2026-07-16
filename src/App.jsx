@@ -54,8 +54,16 @@ export default function App() {
 
   // env is now a site-wide setting (platform_settings.env), not a per-browser
   // toggle — every visitor picks it up here so an admin's live/dev switch
-  // actually applies to everyone, not just their own browser.
+  // actually applies to everyone, not just their own browser. VITE_FORCE_ENV
+  // (set in a local, gitignored .env.local — never present in a real deploy)
+  // overrides this for local testing, so localhost can sit on testnet without
+  // ever touching the shared platform_settings row the live site reads.
   useEffect(() => {
+    const forced = import.meta.env.VITE_FORCE_ENV
+    if (forced === 'dev' || forced === 'live') {
+      setEnv(forced)
+      return
+    }
     getPlatformSetting('env').then((v) => {
       if (v === 'dev' || v === 'live') setEnv(v)
     })

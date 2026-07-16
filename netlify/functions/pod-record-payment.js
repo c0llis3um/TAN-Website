@@ -27,6 +27,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { Client } from 'xrpl'
 import { rateLimit } from './lib/rateLimit.js'
+import { autoWithdrawVaultIfNeeded } from './lib/vaultWithdraw.js'
 
 const NODES = {
   dev:  'wss://testnet.xrpl-labs.com',
@@ -249,6 +250,18 @@ export const handler = async (event) => {
           : { current_cycle: nextCycle, cycle_started_at: new Date().toISOString() },
         )
         .eq('id', podId)
+
+      // Yield/vault pods: empty the vault back into escrow immediately so
+      // members can self-claim their collateral without waiting on an admin.
+      // No-ops for standard pods. Awaited so it actually finishes before this
+      // function returns (a serverless function can't run background work
+      // after responding) — its own failure must not fail this response,
+      // since the payment itself already recorded successfully.
+      if (done) {
+        await autoWithdrawVaultIfNeeded({ supabase, podId }).catch(e =>
+          console.error(`[pod-record-payment] auto-vault-withdraw threw for pod ${podId}:`, e.message),
+        )
+      }
     }
 
     console.log(`[pod-record-payment] ${walletAddress} paid cycle ${pod.current_cycle} of pod ${podId} | tx: ${confirmedTxHash}`)

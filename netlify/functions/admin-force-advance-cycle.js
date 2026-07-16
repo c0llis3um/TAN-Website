@@ -19,6 +19,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { autoWithdrawVaultIfNeeded } from './lib/vaultWithdraw.js'
 
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -115,6 +116,15 @@ export const handler = async (event) => {
 
     if (updateErr) {
       return { statusCode: 500, body: JSON.stringify({ error: updateErr.message }) }
+    }
+
+    // Yield/vault pods: empty the vault back into escrow immediately so
+    // members can self-claim without waiting on a separate manual step.
+    // No-ops for standard pods.
+    if (done) {
+      await autoWithdrawVaultIfNeeded({ supabase, podId }).catch(e =>
+        console.error(`[admin-force-advance-cycle] auto-vault-withdraw threw for pod ${podId}:`, e.message),
+      )
     }
 
     console.log(`[admin-force-advance-cycle] admin ${user.email} force-advanced pod ${podId} — defaulted ${unpaid.length} member(s)`)

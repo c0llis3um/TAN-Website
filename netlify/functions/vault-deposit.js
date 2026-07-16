@@ -208,7 +208,11 @@ export const handler = async (event) => {
     // ── 5. Connect + read RLUSD balance ───────────────────────────────────
     const xrplClient = new Client(node)
 
-    let simulated = false
+    // 'SIMULATED' is a sentinel create-xrpl-escrow.js writes when VaultCreate
+    // isn't enabled on this network at pod-creation time — not a real VaultID.
+    // Treating it as one here would submit a VaultDeposit with an invalid
+    // VaultID and fail on-chain with "Invalid hash string SIMULATED".
+    let simulated = escrowRow.vault_id === 'SIMULATED'
     let vaultId   = escrowRow.vault_id  // may already exist if VaultCreate ran earlier
     let sharesDeposited
     let depositTxHash = null

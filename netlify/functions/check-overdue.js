@@ -22,6 +22,7 @@ import { paymentReminderEmail, overdueSlashEmail, sendEmail } from './lib/email.
 import { sendPushToUser } from './lib/push.js'
 import { decryptSeed } from './lib/crypto.js'
 import { rateLimit } from './lib/rateLimit.js'
+import { autoWithdrawVaultIfNeeded } from './lib/vaultWithdraw.js'
 
 const NODES = {
   dev:  'wss://testnet.xrpl-labs.com',
@@ -411,6 +412,15 @@ export const handler = async (event = {}) => {
         )
         .eq('id', pod.id)
       console.log(`[check-overdue] Pod ${pod.id} cycle advanced to ${done ? 'COMPLETED' : nextCycle}`)
+
+      // Yield/vault pods: empty the vault back into escrow immediately so
+      // members can self-claim without waiting on an admin. No-ops for
+      // standard pods.
+      if (done) {
+        await autoWithdrawVaultIfNeeded({ supabase, podId: pod.id }).catch(e =>
+          console.error(`[check-overdue] auto-vault-withdraw threw for pod ${pod.id}:`, e.message),
+        )
+      }
     }
   }
 

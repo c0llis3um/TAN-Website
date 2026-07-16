@@ -143,6 +143,30 @@ function PodDetail({ pod, onClose }) {
   const [slashingId,   setSlashingId]   = useState(null) // user_id being slashed
   const [slashResults, setSlashResults] = useState({})   // user_id → { txHash, err }
 
+  // Yield/vault state
+  const isVaultPod = pod.tanda_type === 'yield' && pod.yield_strategy === 'vault' && pod.chain === 'XRPL'
+  const [vaultStatus,    setVaultStatus]    = useState(null)
+  const [vaultLoading,   setVaultLoading]   = useState(isVaultPod)
+  const [depositing,     setDepositing]     = useState(false)
+  const [depositResult,  setDepositResult]  = useState(null)
+  const [depositErr,     setDepositErr]     = useState(null)
+  const [withdrawing,    setWithdrawing]    = useState(false)
+  const [withdrawResult, setWithdrawResult] = useState(null)
+  const [withdrawErr,    setWithdrawErr]    = useState(null)
+
+  useEffect(() => {
+    if (!isVaultPod) return
+    import('@/lib/supabase').then(m => m.default
+      .from('pod_escrows')
+      .select('vault_status, vault_id, vault_shares')
+      .eq('pod_id', pod.id)
+      .maybeSingle()
+    ).then(({ data }) => {
+      setVaultStatus(data?.vault_status ?? 'none')
+      setVaultLoading(false)
+    })
+  }, [pod.id, isVaultPod])
+
   // Compute whether current cycle is overdue
   const cycleMs   = (pod.cycle_frequency_days ?? 7) * (pod.env === 'dev' ? 36e5 : 864e5)
   const cycleDue  = pod.cycle_started_at ? new Date(pod.cycle_started_at).getTime() + cycleMs : null
@@ -172,6 +196,7 @@ function PodDetail({ pod, onClose }) {
   const canForceComplete = pod.chain === 'XRPL' && currentStatus === 'ACTIVE' && pod.contract_address
   const canReleaseEVM    = pod.chain === 'Ethereum' && currentStatus === 'COMPLETED' && pod.contract_address
   const canReleaseXRPL   = pod.chain === 'XRPL'    && currentStatus === 'COMPLETED' && pod.contract_address
+    && (!isVaultPod || vaultStatus === 'withdrawn')
   const canRelease       = canReleaseEVM || canReleaseXRPL
 
   const xrplBase = (pod.env ?? 'dev') === 'live'
@@ -289,6 +314,52 @@ function PodDetail({ pod, onClose }) {
     setAdvancing(false)
   }
 
+  async function handleVaultDeposit() {
+    if (!window.confirm('Deposit escrow collateral into the yield vault? This should only be done once the pod is full.')) return
+    setDepositing(true)
+    setDepositErr(null)
+    try {
+      const supabaseModule = await import('@/lib/supabase')
+      const { data: { session } } = await supabaseModule.default.auth.getSession()
+      const res = await fetch('/.netlify/functions/vault-deposit', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token ?? ''}` },
+        body:    JSON.stringify({ podId: pod.id, env: pod.env }),
+      })
+      const json = await safeJson(res)
+      if (!res.ok) throw new Error(json.error ?? 'Vault deposit failed')
+      setDepositResult(json)
+      setVaultStatus('deposited')
+    } catch (e) {
+      setDepositErr(e?.message ?? String(e))
+    } finally {
+      setDepositing(false)
+    }
+  }
+
+  async function handleVaultWithdraw() {
+    if (!window.confirm('Withdraw the full vault balance back to the escrow wallet? Do this before releasing collateral to members.')) return
+    setWithdrawing(true)
+    setWithdrawErr(null)
+    try {
+      const supabaseModule = await import('@/lib/supabase')
+      const { data: { session } } = await supabaseModule.default.auth.getSession()
+      const res = await fetch('/.netlify/functions/vault-withdraw', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token ?? ''}` },
+        body:    JSON.stringify({ podId: pod.id, env: pod.env, full: true }),
+      })
+      const json = await safeJson(res)
+      if (!res.ok) throw new Error(json.error ?? 'Vault withdrawal failed')
+      setWithdrawResult(json)
+      setVaultStatus('withdrawn')
+    } catch (e) {
+      setWithdrawErr(e?.message ?? String(e))
+    } finally {
+      setWithdrawing(false)
+    }
+  }
+
   // Per-member payment status helpers
   function getMemberPayStatus(userId) {
     const pays = cyclePayments.filter(p => p.user_id === userId)
@@ -340,6 +411,65 @@ function PodDetail({ pod, onClose }) {
           <div className="mb-4 p-3 rounded-xl dark:bg-brand-dark bg-slate-50">
             <p className="text-xs dark:text-brand-muted text-slate-400 mb-1">Escrow / Contract</p>
             <p className="font-mono text-xs dark:text-brand-cyan text-brand-blue break-all">{pod.contract_address}</p>
+          </div>
+        )}
+
+        {/* ── Yield / Vault ── */}
+        {isVaultPod && (
+          <div className="mb-4 p-4 rounded-xl border dark:border-purple-500/30 border-purple-300 dark:bg-purple-500/10 bg-purple-50">
+            <p className="text-xs dark:text-purple-300 text-purple-700 font-semibold mb-1">
+              Yield Vault · status: {vaultLoading ? '…' : vaultStatus}
+            </p>
+
+            {vaultStatus === 'none' && ['LOCKED', 'ACTIVE', 'COMPLETED'].includes(currentStatus) && (
+              <>
+                <p className="text-xs dark:text-purple-200/70 text-purple-600 mb-3">
+                  Move the escrow's collateral into the XLS-66d vault so it starts earning yield.
+                </p>
+                {depositErr && <p className="text-xs text-red-400 mb-2 break-all">{depositErr}</p>}
+                {depositResult ? (
+                  <p className="text-xs text-emerald-400 font-semibold break-all">
+                    Deposited ✓ vaultId: {depositResult.vaultId}{depositResult.simulated ? ' (simulated)' : ''}
+                  </p>
+                ) : (
+                  <button onClick={handleVaultDeposit} disabled={depositing}
+                    className="w-full py-2 rounded-xl bg-purple-500 hover:bg-purple-400 disabled:opacity-50 text-white font-bold text-sm transition-colors">
+                    {depositing ? 'Depositing…' : 'Deposit to Vault →'}
+                  </button>
+                )}
+              </>
+            )}
+
+            {vaultStatus === 'deposited' && currentStatus === 'COMPLETED' && (
+              <>
+                <p className="text-xs dark:text-purple-200/70 text-purple-600 mb-3">
+                  Withdraw everything from the vault back to escrow before releasing collateral to members.
+                </p>
+                {withdrawErr && <p className="text-xs text-red-400 mb-2 break-all">{withdrawErr}</p>}
+                {withdrawResult ? (
+                  <p className="text-xs text-emerald-400 font-semibold break-all">
+                    Withdrawn ✓ {withdrawResult.withdrawn} {pod.token}{withdrawResult.simulated ? ' (simulated)' : ''}
+                  </p>
+                ) : (
+                  <button onClick={handleVaultWithdraw} disabled={withdrawing}
+                    className="w-full py-2 rounded-xl bg-purple-500 hover:bg-purple-400 disabled:opacity-50 text-white font-bold text-sm transition-colors">
+                    {withdrawing ? 'Withdrawing…' : 'Withdraw from Vault →'}
+                  </button>
+                )}
+              </>
+            )}
+
+            {vaultStatus === 'deposited' && currentStatus !== 'COMPLETED' && (
+              <p className="text-xs dark:text-purple-200/70 text-purple-600">
+                Earning yield. Withdraw becomes available once the pod is completed.
+              </p>
+            )}
+
+            {vaultStatus === 'withdrawn' && (
+              <p className="text-xs text-emerald-400 font-semibold">
+                Withdrawn — collateral is back in escrow, ready to release.
+              </p>
+            )}
           </div>
         )}
 

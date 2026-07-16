@@ -87,7 +87,7 @@ export const handler = async (event) => {
     const { data: pod } = await supabase
       .from('pods')
       .select(`
-        id, chain, token, contribution_amount, status, env,
+        id, chain, token, contribution_amount, status, env, tanda_type, yield_strategy,
         pod_members ( id, user:users ( id, wallet_address ) )
       `)
       .eq('id', podId)
@@ -99,12 +99,24 @@ export const handler = async (event) => {
 
     const { data: escrowRow } = await supabase
       .from('pod_escrows')
-      .select('escrow_seed')
+      .select('escrow_seed, vault_status')
       .eq('pod_id', podId)
       .single()
 
     if (!escrowRow?.escrow_seed) {
       return { statusCode: 400, body: JSON.stringify({ error: 'No escrow configured for this pod' }) }
+    }
+
+    // Yield/vault pods keep collateral inside an XLS-66d Vault, not liquid in the
+    // escrow wallet — releasing before vault-withdraw would fail on-chain
+    // (insufficient balance) for every member. Block with a clear message so the
+    // admin knows to withdraw from the vault first.
+    const isVaultPod = pod.tanda_type === 'yield' && pod.yield_strategy === 'vault'
+    if (isVaultPod && escrowRow.vault_status !== 'withdrawn') {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: `Vault must be withdrawn before releasing collateral (current vault status: ${escrowRow.vault_status}).` }),
+      }
     }
 
     const isRlusd = pod.token === 'RLUSD'

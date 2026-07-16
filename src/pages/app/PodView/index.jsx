@@ -656,8 +656,8 @@ export default function PodView() {
                   const totalPot      = cyclePays.reduce((s, p) => s + Number(p.amount), 0)
                   const isComplete    = cyclePays.length > 0 && cyclePays.length >= (pod.pod_members?.filter(m => m.status === 'ACTIVE').length ?? pod.size)
                   const explorerBase  = pod.chain === 'Ethereum'
-                    ? `https://${env === 'dev' ? 'sepolia.' : ''}etherscan.io/tx/`
-                    : `https://${env === 'dev' ? 'testnet.' : ''}xrpl.org/transactions/`
+                    ? `https://${pod.env === 'dev' ? 'sepolia.' : ''}etherscan.io/tx/`
+                    : `https://${pod.env === 'dev' ? 'testnet.' : ''}xrpl.org/transactions/`
 
                   return (
                     <div key={cycle} className="px-6 py-5">
@@ -758,7 +758,7 @@ export default function PodView() {
                   <p className="text-xs font-mono dark:text-brand-cyan text-brand-blue truncate flex-1">{pod.contract_address.slice(0,10)}…{pod.contract_address.slice(-6)}</p>
                   {pod.chain === 'Ethereum' && (
                     <a
-                      href={`https://${env === 'dev' ? 'sepolia.' : ''}etherscan.io/address/${pod.contract_address}`}
+                      href={`https://${pod.env === 'dev' ? 'sepolia.' : ''}etherscan.io/address/${pod.contract_address}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs px-2 py-1 rounded-lg bg-brand-blue/10 text-brand-cyan font-semibold hover:bg-brand-blue/20 transition-colors flex-shrink-0"
@@ -832,8 +832,8 @@ export default function PodView() {
                 <div className="p-3 rounded-xl dark:bg-emerald-500/10 bg-emerald-50 border dark:border-emerald-500/30 border-emerald-200">
                   <p className="text-xs font-bold dark:text-emerald-300 text-emerald-700 mb-1">✓ {t('pod.claimed')}</p>
                   <a href={pod.chain === 'Ethereum'
-                      ? `https://${env === 'dev' ? 'sepolia.' : ''}etherscan.io/tx/${claimTx}`
-                      : `https://${env === 'dev' ? 'testnet.' : ''}xrpl.org/transactions/${claimTx}`}
+                      ? `https://${pod.env === 'dev' ? 'sepolia.' : ''}etherscan.io/tx/${claimTx}`
+                      : `https://${pod.env === 'dev' ? 'testnet.' : ''}xrpl.org/transactions/${claimTx}`}
                     target="_blank" rel="noopener noreferrer"
                     className="font-mono text-xs dark:text-brand-cyan text-brand-blue underline break-all">
                     {claimTx.slice(0, 20)}…

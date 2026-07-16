@@ -58,7 +58,7 @@ export const handler = async (event) => {
     const { data: pod } = await supabase
       .from('pods')
       .select(`
-        id, chain, token, contribution_amount, status, env,
+        id, chain, token, contribution_amount, status, env, tanda_type, yield_strategy,
         pod_members ( id, user:users ( id, wallet_address ) )
       `)
       .eq('id', podId)
@@ -95,12 +95,24 @@ export const handler = async (event) => {
     // ── 4. Get escrow seed ─────────────────────────────────────
     const { data: escrowRow } = await supabase
       .from('pod_escrows')
-      .select('escrow_seed')
+      .select('escrow_seed, vault_status')
       .eq('pod_id', podId)
       .single()
 
     if (!escrowRow?.escrow_seed) {
       return { statusCode: 400, body: JSON.stringify({ error: 'No escrow found for this pod' }) }
+    }
+
+    // Yield/vault pods keep collateral inside an XLS-66d Vault, not liquid in the
+    // escrow wallet — a Payment sent before vault-withdraw would fail on-chain
+    // (insufficient balance) with a confusing error. Block with a clear message
+    // instead.
+    const isVaultPod = pod.tanda_type === 'yield' && pod.yield_strategy === 'vault'
+    if (isVaultPod && escrowRow.vault_status !== 'withdrawn') {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'This tanda\'s collateral is still earning yield in the vault — it needs to be withdrawn before it can be claimed. Check back soon.' }),
+      }
     }
 
     // ── 4b. Deduct any prior collateral slashes for this member ─────
