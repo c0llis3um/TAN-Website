@@ -370,6 +370,15 @@ export default function PodView() {
     ['CONFIRMED', 'PENDING'].includes(p.status)
   )
 
+  // Collateral may already have been returned — either this member self-claimed
+  // in an earlier visit (claimTx is only in-memory, reset on every reload), or
+  // an admin released it via the admin panel. Check the real record instead of
+  // trusting local session state alone, so a completed claim never shows the
+  // "Claim" button again.
+  const claimedPayment = payments.find(p =>
+    p.user?.wallet_address === wallet?.address && p.method === 'collateral_return'
+  )
+
   const ms = cycleMs(pod, env)
   const cycleForDate = hasPaidThisCycle ? currentCycle + 1 : currentCycle
   // cycle_started_at is reset every time a cycle advances, so it only ever
@@ -828,16 +837,21 @@ export default function PodView() {
                 {t(pod.status === 'COMPLETED' ? 'pod.claimBody' : 'pod.claimBodyRefund')} <span className="font-bold dark:text-white text-slate-900">{pod.contribution_amount * 2} {pod.token}</span>
               </p>
 
-              {claimTx ? (
+              {(claimTx || claimedPayment) ? (
                 <div className="p-3 rounded-xl dark:bg-emerald-500/10 bg-emerald-50 border dark:border-emerald-500/30 border-emerald-200">
                   <p className="text-xs font-bold dark:text-emerald-300 text-emerald-700 mb-1">✓ {t('pod.claimed')}</p>
-                  <a href={pod.chain === 'Ethereum'
-                      ? `https://${pod.env === 'dev' ? 'sepolia.' : ''}etherscan.io/tx/${claimTx}`
-                      : `https://${pod.env === 'dev' ? 'testnet.' : ''}xrpl.org/transactions/${claimTx}`}
-                    target="_blank" rel="noopener noreferrer"
-                    className="font-mono text-xs dark:text-brand-cyan text-brand-blue underline break-all">
-                    {claimTx.slice(0, 20)}…
-                  </a>
+                  {(() => {
+                    const hash = claimTx ?? claimedPayment?.tx_hash
+                    return (
+                      <a href={pod.chain === 'Ethereum'
+                          ? `https://${pod.env === 'dev' ? 'sepolia.' : ''}etherscan.io/tx/${hash}`
+                          : `https://${pod.env === 'dev' ? 'testnet.' : ''}xrpl.org/transactions/${hash}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="font-mono text-xs dark:text-brand-cyan text-brand-blue underline break-all">
+                        {hash.slice(0, 20)}…
+                      </a>
+                    )
+                  })()}
                 </div>
               ) : (
                 <>
