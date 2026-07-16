@@ -101,7 +101,7 @@
     "step1Title": "Create or join a tanda",
     "step1": "The organizer sets up a tanda — group size, weekly amount, and duration. Members join with a refundable security deposit you can claim back once the tanda completes.",
     "step2Title": "Contribute every cycle",
-    "step2": "Pay your share weekly, biweekly, or monthly. Use Apple Pay, Google Pay, debit card — or connect your crypto wallet directly.",
+    "step2": "Pay your share weekly, biweekly, or monthly — connect Xaman and pay directly from your wallet. Card and bank transfer support is coming soon.",
     "step3Title": "Receive your payout",
     "step3": "When your turn comes, the full pot lands in your wallet automatically. Early slot = interest-free loan. Late slot = disciplined savings plan.",
     "exampleTitle": "Example: 6 friends, 30 XRP/week",
@@ -126,12 +126,12 @@
       "body": "A smart contract holds every dollar. The organizer manages the group — but never touches the funds. Payouts happen directly wallet to wallet."
     },
     "bank": {
-      "title": "Pay your way",
-      "body": "Pay with a debit card, bank transfer, or connect a crypto wallet directly. Your money, your control."
+      "title": "Pay straight from your wallet",
+      "body": "Connect Xaman and pay directly — no exchange account, no middleman taking a cut. Card and bank transfer support is coming soon."
     },
     "remit": {
       "title": "Send your payout anywhere",
-      "body": "Receive in XRP or RLUSD and send to family in seconds — for almost no fee. No Western Union. No 7% cut."
+      "body": "Receive in XRP and send to family in seconds — for almost no fee. No Western Union. No 7% cut."
     },
     "record": {
       "title": "A permanent record",

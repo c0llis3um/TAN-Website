@@ -101,7 +101,7 @@
     "step1Title": "Crea o únete a una tanda",
     "step1": "El organizador configura la tanda — tamaño del grupo, cantidad semanal y duración. Los miembros se unen con un depósito de seguridad reembolsable que puedes reclamar cuando la tanda termina.",
     "step2Title": "Contribuye cada ciclo",
-    "step2": "Paga tu parte semanal, quincenal o mensualmente. Usa Apple Pay, Google Pay, tarjeta de débito — o conecta tu billetera cripto directamente.",
+    "step2": "Paga tu parte semanal, quincenal o mensualmente — conecta Xaman y paga directo desde tu billetera. Tarjeta y transferencia bancaria llegan pronto.",
     "step3Title": "Recibe tu pago",
     "step3": "Cuando llega tu turno, el pozo completo llega a tu billetera automáticamente. ¿Turno temprano? = préstamo sin intereses. ¿Turno tarde? = plan de ahorro disciplinado.",
     "exampleTitle": "Ejemplo: 6 amigos, 30 XRP/semana",
@@ -126,12 +126,12 @@
       "body": "Un contrato inteligente guarda cada centavo. El organizador maneja el grupo — pero nunca toca los fondos. Los pagos van directo de billetera a billetera."
     },
     "bank": {
-      "title": "Paga a tu manera",
-      "body": "Paga con tarjeta de débito, transferencia bancaria o conecta tu billetera cripto directamente. Tu dinero, tu control."
+      "title": "Paga directo desde tu billetera",
+      "body": "Conecta Xaman y paga directamente — sin cuenta en un exchange, sin intermediario que se quede con una comisión. Tarjeta y transferencia bancaria llegan pronto."
     },
     "remit": {
       "title": "Envía tu pago a cualquier lugar",
-      "body": "Recibe en XRP o RLUSD y envía dinero a tu familia en segundos — casi sin comisión. Sin Western Union. Sin el 7% de comisión."
+      "body": "Recibe en XRP y envía dinero a tu familia en segundos — casi sin comisión. Sin Western Union. Sin el 7% de comisión."
     },
     "record": {
       "title": "Un registro permanente",
