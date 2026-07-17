@@ -66,12 +66,16 @@ async function fetchAccountData(address, env) {
   let txCount = 0
 
   try {
-    const info = await client.request({
-      command:      'account_info',
-      account:      address,
-      ledger_index: 'validated',
-    })
-    xrpBalance = Math.max(0, (Number(info.result.account_data.Balance) / 1_000_000) - 10)
+    const [info, serverState] = await Promise.all([
+      client.request({ command: 'account_info', account: address, ledger_index: 'validated' }),
+      client.request({ command: 'server_state' }),
+    ])
+    // Reserve fetched live, not hardcoded — see src/lib/xrpl.js getXrplBalances
+    // for why (XRPL has changed the base reserve via amendment before).
+    const { reserve_base, reserve_inc } = serverState.result.state.validated_ledger
+    const ownerCount = info.result.account_data.OwnerCount ?? 0
+    const reserve = (reserve_base + ownerCount * reserve_inc) / 1_000_000
+    xrpBalance = Math.max(0, (Number(info.result.account_data.Balance) / 1_000_000) - reserve)
   } catch { /* unfunded */ }
 
   try {

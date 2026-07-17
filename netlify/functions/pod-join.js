@@ -144,7 +144,7 @@ export const handler = async (event) => {
     // ── 1. Fetch pod ───────────────────────────────────────────
     const { data: pod } = await supabase
       .from('pods')
-      .select('id, chain, token, env, contribution_amount, size, payout_method, status, expires_at, contract_address')
+      .select('id, chain, token, env, contribution_amount, size, payout_method, status, expires_at, contract_address, deployed_at')
       .eq('id', podId)
       .single()
 
@@ -190,6 +190,14 @@ export const handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'Pod has expired' }) }
     }
     if (!pod.contract_address) return { statusCode: 400, body: JSON.stringify({ error: 'Pod has no escrow wallet yet' }) }
+    // Live pods aren't fully deployed until the organizer's creation fee is
+    // confirmed (confirm-pod-creation-fee.js sets deployed_at) — dev pods get
+    // deployed_at immediately at escrow creation since they have no fee to
+    // wait on. Blocks members from locking real collateral into a pod the
+    // platform was never actually paid to host.
+    if (!pod.deployed_at) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'This pod has not finished deploying yet — the organizer still needs to complete the creation fee payment.' }) }
+    }
 
     // ── 5. Verify the collateral payment on-chain ─────────────────
     const collateralAmount = pod.contribution_amount * 2

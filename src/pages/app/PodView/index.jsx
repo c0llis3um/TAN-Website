@@ -90,6 +90,64 @@ export default function PodView() {
     return () => clearInterval(iv)
   }, [id, pod?.status])
 
+  // Silent reconciliation: a wallet can have a real, valid collateral
+  // payment on-chain without ever being recorded as a member — e.g. they
+  // paid outside the Join button, closed the tab before the follow-up call
+  // fired, or hit a network blip right after signing. pod-join.js verifies
+  // by scanning the wallet's own chain history rather than trusting a
+  // stored hash, so it's safe to call opportunistically here: if there's no
+  // qualifying payment it just fails, which is the normal case for anyone
+  // who simply hasn't joined yet — so failures are swallowed silently
+  // rather than shown as an error to an innocent visitor.
+  useEffect(() => {
+    if (!wallet?.address || !pod || pod.status !== 'OPEN') return
+    const alreadyMember = (pod.pod_members ?? []).some(m => m.user?.wallet_address === wallet.address)
+    if (alreadyMember) return
+
+    let cancelled = false
+    fetch('/.netlify/functions/pod-join', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ podId: id, walletAddress: wallet.address }),
+    })
+      .then(res => res.ok ? getPod(id) : null)
+      .then(result => { if (!cancelled && result?.data) setPod(result.data) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [id, wallet?.address, pod?.status])
+
+  // Same silent reconciliation, for cycle payments instead of the initial
+  // join — a member can pay their cycle contribution directly on-chain
+  // (peer-to-peer to that cycle's recipient) without ever going through the
+  // Pay page, and would otherwise sit shown as "unpaid" forever.
+  useEffect(() => {
+    if (!wallet?.address || !pod || pod.status !== 'ACTIVE') return
+    const isActiveMember = (pod.pod_members ?? []).some(m => m.user?.wallet_address === wallet.address && m.status === 'ACTIVE')
+    if (!isActiveMember) return
+    const alreadyPaid = payments.some(p =>
+      p.user?.wallet_address === wallet.address &&
+      p.cycle === pod.current_cycle &&
+      ['CONFIRMED', 'PENDING'].includes(p.status)
+    )
+    if (alreadyPaid) return
+
+    let cancelled = false
+    fetch('/.netlify/functions/pod-record-payment', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ podId: id, walletAddress: wallet.address }),
+    })
+      .then(res => res.ok ? Promise.all([getPod(id), getPodPayments(id)]) : null)
+      .then(result => {
+        if (cancelled || !result) return
+        const [{ data: freshPod }, { data: freshPays }] = result
+        if (freshPod) setPod(freshPod)
+        if (freshPays) setPayments(freshPays)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [id, wallet?.address, pod?.status, pod?.current_cycle, payments])
+
   async function handleJoin() {
     if (!wallet?.address) return
     setJoining(true)

@@ -82,13 +82,19 @@ export async function getXrplBalances(walletAddress, env) {
   let rlusd = 0
 
   try {
-    const info = await client.request({
-      command: 'account_info',
-      account: walletAddress,
-      ledger_index: 'validated',
-    })
-    // XRP balance is in drops (1 XRP = 1,000,000 drops), minus 10 XRP reserve
-    xrp = (Number(info.result.account_data.Balance) / 1_000_000) - 10
+    const [info, serverState] = await Promise.all([
+      client.request({ command: 'account_info', account: walletAddress, ledger_index: 'validated' }),
+      client.request({ command: 'server_state' }),
+    ])
+    // Reserve is base + 0.2 XRP per owned ledger object (trust lines, etc.) —
+    // fetched live rather than hardcoded. XRPL has reduced the base reserve
+    // via amendment before (10 XRP -> 1 XRP) and could again; a hardcoded
+    // value silently drifts from reality when that happens.
+    const { reserve_base, reserve_inc } = serverState.result.state.validated_ledger
+    const ownerCount = info.result.account_data.OwnerCount ?? 0
+    const reserve = (reserve_base + ownerCount * reserve_inc) / 1_000_000
+    // XRP balance is in drops (1 XRP = 1,000,000 drops), minus the live reserve
+    xrp = (Number(info.result.account_data.Balance) / 1_000_000) - reserve
     if (xrp < 0) xrp = 0
   } catch {
     // Account not funded on testnet
