@@ -6,16 +6,26 @@ import { PieChart, Pie, Cell, Tooltip } from 'recharts'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
+import KpiCard from '@/components/ui/KpiCard'
 import useAppStore from '@/store/useAppStore'
-import { getUser, getOrganizerPods, getMemberPods, getOpenPods } from '@/lib/db'
+import { getUser, getOrganizerPods, getMemberPods, getOpenPods, getUserContributionTotals } from '@/lib/db'
+import { getXrplBalances } from '@/lib/xrpl'
 import { isPushSupported, enablePushNotifications } from '@/lib/push'
-import { IconBadge, IconLock, IconPlus, IconSearch, IconWallet, IconCard, IconBell, IconBolt } from '@/components/ui/Icons'
+import { IconBadge, IconPlus, IconSearch, IconWallet, IconCard, IconBell, IconBolt } from '@/components/ui/Icons'
 
 const stagger = { visible: { transition: { staggerChildren: 0.08 } } }
 const item    = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }
 
 const STATUS_VARIANT = { OPEN: 'blue', LOCKED: 'yellow', ACTIVE: 'green',  COMPLETED: 'muted',     CANCELLED: 'red', EXPIRED: 'red' }
 const CLAIMABLE_STATUSES = ['EXPIRED', 'CANCELLED']
+
+// Formats a { XRP: 4, RLUSD: 2 } style totals object for display — tokens
+// are never summed together, just joined as separate amounts.
+function formatTokenTotals(totals) {
+  const entries = Object.entries(totals ?? {}).filter(([, v]) => v > 0)
+  if (entries.length === 0) return null
+  return entries.map(([token, amount]) => `${amount.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${token}`).join(', ')
+}
 
 export default function Dashboard() {
   const { t }             = useTranslation()
@@ -46,6 +56,11 @@ export default function Dashboard() {
   const [notifDismissed,setNotifDismissed]= useState(false)
   const [notifBusy,     setNotifBusy]     = useState(false)
   const [notifErr,      setNotifErr]      = useState(null)
+
+  const [balance,        setBalance]        = useState(null)
+  const [balanceLoading, setBalanceLoading] = useState(false)
+  const [contribTotals,  setContribTotals]  = useState(null)
+  const [contribLoading, setContribLoading] = useState(false)
 
   useEffect(() => {
     if (isPushSupported() && Notification.permission === 'default') setNotifPrompt(true)
@@ -107,6 +122,36 @@ export default function Dashboard() {
       .catch(() => {})
   }, [])
 
+  useEffect(() => {
+    if (!wallet?.address || wallet.chain !== 'XRPL') return
+    setBalanceLoading(true)
+    getXrplBalances(wallet.address, env)
+      .then(setBalance)
+      .catch(() => setBalance(null))
+      .finally(() => setBalanceLoading(false))
+  }, [wallet?.address, wallet?.chain, env])
+
+  useEffect(() => {
+    if (!user?.id) return
+    setContribLoading(true)
+    getUserContributionTotals(user.id).then(({ data }) => {
+      setContribTotals(data)
+      setContribLoading(false)
+    })
+  }, [user?.id])
+
+  // Client-side, from state Dashboard already fetches — no extra query.
+  // Approximates by pod status rather than the member's own status, so a
+  // defaulted member's already-slashed collateral can be over-counted in
+  // an edge case; fine for a glance-value KPI, not a ledger. Grouped by
+  // token, same as contribTotals — XRP and RLUSD are never summed together.
+  const totalLocked = [...pods, ...joinedPods]
+    .filter(p => p.status === 'ACTIVE')
+    .reduce((totals, p) => {
+      totals[p.token] = (totals[p.token] ?? 0) + p.contribution_amount * 2
+      return totals
+    }, {})
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
 
@@ -165,6 +210,34 @@ export default function Dashboard() {
           <Button size="sm" onClick={() => navigate(`/app/pod/${duePod.id}/pay`)}>{t('dashboard.payNow')}</Button>
         </motion.div>
       )}
+
+      {/* KPI strip */}
+      <motion.div variants={stagger} initial="hidden" animate="visible"
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+        {wallet && (
+          <>
+            <motion.div variants={item}>
+              <KpiCard accent label={t('dashboard.kpiBalance')}
+                value={balance ? formatTokenTotals({ XRP: balance.xrp, RLUSD: balance.rlusd }) ?? '0 XRP' : '—'}
+                loading={balanceLoading} />
+            </motion.div>
+            <motion.div variants={item}>
+              <KpiCard label={t('dashboard.reputation')} value={user ? `${user.reputation_score} / 100` : '—'} loading={loading} />
+            </motion.div>
+            <motion.div variants={item}>
+              <KpiCard label={t('dashboard.kpiLocked')} value={formatTokenTotals(totalLocked) ?? `0 ${wallet.chainName ?? 'XRP'}`} loading={loading} />
+            </motion.div>
+            <motion.div variants={item}>
+              <KpiCard label={t('dashboard.kpiContributed')} value={formatTokenTotals(contribTotals) ?? '0 XRP'} loading={contribLoading} />
+            </motion.div>
+          </>
+        )}
+        {tvl && tvl.podCount > 0 && (
+          <motion.div variants={item}>
+            <KpiCard label={t('dashboard.tvlTitle')} value={`${tvl.totalXrp.toFixed(2)} XRP`} sub={t('dashboard.tvlSub', { n: tvl.podCount })} />
+          </motion.div>
+        )}
+      </motion.div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -286,20 +359,6 @@ export default function Dashboard() {
 
         {/* Sidebar */}
         <div className="space-y-5">
-
-          {/* Total Value Locked */}
-          {tvl && tvl.podCount > 0 && (
-            <Card hover={false} className="p-5">
-              <div className="flex items-center gap-3">
-                <IconBadge size="sm"><IconLock /></IconBadge>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500">{t('dashboard.tvlTitle')}</p>
-                  <p className="text-xl font-extrabold gradient-text">{tvl.totalXrp.toFixed(2)} XRP</p>
-                </div>
-              </div>
-              <p className="text-xs dark:text-brand-muted text-slate-400 mt-2">{t('dashboard.tvlSub', { n: tvl.podCount })}</p>
-            </Card>
-          )}
 
           {/* Pod Status Donut */}
           <Card hover={false} className="p-5">

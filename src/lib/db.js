@@ -335,6 +335,24 @@ export async function getMyPayments(userId, podId) {
     .order('cycle', { ascending: true })
 }
 
+// Lifetime sum of a user's own confirmed contributions, grouped by token —
+// XRP and RLUSD totals are never combined into one number.
+export async function getUserContributionTotals(userId) {
+  const { data, error } = await supabase
+    .from('payments')
+    .select('amount, token')
+    .eq('user_id', userId)
+    .eq('status', 'CONFIRMED')
+
+  if (error) return { data: null, error }
+
+  const totals = {}
+  for (const { amount, token } of data ?? []) {
+    totals[token] = (totals[token] ?? 0) + Number(amount)
+  }
+  return { data: totals, error: null }
+}
+
 // ── Push Notifications ───────────────────────────────────────
 
 export async function savePushSubscription({ user_id, endpoint, keys_p256dh, keys_auth }) {
