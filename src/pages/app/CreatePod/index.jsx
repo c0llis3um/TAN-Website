@@ -166,9 +166,11 @@ export default function CreatePod() {
 
   const upd      = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const tokens   = CHAIN_TOKENS[form.chain] ?? []
-  // The pot a recipient collects is what the OTHER members pay in each cycle —
-  // size - 1, not size (which would count the recipient paying themselves).
-  const totalPot = +(form.contribution * (form.size - 1)).toFixed(6)
+  // Headline/informational preview (contribution x size) — the actual amount
+  // a recipient collects each cycle is size - 1 (their own contribution is
+  // never really moved), shown accurately on the pod page itself once real
+  // members exist; this preview is just "how big is this tanda."
+  const totalPot = +(form.contribution * form.size).toFixed(6)
 
   const isYield    = form.chain === 'XRPL' && form.tandaType === 'yield'
   const strategy   = YIELD_STRATEGIES.find(s => s.id === form.yieldStrategy)

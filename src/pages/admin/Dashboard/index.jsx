@@ -251,7 +251,7 @@ export default function AdminDash() {
                       <td className="px-5 py-4 text-xs dark:text-brand-muted text-slate-400">{pod.token}</td>
                       <td className="px-5 py-4"><Badge variant={STATUS_COLORS[pod.status] ?? 'muted'}>{pod.status}</Badge></td>
                       <td className="px-5 py-4 dark:text-brand-text text-slate-700">{members}/{pod.size}</td>
-                      <td className="px-5 py-4 font-bold dark:text-white text-slate-900">{pod.contribution_amount * (pod.size - 1)} {pod.token}</td>
+                      <td className="px-5 py-4 font-bold dark:text-white text-slate-900">{pod.contribution_amount * pod.size} {pod.token}</td>
                       <td className="px-5 py-4 dark:text-brand-muted text-slate-400 text-xs whitespace-nowrap">{timeAgo(pod.created_at)}</td>
                     </motion.tr>
                   )

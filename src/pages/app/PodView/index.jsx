@@ -481,7 +481,10 @@ export default function PodView() {
           </button>
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-3xl font-extrabold dark:text-white text-slate-900">{pod.name}</h1>
-            <Badge variant="blue">{t('pod.totalPerCycle', { amount: pod.contribution_amount * (pod.size - 1), token: pod.token })}</Badge>
+            {/* Headline/informational figure (contribution x size) — distinct from
+                the per-member "your payout" promise below, which stays at
+                size - 1 since that's the real amount that lands on-chain. */}
+            <Badge variant="blue">{t('pod.totalPerCycle', { amount: pod.contribution_amount * pod.size, token: pod.token })}</Badge>
           </div>
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             <Badge variant={STATUS_VARIANT[pod.status] ?? 'muted'}>● {pod.status}</Badge>
@@ -814,7 +817,7 @@ export default function PodView() {
           <Card hover={false} className="p-5">
             <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-4">{t('pod.podInfo')}</h3>
             {[
-              [t('pod.totalPot'),    `${pod.contribution_amount * (pod.size - 1)} ${pod.token}`],
+              [t('pod.totalPot'),    `${pod.contribution_amount * pod.size} ${pod.token}`],
               [t('pod.contribution'), `${pod.contribution_amount} ${pod.token}${t('pod.perWeek')}`],
               [t('pod.members'),      `${pod.size} ${t('pod.people')}`],
               [t('pod.duration'),     `${totalCycles} ${t('pod.weeks')}`],

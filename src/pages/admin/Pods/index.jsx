@@ -89,7 +89,7 @@ export default function AdminPods() {
               ) : paged.map(pod => {
                 const members  = pod.pod_members?.length ?? 0
                 const organizer = pod.organizer?.alias ?? pod.organizer?.wallet_address?.slice(0,10) ?? '—'
-                const pot      = pod.contribution_amount * (pod.size - 1)
+                const pot      = pod.contribution_amount * pod.size
                 return (
                   <motion.tr key={pod.id} variants={row} onClick={() => setSelected(pod)}
                     className="border-b dark:border-brand-border/40 border-slate-100 last:border-0 dark:hover:bg-brand-mid/40 hover:bg-slate-50 transition-colors cursor-pointer">
@@ -394,7 +394,7 @@ function PodDetail({ pod, onClose }) {
             ['Token',        pod.token],
             ['Status',       currentStatus],
             ['Members',      `${memberCount} / ${pod.size}`],
-            ['Total Pot',    `${pod.contribution_amount * (pod.size - 1)} ${pod.token}`],
+            ['Total Pot',    `${pod.contribution_amount * pod.size} ${pod.token}`],
             ['Contribution', `${pod.contribution_amount} ${pod.token}/wk`],
             ['Cycle',        pod.current_cycle ? `${pod.current_cycle} / ${pod.total_cycles}` : '—'],
             ['Fee Paid',     pod.creation_fee_paid ? 'Yes' : 'No'],

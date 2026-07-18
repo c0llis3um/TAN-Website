@@ -113,7 +113,7 @@
     "fee": "Protocol fee",
     "exMembers": "6",
     "exContribution": "30 XRP / week",
-    "exPot": "150 XRP",
+    "exPot": "180 XRP",
     "exDuration": "6 weeks",
     "exReceives": "150 XRP once",
     "feeValue": "$5, paid once"
