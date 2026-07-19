@@ -114,8 +114,11 @@ export default function Pay() {
           // A previous attempt may have already sent this cycle's payment
           // on-chain but failed to record it (closed tab, blocked popup,
           // dropped network) — don't pay the recipient twice on retry.
+          // sinceMs = this cycle's start: without it, an unrelated past payment
+          // to the same recipient (e.g. a different pod that happened to assign
+          // them the same payout slot) false-positives as "already paid" here.
           const alreadyPaid = pod.chain === 'XRPL'
-            ? await (await import('@/lib/xrpl')).hasAlreadyPaid(wallet.address, recipientAddr, pod.contribution_amount, pod.token, env)
+            ? await (await import('@/lib/xrpl')).hasAlreadyPaid(wallet.address, recipientAddr, pod.contribution_amount, pod.token, env, new Date(pod.cycle_started_at).getTime())
             : false
 
           if (alreadyPaid) {

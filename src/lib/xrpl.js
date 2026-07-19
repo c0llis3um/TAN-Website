@@ -206,8 +206,21 @@ function deliveredMatchesToken(delivered, token, env) {
  * @param {number} expectedAmount
  * @param {'XRP'|'RLUSD'} token
  * @param {'dev'|'live'} env
+ * @param {number} [sinceMs] — only consider payments sent at or after this unix-ms
+ *   timestamp. Without this, a wallet's unrelated PAST payment to `toAddress` can
+ *   false-positive as "already paid" — real incident: a member who'd already paid
+ *   pod A's cycle 1 tried to pay pod B's cycle 1, and both pods happened to assign
+ *   the same person payout slot 1 (a regular wallet, reused across pods — unlike
+ *   join's escrow address, which is always unique per pod). This function then
+ *   skipped sending the real payment (thinking it was already sent), so no Xaman
+ *   prompt ever appeared, and the follow-up server verification correctly failed
+ *   with "Could not verify payment on-chain" since nothing was actually sent for
+ *   pod B. The server-side equivalent (`findQualifyingPayment` in
+ *   pod-record-payment.js) already had this same time filter — this brings the
+ *   client-side check in line with it. Callers checking a per-pod-unique
+ *   destination (e.g. a pod's own escrow address, for join) don't need this.
  */
-export async function hasAlreadyPaid(fromAddress, toAddress, expectedAmount, token, env) {
+export async function hasAlreadyPaid(fromAddress, toAddress, expectedAmount, token, env, sinceMs = null) {
   const client = new Client(NODES[env] ?? NODES.dev)
   await client.connect()
 
@@ -226,6 +239,8 @@ export async function hasAlreadyPaid(fromAddress, toAddress, expectedAmount, tok
         entry.validated &&
         entry.meta?.TransactionResult === 'tesSUCCESS'
       ) {
+        // XRPL close times are seconds since the Ripple Epoch (2000-01-01T00:00:00Z).
+        if (sinceMs != null && (tx.date == null || (tx.date + 946684800) * 1000 < sinceMs)) continue
         const delivered = entry.meta?.delivered_amount ?? entry.meta?.DeliveredAmount
         if (!deliveredMatchesToken(delivered, token, env)) continue
         if (deliveredAmountToNumber(delivered) >= expectedAmount - 1e-6) return true
