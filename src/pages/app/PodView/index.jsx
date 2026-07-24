@@ -656,7 +656,10 @@ export default function PodView() {
                     )
                   })}
                 </div>
-                {mySlot && (
+                {/* A defaulted member's payout slot gets redirected to the organizer
+                    (see pod-record-payment.js / check-overdue.js) — don't tell them
+                    they're still getting a payout that's no longer coming to them. */}
+                {mySlot && myMember?.status === 'ACTIVE' && (
                   <p className="text-xs dark:text-brand-muted text-slate-400 mt-4">
                     {t('pod.yourPayoutSlot', { slot: mySlot, amount: pod.contribution_amount * (pod.size - 1), token: pod.token })}
                   </p>
@@ -728,9 +731,14 @@ export default function PodView() {
                 {Array.from({ length: pod.total_cycles ?? pod.size }, (_, i) => {
                   const cycle         = i + 1
                   const cyclePays     = payments.filter(p => p.cycle === cycle)
-                  const recipient     = pod.pod_members?.find(m => m.payout_slot === cycle)
-                  const recipientAddr = recipient?.user?.wallet_address ?? ''
-                  const recipientName = recipient?.user?.alias ?? (recipientAddr ? `${recipientAddr.slice(0,6)}…${recipientAddr.slice(-4)}` : '—')
+                  // Redirected to the organizer if the member holding this cycle's
+                  // slot has since defaulted — matches pod-record-payment.js /
+                  // check-overdue.js / Pay/index.jsx, so this never shows a
+                  // recipient the real payment didn't actually go to.
+                  const slotMember    = pod.pod_members?.find(m => m.payout_slot === cycle)
+                  const recipient     = slotMember?.status === 'ACTIVE' ? slotMember : pod.organizer
+                  const recipientAddr = recipient?.user?.wallet_address ?? recipient?.wallet_address ?? ''
+                  const recipientName = (recipient?.user?.alias ?? recipient?.alias) ?? (recipientAddr ? `${recipientAddr.slice(0,6)}…${recipientAddr.slice(-4)}` : '—')
                   const totalPot      = cyclePays.reduce((s, p) => s + Number(p.amount), 0)
                   const isComplete    = cyclePays.length > 0 && cyclePays.length >= (pod.pod_members?.filter(m => m.status === 'ACTIVE').length ?? pod.size)
                   const explorerBase  = pod.chain === 'Ethereum'

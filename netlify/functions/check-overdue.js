@@ -155,10 +155,19 @@ async function slashMember({ supabase, pod, member, escrowWallet, env }) {
 
   // Find payout recipient — needed both for the paid-check below (on-chain
   // scan target) and for where the slash payment goes if we do end up
-  // slashing.
-  const recipient = pod.pod_members?.find(m => m.payout_slot === cycle)
-  if (!recipient?.user?.wallet_address) {
+  // slashing. Payout slots are assigned once at pod-fill and never
+  // reassigned — if the member holding this cycle's slot has since
+  // defaulted, redirect to the organizer instead of sending real money to
+  // an already-excluded member (matches pod-record-payment.js/Pay/index.jsx).
+  const slotRecipient = pod.pod_members?.find(m => m.payout_slot === cycle)
+  if (!slotRecipient?.user?.wallet_address) {
     return { skipped: true, reason: 'no payout recipient found' }
+  }
+  const recipientIsActive = slotRecipient.status === 'ACTIVE'
+  const recipientUserId   = recipientIsActive ? slotRecipient.user_id : pod.organizer?.id
+  const recipientWallet   = recipientIsActive ? slotRecipient.user.wallet_address : pod.organizer?.wallet_address
+  if (!recipientWallet) {
+    return { skipped: true, reason: 'no payout recipient found (organizer wallet missing)' }
   }
 
   // This cycle's recipient never owes themselves a payment — nothing to
@@ -167,7 +176,7 @@ async function slashMember({ supabase, pod, member, escrowWallet, env }) {
   // look unpaid here and get wrongly slashed — sending a "penalty" payment
   // from their own collateral into their own wallet and marking them
   // DEFAULTED for a cycle they'd already received.
-  if (recipient.user_id === memberUserId) {
+  if (recipientUserId === memberUserId) {
     return { skipped: true, reason: "member is this cycle's recipient" }
   }
 
@@ -199,7 +208,7 @@ async function slashMember({ supabase, pod, member, escrowWallet, env }) {
   if (member.user?.wallet_address) {
     const sinceMs = new Date(pod.cycle_started_at).getTime()
     const found = await findQualifyingPayment(
-      supabase, member.user.wallet_address, recipient.user.wallet_address, pod.contribution_amount, pod.token, env, sinceMs,
+      supabase, member.user.wallet_address, recipientWallet, pod.contribution_amount, pod.token, env, sinceMs,
     )
     if (found) {
       const { error: insertErr } = await supabase.from('payments').insert({
@@ -228,7 +237,7 @@ async function slashMember({ supabase, pod, member, escrowWallet, env }) {
   const payment = {
     TransactionType: 'Payment',
     Account:         escrowWallet.address,
-    Destination:     recipient.user.wallet_address,
+    Destination:     recipientWallet,
     Amount:          xrpToDrops(String(amount)),
   }
 
@@ -333,6 +342,7 @@ export const handler = async (event = {}) => {
     .select(`
       id, chain, token, contribution_amount, status, env, total_cycles,
       current_cycle, cycle_started_at, cycle_frequency_days,
+      organizer:users!organizer_id ( id, wallet_address ),
       pod_members (
         id, user_id, payout_slot, status,
         user:users ( id, wallet_address, email )

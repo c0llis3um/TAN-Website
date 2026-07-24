@@ -86,10 +86,18 @@ export default function Pay() {
       return
     }
 
-    // Find the payout recipient for this cycle
+    // Find the payout recipient for this cycle — redirected to the organizer
+    // if the member holding this cycle's payout slot has since defaulted
+    // (slots are assigned once at pod-fill and never reassigned), matching
+    // pod-record-payment.js's server-side redirect. Must match exactly: this
+    // is the address the real on-chain payment actually gets sent to.
     const payoutMember = pod.pod_members?.find(m => m.payout_slot === pod.current_cycle)
-    const recipientAddr = payoutMember?.user?.wallet_address
-    const recipientAlias = payoutMember?.user?.alias ?? recipientAddr?.slice(0, 8)
+    const recipientAddr = payoutMember?.status === 'ACTIVE'
+      ? payoutMember?.user?.wallet_address
+      : pod.organizer?.wallet_address
+    const recipientAlias = payoutMember?.status === 'ACTIVE'
+      ? (payoutMember?.user?.alias ?? recipientAddr?.slice(0, 8))
+      : (pod.organizer?.alias ?? recipientAddr?.slice(0, 8))
 
     let txHashResult = null
 

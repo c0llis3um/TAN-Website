@@ -160,6 +160,7 @@ export const handler = async (event) => {
       .from('pods')
       .select(`
         id, chain, token, env, contribution_amount, size, current_cycle, total_cycles, status, cycle_started_at,
+        organizer:users!organizer_id ( id, wallet_address ),
         pod_members ( id, user_id, status, payout_slot, user:users ( id, wallet_address ) )
       `)
       .eq('id', podId)
@@ -172,8 +173,16 @@ export const handler = async (event) => {
     const member = pod.pod_members?.find(m => m.user?.wallet_address === walletAddress && m.status === 'ACTIVE')
     if (!member) return { statusCode: 403, body: JSON.stringify({ error: 'Wallet is not an active member of this pod' }) }
 
+    // Payout slots are assigned once at pod-fill and never reassigned — if the
+    // member who holds this cycle's slot has since defaulted (excluded from
+    // future cycles), redirect the pot to the organizer instead of letting
+    // real money flow to an excluded member. Real incident: a 3-member pod
+    // where 2 members defaulted on cycle 2, leaving the 3rd (final) cycle's
+    // designated recipient already-defaulted before anyone could pay it.
     const payoutMember  = pod.pod_members?.find(m => m.payout_slot === pod.current_cycle)
-    const recipientAddr = payoutMember?.user?.wallet_address
+    const recipientAddr = payoutMember?.status === 'ACTIVE'
+      ? payoutMember?.user?.wallet_address
+      : pod.organizer?.wallet_address
     if (!recipientAddr) return { statusCode: 400, body: JSON.stringify({ error: 'Payout recipient not assigned for this cycle yet' }) }
 
     // ── 2. Idempotency: already recorded? ─────────────────────────
