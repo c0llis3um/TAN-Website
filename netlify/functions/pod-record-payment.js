@@ -235,6 +235,44 @@ export const handler = async (event) => {
       return { statusCode: 500, body: JSON.stringify({ error: `Payment verified but recording it failed: ${insertErr.message}. Contact support — do not pay again.` }) }
     }
 
+    // ── 4b. Auto-complete the recipient's own self-recipient record if missing ──
+    // A cycle's recipient owes nothing and needs no signature for that fact —
+    // it's a deterministic bookkeeping record, not something that should
+    // depend on them happening to load the app. Without this, a cycle could
+    // get stuck forever at "N-1 of N paid" if the recipient never visits
+    // while connected, even though every real payment obligation is already
+    // satisfied (found on a real live pod). Only for the normal case where
+    // the designated slot-holder is still ACTIVE — the organizer-redirect
+    // case (payoutMember not ACTIVE) has no stub to complete, since the
+    // original slot-holder is already excluded.
+    if (!isSelfRecipient && payoutMember?.status === 'ACTIVE') {
+      const { data: recipientExisting } = await supabase
+        .from('payments')
+        .select('id')
+        .eq('pod_id', podId)
+        .eq('user_id', payoutMember.user_id)
+        .eq('cycle', pod.current_cycle)
+        .maybeSingle()
+
+      if (!recipientExisting) {
+        const { error: recipErr } = await supabase.from('payments').insert({
+          pod_id:  podId,
+          user_id: payoutMember.user_id,
+          cycle:   pod.current_cycle,
+          amount:  pod.contribution_amount,
+          token:   pod.token,
+          chain:   pod.chain,
+          method:  'wallet',
+          tx_hash: 'self-recipient',
+          status:  'CONFIRMED',
+          paid_at: new Date().toISOString(),
+        })
+        if (recipErr && recipErr.code !== PG_UNIQUE_VIOLATION) {
+          console.error(`[pod-record-payment] Failed to auto-complete recipient self-record for pod ${podId} cycle ${pod.current_cycle}:`, recipErr.message)
+        }
+      }
+    }
+
     // ── 5. Advance the cycle if everyone's paid ─────────────────────
     // "Everyone" means every still-ACTIVE member, not the pod's original size —
     // a DEFAULTED member is permanently excluded from paying (see the ACTIVE
