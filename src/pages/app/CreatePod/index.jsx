@@ -912,6 +912,8 @@ export default function CreatePod() {
                   [t('create.contribution'), `${form.contribution} ${form.token} / cycle`],
                   [t('how.members'),         `${form.size} people`],
                   [t('create.weeklyPot'),    `${totalPot} ${form.token}`],
+                  [t('create.totalAfterCycles'), `${+(form.contribution * (form.size - 1)).toFixed(6)} ${form.token}`],
+                  [t('create.totalTandaVolume'), `${+(totalPot * form.size).toFixed(6)} ${form.token}`],
                   [t('create.payoutOrder'),  form.payoutOrder],
                   ...(isYield ? [
                     [t('create.tandaType'),    t('create.typeYield')],
@@ -951,7 +953,7 @@ export default function CreatePod() {
                   )}
                   <div className="flex justify-between text-sm border-t dark:border-brand-border border-slate-200 pt-2 mt-2">
                     <span className="font-bold dark:text-white text-slate-900">{t('create.totalUpfront')}</span>
-                    <span className="font-extrabold text-brand-cyan">{form.contribution * 3} {form.token}{form.chain === 'Ethereum' ? ' + gas' : ''}</span>
+                    <span className="font-extrabold text-brand-cyan">{+(form.contribution * (form.size + 1)).toFixed(6)} {form.token}{form.chain === 'Ethereum' ? ' + gas' : ''}</span>
                   </div>
                 </div>
                 {form.chain === 'XRPL' && env === 'live' && (

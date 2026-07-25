@@ -494,6 +494,8 @@
     "groupSize": "Miembros: {{n}} personas",
     "frequency": "Frecuencia de Pago",
     "weeklyPot": "Pozo total",
+    "totalAfterCycles": "Total después de los ciclos",
+    "totalTandaVolume": "Total de toda la tanda",
     "duration": "Duración",
     "toJoin": "Para unirse",
     "network": "Red",

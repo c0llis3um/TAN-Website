@@ -494,6 +494,8 @@
     "groupSize": "Members: {{n}} people",
     "frequency": "Payment Frequency",
     "weeklyPot": "Total pot",
+    "totalAfterCycles": "Total after cycles",
+    "totalTandaVolume": "Total of the whole tanda",
     "duration": "Duration",
     "toJoin": "To join",
     "network": "Network",

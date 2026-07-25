@@ -494,6 +494,8 @@
     "groupSize": "成员：{{n}} 人",
     "frequency": "缴费频率",
     "weeklyPot": "总款项",
+    "totalAfterCycles": "所有周期结束后的总额",
+    "totalTandaVolume": "整个标会的总额",
     "duration": "周期",
     "toJoin": "加入所需",
     "network": "网络",
