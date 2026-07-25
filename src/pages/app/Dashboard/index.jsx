@@ -148,7 +148,7 @@ export default function Dashboard() {
   const totalLocked = [...pods, ...joinedPods]
     .filter(p => p.status === 'ACTIVE')
     .reduce((totals, p) => {
-      totals[p.token] = (totals[p.token] ?? 0) + p.contribution_amount * 2
+      totals[p.token] = (totals[p.token] ?? 0) + p.contribution_amount * p.collateral_multiplier
       return totals
     }, {})
 

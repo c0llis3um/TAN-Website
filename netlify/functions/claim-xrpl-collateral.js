@@ -4,7 +4,8 @@
  * POST /.netlify/functions/claim-xrpl-collateral
  * Body: { podId: string, walletAddress: string }
  *
- * Sends the requesting member's remaining collateral (2× contribution, minus
+ * Sends the requesting member's remaining collateral (pod.collateral_multiplier×
+ * contribution, fixed per-pod at creation — see migration 032, minus
  * any collateral_slash payments already taken from them for missed cycles —
  * slash-xrpl-collateral.js takes exactly 1× contribution per default and the
  * member is excluded from further cycles after that, so this is never more
@@ -58,7 +59,7 @@ export const handler = async (event) => {
     const { data: pod } = await supabase
       .from('pods')
       .select(`
-        id, chain, token, contribution_amount, status, env, tanda_type, yield_strategy,
+        id, chain, token, contribution_amount, collateral_multiplier, status, env, tanda_type, yield_strategy,
         pod_members ( id, user:users ( id, wallet_address ) )
       `)
       .eq('id', podId)
@@ -124,7 +125,7 @@ export const handler = async (event) => {
       .eq('method', 'collateral_slash')
 
     const alreadySlashed = (slashes ?? []).reduce((sum, p) => sum + Number(p.amount), 0)
-    const amount = Math.max(0, pod.contribution_amount * 2 - alreadySlashed)
+    const amount = Math.max(0, pod.contribution_amount * pod.collateral_multiplier - alreadySlashed)
 
     if (amount <= 0) {
       return { statusCode: 400, body: JSON.stringify({ error: 'No collateral remaining to claim — it was fully used to cover a missed payment.' }) }

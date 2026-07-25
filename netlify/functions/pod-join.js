@@ -144,7 +144,7 @@ export const handler = async (event) => {
     // ── 1. Fetch pod ───────────────────────────────────────────
     const { data: pod } = await supabase
       .from('pods')
-      .select('id, chain, token, env, contribution_amount, size, payout_method, status, expires_at, contract_address, deployed_at')
+      .select('id, chain, token, env, contribution_amount, collateral_multiplier, size, payout_method, status, expires_at, contract_address, deployed_at')
       .eq('id', podId)
       .single()
 
@@ -200,7 +200,9 @@ export const handler = async (event) => {
     }
 
     // ── 5. Verify the collateral payment on-chain ─────────────────
-    const collateralAmount = pod.contribution_amount * 2
+    // Stored per-pod at creation, not recomputed from current size — see
+    // migration 032. Existing pods keep 2 (what their members actually paid).
+    const collateralAmount = pod.contribution_amount * pod.collateral_multiplier
     const env = pod.env ?? 'dev'
     const foundTxHash = await findQualifyingPayment(supabase, walletAddress, pod.contract_address, collateralAmount, pod.token, env)
     if (!foundTxHash) {

@@ -156,7 +156,7 @@ export const handler = async (event) => {
     // ── 3. Fetch pod ──────────────────────────────────────────────────────
     const { data: pod } = await supabase
       .from('pods')
-      .select('id, tanda_type, yield_strategy, token, contribution_amount, size, status, chain')
+      .select('id, tanda_type, yield_strategy, token, contribution_amount, collateral_multiplier, size, status, chain')
       .eq('id', podId)
       .maybeSingle()
 
@@ -260,7 +260,7 @@ export const handler = async (event) => {
         .eq('pod_id', podId)
         .eq('status', 'ACTIVE')
 
-      const expectedTotal = (activeMemberCount ?? 0) * pod.contribution_amount * 2
+      const expectedTotal = (activeMemberCount ?? 0) * pod.contribution_amount * pod.collateral_multiplier
       const EPSILON = 1e-6
 
       // XRP collateral shares the escrow wallet's own spendable balance with

@@ -87,7 +87,7 @@ export const handler = async (event) => {
     const { data: pod } = await supabase
       .from('pods')
       .select(`
-        id, chain, token, contribution_amount, status, env, tanda_type, yield_strategy,
+        id, chain, token, contribution_amount, collateral_multiplier, status, env, tanda_type, yield_strategy,
         pod_members ( id, user:users ( id, wallet_address ) )
       `)
       .eq('id', podId)
@@ -133,7 +133,7 @@ export const handler = async (event) => {
     await client.connect()
 
     const escrowWallet        = Wallet.fromSeed(decryptSeed(escrowRow.escrow_seed))
-    const fullCollateral      = pod.contribution_amount * 2
+    const fullCollateral      = pod.contribution_amount * pod.collateral_multiplier
     const results             = []
 
     try {

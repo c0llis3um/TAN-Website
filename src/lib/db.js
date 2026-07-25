@@ -168,6 +168,7 @@ export async function createPod({
   contribution_amount, size, payout_method,
   cycle_frequency_days = 7, env,
   tanda_type = 'standard', yield_strategy = null,
+  collateral_multiplier,
 }) {
   return supabase
     .from('pods')
@@ -179,6 +180,7 @@ export async function createPod({
       status: 'OPEN',
       tanda_type,
       ...(yield_strategy ? { yield_strategy } : {}),
+      ...(collateral_multiplier ? { collateral_multiplier } : {}),
     })
     .select('id')
     .single()
@@ -508,7 +510,7 @@ export async function adminGetPodsForAnomalyScan() {
   return supabase
     .from('pods')
     .select(`
-      id, name, status, env, chain, token, contribution_amount, contract_address,
+      id, name, status, env, chain, token, contribution_amount, collateral_multiplier, contract_address,
       pod_members ( user:users ( wallet_address ) )
     `)
     .eq('chain', 'XRPL')

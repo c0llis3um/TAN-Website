@@ -238,7 +238,7 @@ export default function PodView() {
           return
         }
       }
-      const collateralAmount = pod.contribution_amount * 2
+      const collateralAmount = pod.contribution_amount * pod.collateral_multiplier
       let txHash = null
       try {
         const { hasAlreadyPaid } = await import('@/lib/xrpl')
@@ -925,7 +925,7 @@ export default function PodView() {
             <Card hover={false} className="p-5">
               <h3 className="text-xs font-bold uppercase tracking-widest dark:text-brand-muted text-slate-500 mb-1">{t('pod.collateralReturn')}</h3>
               <p className="text-xs dark:text-brand-muted text-slate-400 mb-4">
-                {t(pod.status === 'COMPLETED' ? 'pod.claimBody' : 'pod.claimBodyRefund')} <span className="font-bold dark:text-white text-slate-900">{pod.contribution_amount * 2} {pod.token}</span>
+                {t(pod.status === 'COMPLETED' ? 'pod.claimBody' : 'pod.claimBodyRefund')} <span className="font-bold dark:text-white text-slate-900">{pod.contribution_amount * pod.collateral_multiplier} {pod.token}</span>
               </p>
 
               {(claimTx || claimedPayment) ? (
@@ -949,7 +949,7 @@ export default function PodView() {
                   {claimErr && <p className="text-xs text-red-400 mb-2">{claimErr}</p>}
                   <button onClick={handleClaim} disabled={claiming}
                     className="w-full py-2.5 rounded-xl bg-gradient-brand text-white font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-all">
-                    {claiming ? t('pod.claiming') : t('pod.claimBtn', { amount: pod.contribution_amount * 2, token: pod.token })}
+                    {claiming ? t('pod.claiming') : t('pod.claimBtn', { amount: pod.contribution_amount * pod.collateral_multiplier, token: pod.token })}
                   </button>
                 </>
               )}
@@ -1015,7 +1015,7 @@ function HowItWorksCard({ pod, t }) {
     : status === 'ACTIVE' ? 'howActive'
     : 'howOpen'
 
-  const rawSteps = t(stepsKey, { returnObjects: true, size: pod.size })
+  const rawSteps = t(stepsKey, { returnObjects: true, size: pod.size, multiplier: pod.collateral_multiplier })
   const steps = Array.isArray(rawSteps) ? rawSteps : []
 
   const icons = status === 'COMPLETED'
@@ -1091,7 +1091,7 @@ function HowItWorksCard({ pod, t }) {
 const APY = { vault: 0.06, amm: 0.10 }
 
 function YieldVaultCard({ pod, vaultInfo, t }) {
-  const principal  = pod.contribution_amount * 2
+  const principal  = pod.contribution_amount * pod.collateral_multiplier
   const apy        = APY[pod.yield_strategy] ?? 0.06
   const isDeposited = vaultInfo?.vault_status === 'deposited'
   const isSimulated = vaultInfo?.vault_id === 'SIMULATED'

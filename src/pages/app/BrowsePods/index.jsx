@@ -203,9 +203,9 @@ function JoinModal({ pod, onClose, onJoin }) {
         <div className="space-y-3 mb-6">
           {[
             [t('browse.modal.contribution'), `${pod.contribution_amount} ${pod.token}`],
-            [t('browse.modal.collateral'),   `${pod.contribution_amount * 2} ${pod.token}`],
+            [t('browse.modal.collateral', { multiplier: pod.collateral_multiplier }),   `${pod.contribution_amount * pod.collateral_multiplier} ${pod.token}`],
             [t('browse.modal.firstPayment'), `${pod.contribution_amount} ${pod.token}`],
-            [t('browse.modal.totalUpfront'), `${pod.contribution_amount * 3} ${pod.token}`],
+            [t('browse.modal.totalUpfront'), `${pod.contribution_amount * (pod.collateral_multiplier + 1)} ${pod.token}`],
             [t('browse.modal.totalPot'),     `${pod.contribution_amount * pod.size} ${pod.token}`],
             [t('browse.modal.duration'),     `${pod.size} weeks`],
             [t('browse.modal.spotsLeft'),    `${pod.size - members} of ${pod.size}`],

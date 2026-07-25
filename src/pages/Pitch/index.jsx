@@ -161,7 +161,7 @@ export default function Pitch() {
             transition={{ duration: 0.7, delay: 0.35 }}
             className="text-xl dark:text-brand-muted text-slate-600 max-w-2xl mx-auto mb-10"
           >
-            DeFi Tanda brings the world's oldest community savings tradition — the <strong className="dark:text-brand-text text-slate-800">rotating savings circle</strong> — to the blockchain. Trustless, automatic, borderless.
+            DeFi Tanda brings the world's oldest community savings tradition — the <strong className="dark:text-brand-text text-slate-800">rotating savings circle</strong> — to the blockchain. Verified on-chain, automatic, borderless.
           </motion.p>
 
           <motion.div
@@ -173,7 +173,7 @@ export default function Pitch() {
             {[
               { label: 'Live on XRPL Testnet', Icon: IconBolt },
               { label: 'RLUSD + XRP', Icon: IconCoin },
-              { label: 'Smart Contract Secured', Icon: IconLock },
+              { label: 'On-Chain Verified', Icon: IconLock },
               { label: 'Chicago · Global', Icon: IconGlobe },
             ].map((b, i) => (
               <span key={i} className="flex items-center gap-2 px-4 py-2 rounded-xl dark:bg-brand-mid/60 bg-white border dark:border-brand-border border-slate-200 dark:text-brand-text text-slate-700 shadow-sm">
@@ -259,22 +259,22 @@ export default function Pitch() {
             <FadeUp><Pill>The Solution</Pill></FadeUp>
             <FadeUp delay={0.1}>
               <h2 className="text-4xl font-black dark:text-white text-slate-900">
-                DeFi Tanda: trustless by design
+                DeFi Tanda: verified by design
               </h2>
             </FadeUp>
             <FadeUp delay={0.2}>
               <p className="text-lg dark:text-brand-muted text-slate-600 mt-4 max-w-2xl mx-auto">
-                A smart contract replaces the organizer's handshake. Every contribution, every payout — automatic, transparent, immutable on XRPL.
+                Encrypted on-chain escrow replaces the organizer's handshake. Every contribution, every payout — automatic, transparent, independently verified on XRPL.
               </p>
             </FadeUp>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
-              { Icon: IconLock, title: 'No one holds the money', body: 'Smart contract custody. The organizer manages the group — but never touches funds.' },
+              { Icon: IconLock, title: 'The organizer never holds the money', body: 'Encrypted escrow custody. The organizer manages the group — but never touches funds.' },
               { Icon: IconBolt, title: 'Settles in 3 seconds', body: 'Built on XRP Ledger. $0.001 per transaction. Perfect for weekly savings circles.' },
               { Icon: IconCoin, title: 'RLUSD stable payouts', body: 'Members can contribute and receive in RLUSD — Ripple\'s stablecoin, no crypto volatility.' },
-              { Icon: IconShield, title: 'Collateral enforcement', body: '2× security deposit locked on-chain. Members can\'t collect and disappear.' },
+              { Icon: IconShield, title: 'Collateral enforcement', body: 'Security deposit scaled to group size, locked on-chain. Members can\'t collect and disappear.' },
               { Icon: IconGlobe, title: 'Borderless payouts', body: 'Send your payout to family anywhere in seconds. No Western Union. Near-zero fees.' },
               { Icon: IconPhone, title: 'WhatsApp + Xaman native', body: 'Invite members via WhatsApp. Pay via Xaman. Works where your community already lives.' },
             ].map((s, i) => (
@@ -429,7 +429,7 @@ export default function Pitch() {
 
           <div className="grid sm:grid-cols-2 gap-6 mb-12">
             {[
-              { Icon: IconCheck, title: 'XRPL Testnet Live', body: 'Full tanda lifecycle deployed — create, join, pay, payout, claim collateral. Real smart contract logic on XRPL devnet.' },
+              { Icon: IconCheck, title: 'XRPL Testnet Live', body: 'Full tanda lifecycle deployed — create, join, pay, payout, claim collateral. Real on-chain escrow logic on XRPL devnet.' },
               { Icon: IconCheck, title: 'RLUSD + XRP Support', body: 'Dual-token system live. Members can save and receive payouts in Ripple\'s regulated stablecoin or native XRP.' },
               { Icon: IconCheck, title: 'Xaman Wallet Integration', body: 'One-tap payments via Xaman (XUMM). Native XRPL wallet, 10M+ users globally.' },
               { Icon: IconCheck, title: 'Full Web App', body: 'Dashboard, pod creation, payout tracking, collateral flow, WhatsApp/Telegram sharing — all built and live.' },

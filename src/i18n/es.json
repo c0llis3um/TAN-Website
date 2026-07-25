@@ -45,7 +45,7 @@
         "a": "Abre el grupo y toca Unirse. Tu billetera (Xaman) te pedirá enviar el monto de garantía a la billetera de garantía del grupo. Una vez confirmado ese pago en la cadena, quedas agregado como integrante. Cuando el grupo se llena, la tanda se activa y comienza el ciclo 1."
       },
       "whyCollateral": {
-        "q": "¿Por qué tengo que pagar 2× el monto de contribución para unirme?",
+        "q": "¿Por qué tengo que pagar una garantía para unirme?",
         "a": "La garantía protege al resto del grupo. Si alguna vez no pagas un ciclo, tu garantía lo cubre en vez de dejar sin su pago a quien recibía ese ciclo. Recibes de vuelta lo que quede de tu garantía cuando la tanda termina (o de inmediato, si el grupo se cancela antes de llenarse)."
       },
       "howToPay": {
@@ -54,7 +54,7 @@
       },
       "whatIsDefault": {
         "q": "¿Qué pasa si no pago a tiempo (incumplimiento)?",
-        "a": "Todos los días, la plataforma revisa automáticamente si hay integrantes que no pagaron el ciclo actual a tiempo. Si no pagaste a tiempo, se toma automáticamente 1× tu monto de contribución de tu garantía y se envía en tu nombre a quien recibía ese ciclo — así que quien recibe siempre cobra completo, pase lo que pase. Luego quedas marcado como INCUMPLIDO y se te retira de la rotación de pagos por el resto de la tanda: no se te pedirá pagar los ciclos futuros, y no recibirás un turno de pago si aún no lo tenías asignado.\n\nConservas lo que quede de tu garantía (originalmente 2× tu contribución — se usa 1× para cubrir el ciclo no pagado, así que queda 1×) y puedes reclamarlo cuando la tanda termine."
+        "a": "Todos los días, la plataforma revisa automáticamente si hay integrantes que no pagaron el ciclo actual a tiempo. Si no pagaste a tiempo, se toma automáticamente 1× tu monto de contribución de tu garantía y se envía en tu nombre a quien recibía ese ciclo — así que quien recibe siempre cobra completo, pase lo que pase. Luego quedas marcado como INCUMPLIDO y se te retira de la rotación de pagos por el resto de la tanda: no se te pedirá pagar los ciclos futuros, y no recibirás un turno de pago si aún no lo tenías asignado.\n\nConservas lo que quede de tu garantía (se usa 1× tu contribución para cubrir el ciclo no pagado; lo que quede de tu depósito original sigue siendo tuyo) y puedes reclamarlo cuando la tanda termine."
       },
       "whyCantIPay": {
         "q": "¿Por qué ya no aparece el botón de Pagar después de incumplir?",
@@ -62,7 +62,7 @@
       },
       "howToClaimBack": {
         "q": "¿Cómo y cuándo recupero mi garantía?",
-        "a": "Cuando una tanda llega a COMPLETADA (todos recibieron su pago) — o si se CANCELA o EXPIRA antes de llenarse — cada integrante puede reclamar su garantía restante desde la página del grupo. Si nunca incumpliste, es el 2× completo de tu contribución. Si incumpliste una vez, es lo que quedó después de ese único descuento."
+        "a": "Cuando una tanda llega a COMPLETADA (todos recibieron su pago) — o si se CANCELA o EXPIRA antes de llenarse — cada integrante puede reclamar su garantía restante desde la página del grupo. Si nunca incumpliste, es tu depósito de garantía original completo. Si incumpliste una vez, es lo que quedó después de ese único descuento."
       },
       "isItSafe": {
         "q": "¿Mi dinero está seguro? ¿Cómo funciona la verificación?",
@@ -81,10 +81,10 @@
     "cta1": "Abrir la App",
     "cta2": "Ver cómo funciona",
     "testnetBadge": "TESTNET — Sin dinero real",
-    "statCustody": "No custodial",
-    "statCustodyLabel": "Tú tienes las llaves",
-    "statCollateral": "2× colateral",
-    "statCollateralLabel": "Bloqueado antes de pagar",
+    "statCustody": "Verificado en cadena",
+    "statCustodyLabel": "Cada pago se verifica antes de contar",
+    "statCollateral": "Respaldado por garantía",
+    "statCollateralLabel": "Escala con el tamaño del grupo",
     "statSpeed": "< 5 seg",
     "statSpeedLabel": "Liquidación"
   },
@@ -93,7 +93,7 @@
     "p1": "Una Tanda es un círculo comunitario de ahorro. Un grupo de personas acuerda poner la misma cantidad cada semana — y cada semana, una persona se lleva todo el pozo. Rota hasta que todos hayan recibido su pago.",
     "p2": "Sin intereses. Sin intermediarios. Sin ánimo de lucro. Solo un grupo de personas ayudándose mutuamente a ahorrar y salir adelante — como las comunidades lo han hecho por siglos.",
     "p3": "Quizás la conozcas como Osusu, Hui, Stokvel, Chit Fund o Arisan — misma idea, cada cultura la tiene.",
-    "p4": "¿El problema? Cuando el organizador desaparece con el dinero, o alguien deja de pagar después de recibir su pago. DeFi Tanda lo soluciona con un contrato inteligente — código que nadie puede anular, ni siquiera nosotros."
+    "p4": "¿El problema? Cuando el organizador desaparece con el dinero, o alguien deja de pagar después de recibir su pago. DeFi Tanda lo soluciona con garantía en cadena y cumplimiento automático — cada pago se verifica de forma independiente, y un pago faltante se descuenta automáticamente de la garantía bloqueada de ese miembro."
   },
   "how": {
     "title": "Cómo funciona",
@@ -123,7 +123,7 @@
     "sub": "Todo lo que hacía quebrar las tandas tradicionales — solucionado.",
     "fraud": {
       "title": "Nadie puede huir con el dinero",
-      "body": "Un contrato inteligente guarda cada centavo. El organizador maneja el grupo — pero nunca toca los fondos. Los pagos van directo de billetera a billetera."
+      "body": "Una billetera de garantía cifrada guarda cada centavo. El organizador maneja el grupo — pero nunca toca los fondos. Los pagos van directo de billetera a billetera."
     },
     "bank": {
       "title": "Paga directo desde tu billetera",
@@ -157,7 +157,7 @@
     "googlePay": "Google Pay",
     "orWallet": "o paga con billetera",
     "payFromWallet": "Pagar desde Billetera",
-    "secured": "Asegurado por contrato inteligente · {{chain}}",
+    "secured": "Verificado en cadena · {{chain}}",
     "processing": "Procesando…",
     "confirming": "Confirmando en {{chain}}",
     "confirmed": "¡Pago confirmado!",
@@ -379,7 +379,7 @@
     "timeLeft": "{{time}} restante",
     "yourPayoutSlot": "Tu pago: Semana {{slot}} — {{amount}} {{token}}",
     "toJoinHint": "~{{amount}} {{token}} necesarios para unirse",
-    "collateralHint": "(2× garantía + 1er pago)",
+    "collateralHint": "({{multiplier}}× garantía + 1er pago)",
     "buyAppleGoog": "Compra XRP con Apple/Google Pay",
     "perWeek": "/semana",
     "people": "personas",
@@ -397,7 +397,7 @@
     "howTitle": "Cómo funciona esta tanda",
     "howToggle": "Cómo funciona",
     "howOpen": [
-      "Únete depositando 2× tu contribución como garantía — este es tu depósito de seguridad.",
+      "Únete depositando {{multiplier}}× tu contribución como garantía — este es tu depósito de seguridad.",
       "Cuando los {{size}} miembros se unan, la tanda se bloquea y comienza el primer ciclo. Comparte el enlace para llenarla más rápido.",
       "¿No se llena en 7 días? La tanda expira automáticamente y todos pueden reclamar su garantía de vuelta — nada queda bloqueado.",
       "Cada ciclo, todos pagan su contribución. El pozo completo va al miembro en turno.",
@@ -405,13 +405,13 @@
     ],
     "howActive": [
       "Paga tu contribución antes del límite del ciclo — los pagos tardíos generan un recorte automático.",
-      "Tu garantía de 2× queda bloqueada hasta que termine la tanda. No puedes retirarla antes.",
+      "Tu garantía de {{multiplier}}× queda bloqueada hasta que termine la tanda. No puedes retirarla antes.",
       "Cuando llegue tu turno, el pozo completo llega a tu billetera automáticamente.",
       "Después del último ciclo, reclama tu garantía desde esta página."
     ],
     "howCompleted": [
       "¡Todos los ciclos completados — felicitaciones!",
-      "Reclama tu depósito de garantía 2× con el botón en esta página.",
+      "Reclama tu depósito de garantía {{multiplier}}× con el botón en esta página.",
       "Tu historial de pagos en cadena es prueba permanente de tu confiabilidad.",
       "Comparte esta tanda o comienza una nueva con tu grupo."
     ],
@@ -451,17 +451,17 @@
     },
     "rules": {
       "title": "Cómo funciona una DeFi Tanda",
-      "sub": "Estas reglas son ejecutadas por el contrato inteligente — sin excepciones ni apelaciones.",
+      "sub": "Estas reglas se aplican automáticamente en la plataforma — sin excepciones ni apelaciones.",
       "rule1Title": "Debes pagar cada ciclo",
       "rule1Body": "Una vez que la tanda está activa, todos deben contribuir a tiempo. No hay período de gracia.",
-      "rule2Title": "El depósito de 2× queda bloqueado toda la duración",
-      "rule2Body": "Depositas el doble de tu contribución como garantía. Permanece bloqueado hasta que termine la tanda y se te devuelve completo.",
+      "rule2Title": "El depósito de garantía queda bloqueado toda la duración",
+      "rule2Body": "Depositas una garantía proporcional al tamaño de tu grupo. Permanece bloqueada hasta que termine la tanda y se te devuelve completa.",
       "rule3Title": "Un pago perdido activa un recorte automático",
       "rule3Body": "Si pierdes un pago, 1× de tu garantía se envía automáticamente al destinatario de ese ciclo. El contrato no puede ser anulado.",
       "rule4Title": "Sin salida anticipada",
       "rule4Body": "Una vez activa la tanda, no puedes retirar tu garantía hasta que termine. Unirte es un compromiso por toda la duración.",
       "ack1": "Me comprometo a pagar cada ciclo durante toda la duración.",
-      "ack2": "Entiendo que mi depósito de 2× queda bloqueado hasta que termine la tanda.",
+      "ack2": "Entiendo que mi depósito de garantía queda bloqueado hasta que termine la tanda.",
       "ack3": "Entiendo que un pago perdido envía automáticamente 1× de mi garantía al destinatario del ciclo.",
       "ack4": "Entiendo que no puedo salir ni recuperar mi garantía anticipadamente una vez que comienza la tanda.",
       "kycRequired": "Se requiere verificación de identidad",
@@ -561,7 +561,7 @@
     "modal": {
       "title": "¿Unirse a {{name}}?",
       "contribution": "Contribución semanal",
-      "collateral": "Depósito (2×)",
+      "collateral": "Depósito ({{multiplier}}×)",
       "firstPayment": "Primer pago",
       "totalUpfront": "Total inicial",
       "totalPot": "Pozo total",

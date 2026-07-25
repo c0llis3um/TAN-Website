@@ -26,7 +26,7 @@ export default function AdminAnomalies() {
       for (const pod of pods ?? []) {
         const expectedSenders = (pod.pod_members ?? [])
           .filter(m => m.user?.wallet_address)
-          .map(m => ({ address: m.user.wallet_address, expectedAmount: pod.contribution_amount * 2 }))
+          .map(m => ({ address: m.user.wallet_address, expectedAmount: pod.contribution_amount * pod.collateral_multiplier }))
 
         const found = await scanEscrowAnomalies(pod.contract_address, pod.token, pod.env ?? 'dev', expectedSenders)
         for (const a of found) {

@@ -271,6 +271,7 @@ export default function CreatePod() {
         organizer_id:         user.id,
         contribution_amount:  form.contribution,
         size:                 form.size,
+        collateral_multiplier: form.size,
         payout_method:        form.payoutOrder,
         cycle_frequency_days: form.frequencyDays,
         env,
@@ -846,7 +847,7 @@ export default function CreatePod() {
                 {[
                   [t('create.weeklyPot'), `${totalPot} ${form.token}`],
                   [t('create.duration'),  `${form.size} cycles`],
-                  [t('create.toJoin'),    `${+(form.contribution * 2).toFixed(6)} ${form.token}`],
+                  [t('create.toJoin'),    `${+(form.contribution * form.size).toFixed(6)} ${form.token}`],
                   [t('create.network'),   form.chain],
                 ].map(([l, v]) => (
                   <div key={l}>
@@ -935,8 +936,8 @@ export default function CreatePod() {
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
-                    <span className="dark:text-brand-muted text-slate-500">{t('create.collateral')} (2×)</span>
-                    <span className="font-bold dark:text-white text-slate-900">{form.contribution * 2} {form.token}</span>
+                    <span className="dark:text-brand-muted text-slate-500">{t('create.collateral')} ({form.size}×)</span>
+                    <span className="font-bold dark:text-white text-slate-900">{form.contribution * form.size} {form.token}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="dark:text-brand-muted text-slate-500">{t('create.firstContrib')}</span>

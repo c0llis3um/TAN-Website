@@ -45,7 +45,7 @@
         "a": "Open the pod and tap Join. Your wallet (Xaman) will prompt you to send the collateral amount to the pod's escrow wallet. Once that payment is confirmed on-chain, you're added as a member. When the group fills up, the tanda activates and cycle 1 begins."
       },
       "whyCollateral": {
-        "q": "Why do I have to pay 2× the contribution amount to join?",
+        "q": "Why do I have to pay collateral to join?",
         "a": "Collateral protects the rest of the group. If you ever miss a cycle payment, your collateral covers it instead of leaving that cycle's recipient short. You get back whatever's left of your collateral once the tanda completes (or immediately, if the pod is cancelled before it fills)."
       },
       "howToPay": {
@@ -54,7 +54,7 @@
       },
       "whatIsDefault": {
         "q": "What happens if I miss a payment (default)?",
-        "a": "Every day, the platform automatically checks for members who haven't paid the current cycle in time. If you've missed the window, 1× your contribution amount is automatically taken from your collateral and sent to that cycle's recipient on your behalf — so the recipient still gets paid in full, no matter what. You're then marked DEFAULTED and removed from the payment rotation for the rest of the tanda: you won't be asked to pay future cycles, and you won't receive a payout slot if you don't already have one.\n\nYou keep whatever's left of your collateral (originally 2× your contribution — 1× gets used to cover the missed cycle, so 1× remains) and can claim it back once the tanda completes."
+        "a": "Every day, the platform automatically checks for members who haven't paid the current cycle in time. If you've missed the window, 1× your contribution amount is automatically taken from your collateral and sent to that cycle's recipient on your behalf — so the recipient still gets paid in full, no matter what. You're then marked DEFAULTED and removed from the payment rotation for the rest of the tanda: you won't be asked to pay future cycles, and you won't receive a payout slot if you don't already have one.\n\nYou keep whatever's left of your collateral (1× your contribution is used to cover the missed cycle; whatever remains of your original deposit stays yours) and can claim it back once the tanda completes."
       },
       "whyCantIPay": {
         "q": "Why is there no Pay button after I've defaulted?",
@@ -62,7 +62,7 @@
       },
       "howToClaimBack": {
         "q": "How and when do I get my collateral back?",
-        "a": "Once a tanda reaches COMPLETED (everyone has received their payout) — or if it's CANCELLED or EXPIRED before it ever filled — every member can claim their remaining collateral back from the pod page. If you never defaulted, that's the full 2× your contribution. If you did default once, it's whatever was left after that single deduction."
+        "a": "Once a tanda reaches COMPLETED (everyone has received their payout) — or if it's CANCELLED or EXPIRED before it ever filled — every member can claim their remaining collateral back from the pod page. If you never defaulted, that's your full original collateral deposit. If you did default once, it's whatever was left after that single deduction."
       },
       "isItSafe": {
         "q": "Is my money safe? How does verification work?",
@@ -81,10 +81,10 @@
     "cta1": "Launch the App",
     "cta2": "See how it works",
     "testnetBadge": "TESTNET — No real money",
-    "statCustody": "Non-custodial",
-    "statCustodyLabel": "You hold the keys",
-    "statCollateral": "2× collateral",
-    "statCollateralLabel": "Locked before payouts",
+    "statCustody": "On-chain verified",
+    "statCustodyLabel": "Every payment checked before it counts",
+    "statCollateral": "Collateral-backed",
+    "statCollateralLabel": "Scales with group size",
     "statSpeed": "< 5 sec",
     "statSpeedLabel": "Settlement"
   },
@@ -93,7 +93,7 @@
     "p1": "A Tanda is a community savings circle. A group of people agree to each put in the same amount every week — and every week, one person takes home the whole pot. It rotates until everyone has received their payout.",
     "p2": "No interest. No middleman. No profit. Just a group of people helping each other save and get ahead — the way communities have done it for centuries.",
     "p3": "You might know it as an Osusu, Hui, Stokvel, Chit Fund, or Arisan — same idea, every culture has one.",
-    "p4": "The problem? When the organizer disappears, or someone stops paying after getting their payout. DeFi Tanda fixes that with a smart contract — code nobody can override, not even us."
+    "p4": "The problem? When the organizer disappears, or someone stops paying after getting their payout. DeFi Tanda fixes that with on-chain collateral and automatic enforcement — every payment is independently verified, and a missed payment automatically pulls from that member's locked collateral."
   },
   "how": {
     "title": "How it works",
@@ -123,7 +123,7 @@
     "sub": "Everything that made traditional tandas break — fixed.",
     "fraud": {
       "title": "Nobody can run off with the money",
-      "body": "A smart contract holds every dollar. The organizer manages the group — but never touches the funds. Payouts happen directly wallet to wallet."
+      "body": "An encrypted escrow wallet holds every dollar. The organizer manages the group — but never touches the funds. Payouts happen directly wallet to wallet."
     },
     "bank": {
       "title": "Pay straight from your wallet",
@@ -157,7 +157,7 @@
     "googlePay": "Google Pay",
     "orWallet": "or pay with wallet",
     "payFromWallet": "Pay from Wallet",
-    "secured": "Secured by smart contract · {{chain}}",
+    "secured": "Verified on-chain · {{chain}}",
     "processing": "Processing…",
     "confirming": "Confirming on {{chain}}",
     "confirmed": "Payment confirmed!",
@@ -379,7 +379,7 @@
     "timeLeft": "{{time}} left",
     "yourPayoutSlot": "Your payout: Week {{slot}} — {{amount}} {{token}}",
     "toJoinHint": "~{{amount}} {{token}} needed to join",
-    "collateralHint": "(2× collateral + 1st payment)",
+    "collateralHint": "({{multiplier}}× collateral + 1st payment)",
     "buyAppleGoog": "Buy XRP with Apple/Google Pay",
     "perWeek": "/week",
     "people": "people",
@@ -397,7 +397,7 @@
     "howTitle": "How this tanda works",
     "howToggle": "How it works",
     "howOpen": [
-      "Join by depositing 2× your contribution as collateral — this is your security deposit.",
+      "Join by depositing {{multiplier}}× your contribution as collateral — this is your security deposit.",
       "Once all {{size}} members join, the tanda locks and the first cycle starts. Share the link to fill it faster.",
       "Doesn't fill up within 7 days? The tanda expires automatically and everyone can claim their collateral back — nothing stays locked.",
       "Every cycle, each member pays their contribution. The full pot goes to whoever's turn it is.",
@@ -405,13 +405,13 @@
     ],
     "howActive": [
       "Pay your contribution before the cycle deadline — late payments trigger an automatic slash.",
-      "Your 2× collateral stays locked until the tanda finishes. You can't withdraw it early.",
+      "Your {{multiplier}}× collateral stays locked until the tanda finishes. You can't withdraw it early.",
       "When your payout slot arrives, the full pot lands in your wallet automatically.",
       "After the last cycle, claim your collateral back from this page."
     ],
     "howCompleted": [
       "All cycles are complete — congratulations!",
-      "Claim your 2× collateral deposit back using the button on this page.",
+      "Claim your {{multiplier}}× collateral deposit back using the button on this page.",
       "Your on-chain payment history is permanent proof of your reliability.",
       "Share this tanda or start a new one with your group."
     ],
@@ -451,17 +451,17 @@
     },
     "rules": {
       "title": "How a DeFi Tanda works",
-      "sub": "These rules are enforced by the smart contract — no exceptions, no appeals.",
+      "sub": "These rules are enforced automatically by the platform — no exceptions, no appeals.",
       "rule1Title": "You must pay every cycle",
       "rule1Body": "Once the tanda is active, every member must contribute on time. There is no grace period.",
-      "rule2Title": "2× collateral is locked for the full duration",
-      "rule2Body": "You deposit double your contribution as a security deposit. It stays locked until the tanda completes, then is returned in full.",
+      "rule2Title": "Collateral is locked for the full duration",
+      "rule2Body": "You deposit collateral scaled to your group size as a security deposit. It stays locked until the tanda completes, then is returned in full.",
       "rule3Title": "Missing a payment triggers an automatic slash",
       "rule3Body": "If you miss a payment, 1× your contribution is taken from your collateral and sent directly to that cycle's payout recipient. The contract cannot be overridden.",
       "rule4Title": "No early exit",
       "rule4Body": "Once the tanda is active, you cannot withdraw your collateral until it completes. Joining is a commitment to the full duration.",
       "ack1": "I commit to paying every cycle for the full duration.",
-      "ack2": "I understand my 2× collateral is locked until the tanda completes.",
+      "ack2": "I understand my collateral is locked until the tanda completes.",
       "ack3": "I understand that a missed payment automatically sends 1× my collateral to the cycle's payout recipient.",
       "ack4": "I understand I cannot exit or recover my collateral early once the tanda starts.",
       "kycRequired": "Identity verification required",
@@ -561,7 +561,7 @@
     "modal": {
       "title": "Join {{name}}?",
       "contribution": "Weekly contribution",
-      "collateral": "Collateral (2×)",
+      "collateral": "Collateral ({{multiplier}}×)",
       "firstPayment": "First payment",
       "totalUpfront": "Total upfront",
       "totalPot": "Total pot",
