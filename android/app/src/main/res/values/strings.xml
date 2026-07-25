@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DeFi Tanda</string>
+    <string name="title_activity_main">DeFi Tanda</string>
+    <string name="package_name">app.defitanda.mobile</string>
+    <string name="custom_url_scheme">app.defitanda.mobile</string>
+</resources>

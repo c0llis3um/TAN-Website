@@ -225,13 +225,9 @@ const handleDisconnect = async () => {
                     <MobileLink href="#learn" onClick={() => setMobileOpen(false)}>{t('nav.learn')}</MobileLink>
                   </>
                 )}
+                {/* Dashboard/My Pods/Create live in the bottom tab bar on mobile now — just FAQ here. */}
                 {isApp && (
-                  <>
-                    <MobileLink to="/app"        onClick={() => setMobileOpen(false)}>{t('nav.dashboard')}</MobileLink>
-                    <MobileLink to="/app/pods"   onClick={() => setMobileOpen(false)}>{t('nav.myPods')}</MobileLink>
-                    <MobileLink to="/app/create" onClick={() => setMobileOpen(false)}>{t('nav.create')}</MobileLink>
-                    <MobileLink to="/faq"        onClick={() => setMobileOpen(false)}>{t('nav.faq')}</MobileLink>
-                  </>
+                  <MobileLink to="/faq" onClick={() => setMobileOpen(false)}>{t('nav.faq')}</MobileLink>
                 )}
                 {isApp && !wallet && (
                   <button

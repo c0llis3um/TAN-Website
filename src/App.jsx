@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import Navbar from '@/components/Layout/Navbar'
 import Footer from '@/components/Layout/Footer'
+import BottomTabBar from '@/components/Layout/BottomTabBar'
 import DevBanner from '@/components/DevBanner'
 import useAppStore from '@/store/useAppStore'
 import { getPlatformSetting } from '@/lib/db'
@@ -74,7 +75,7 @@ export default function App() {
       <DevBanner />
       {!isAdmin && <Navbar />}
 
-      <main className="flex-1">
+      <main className="flex-1 pb-24 md:pb-0">
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             {/* ── Public ── */}
@@ -111,6 +112,7 @@ export default function App() {
       </main>
 
       {!isAdmin && <Footer />}
+      {!isAdmin && <BottomTabBar />}
     </div>
   )
 }
