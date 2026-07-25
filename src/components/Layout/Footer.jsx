@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 const links = [
   { label: 'Home', to: '/' },
   { label: 'Docs', href: 'https://whoosh.gitbook.io/defi-tanda', external: true },
-  { label: 'Telegram', href: 'https://t.me/tandasolana', external: true },
+  { label: 'Telegram', href: 'https://t.me/defitanda', external: true },
 ]
 
 export default function Footer() {
