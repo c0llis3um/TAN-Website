@@ -18,8 +18,10 @@ import {
 // ── Config ───────────────────────────────────────────────────
 
 // Flat USD creation fee, charged in XRP at current market price. Only
-// charged for live XRPL pods — dev/testnet pods stay free.
-const CREATION_FEE_USD = 5
+// charged for live XRPL pods — dev/testnet pods stay free. Admin-configurable
+// (platform_settings key 'creation_fee_usd', see admin Settings page) —
+// this is just the fallback if that setting is missing/unset.
+const DEFAULT_CREATION_FEE_USD = 5
 
 async function fetchXrpUsdPrice() {
   const res  = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd')
@@ -136,9 +138,14 @@ export default function CreatePod() {
 
   const [kycStatus,   setKycStatus]   = useState(null)
   const [kycEnforced, setKycEnforced] = useState(false)
+  const [creationFeeUsd, setCreationFeeUsd] = useState(DEFAULT_CREATION_FEE_USD)
 
   useEffect(() => {
     getPlatformSetting('kyc_required').then(v => setKycEnforced(v === 'true'))
+    getPlatformSetting('creation_fee_usd').then(v => {
+      const parsed = parseFloat(v)
+      if (!isNaN(parsed) && parsed > 0) setCreationFeeUsd(parsed)
+    })
   }, [])
 
   // RLUSD and yield tandas aren't safe on live yet (empty live RLUSD issuer) — if env
@@ -337,7 +344,7 @@ export default function CreatePod() {
           const treasuryAddress = await getTreasuryWallet('XRPL')
           if (!treasuryAddress) throw new Error('Treasury wallet not configured — contact support.')
           const xrpPrice = await fetchXrpUsdPrice()
-          const feeXrp   = +(CREATION_FEE_USD / xrpPrice).toFixed(2)
+          const feeXrp   = +(creationFeeUsd / xrpPrice).toFixed(2)
           // skipVerify: true — don't block here waiting up to 20s for mainnet
           // confirmation. confirm-pod-creation-fee.js (below) independently
           // re-verifies the payment itself, with its own retries, so a slow
@@ -948,7 +955,7 @@ export default function CreatePod() {
                   {form.chain === 'XRPL' && env === 'live' && (
                     <div className="flex justify-between text-sm">
                       <span className="dark:text-brand-muted text-slate-500">{t('create.creationFee')}</span>
-                      <span className="font-bold dark:text-white text-slate-900">${CREATION_FEE_USD} ({t('create.inXrp')}) · {t('create.nonRefundable')}</span>
+                      <span className="font-bold dark:text-white text-slate-900">${creationFeeUsd} ({t('create.inXrp')}) · {t('create.nonRefundable')}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm border-t dark:border-brand-border border-slate-200 pt-2 mt-2">
@@ -958,7 +965,7 @@ export default function CreatePod() {
                 </div>
                 {form.chain === 'XRPL' && env === 'live' && (
                   <p className="text-xs dark:text-brand-muted text-slate-500 mt-3 pt-3 border-t dark:border-brand-border border-slate-200">
-                    {t('create.creationFeeDisclosure', { fee: CREATION_FEE_USD })}
+                    {t('create.creationFeeDisclosure', { fee: creationFeeUsd })}
                   </p>
                 )}
               </div>

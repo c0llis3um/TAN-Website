@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import useAppStore from '@/store/useAppStore'
-import { getPlatformSetting, setPlatformSetting } from '@/lib/db'
+import { getPlatformSetting } from '@/lib/db'
 import { IconCheck } from '@/components/ui/Icons'
 
 const ADMINS = [
@@ -21,25 +21,75 @@ const item = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, trans
 
 export default function AdminSettings() {
   const { adminUser } = useAppStore()
-  const [pilotFee, setPilotFee]       = useState('2')
+  const [creationFeeUsd, setCreationFeeUsd] = useState('5')
   const [minPool, setMinPool]         = useState('25000')
   const [gracePeriod, setGracePeriod] = useState('72')
   const [maxPodSize, setMaxPodSize]   = useState('20')
   const [saved, setSaved]             = useState(false)
+  const [saveError, setSaveError]     = useState(null)
   const [kycRequired, setKycRequired] = useState(false)
+  const [kycError, setKycError]       = useState(null)
 
   useEffect(() => {
     getPlatformSetting('kyc_required').then(v => setKycRequired(v === 'true'))
+    getPlatformSetting('creation_fee_usd').then(v => { if (v != null) setCreationFeeUsd(v) })
   }, [])
 
+  // Writes to platform_settings are service_role-only by RLS (migration 021)
+  // — a direct client upsert (what this used to do via setPlatformSetting)
+  // silently fails against that policy, so this goes through the
+  // service-role-backed set-kyc-required function instead, same pattern as
+  // set-platform-env.js / set-creation-fee.js. Reverts the optimistic toggle
+  // if the call fails, rather than showing a state that never actually saved.
   async function handleKycToggle(val) {
     setKycRequired(val)
-    await setPlatformSetting('kyc_required', String(val))
+    setKycError(null)
+    try {
+      const supabaseModule = await import('@/lib/supabase')
+      const { data: { session } } = await supabaseModule.default.auth.getSession()
+      const res = await fetch('/.netlify/functions/set-kyc-required', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token ?? ''}` },
+        body:    JSON.stringify({ required: val }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.error ?? `Save failed (${res.status})`)
+    } catch (e) {
+      setKycRequired(!val)
+      setKycError(e.message ?? 'Save failed.')
+    }
   }
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  // Only the Creation Fee is wired to a real setting today — Insurance Pool
+  // Floor, Grace Period, and Max Pod Size below remain local-only display
+  // values, same as before.
+  //
+  // Writes to platform_settings are service_role-only by RLS (migration 021)
+  // — a direct client upsert would silently fail against that policy, so
+  // this goes through the service-role-backed set-creation-fee function
+  // instead, same pattern as set-platform-env.js.
+  const handleSave = async () => {
+    setSaveError(null)
+    const parsed = parseFloat(creationFeeUsd)
+    if (isNaN(parsed) || parsed <= 0) {
+      setSaveError('Creation fee must be a positive number.')
+      return
+    }
+    try {
+      const supabaseModule = await import('@/lib/supabase')
+      const { data: { session } } = await supabaseModule.default.auth.getSession()
+      const res = await fetch('/.netlify/functions/set-creation-fee', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token ?? ''}` },
+        body:    JSON.stringify({ feeUsd: parsed }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.error ?? `Save failed (${res.status})`)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (e) {
+      setSaveError(e.message ?? 'Save failed.')
+    }
   }
 
   return (
@@ -55,7 +105,7 @@ export default function AdminSettings() {
           <h2 className="font-bold dark:text-white text-slate-900 mb-5">Protocol Parameters</h2>
           <div className="grid lg:grid-cols-2 gap-5">
             {[
-              { label: 'Creation Fee (USD)',          val: pilotFee,    set: setPilotFee,    hint: 'Charged per pod at creation. Pilot: $2.00'   },
+              { label: 'Creation Fee (USD)',          val: creationFeeUsd, set: setCreationFeeUsd, hint: 'Charged per live-XRPL pod at creation, paid in XRP at market price. Free on testnet.' },
               { label: 'Insurance Pool Floor (USD)',   val: minPool,     set: setMinPool,     hint: 'Global minimum. Alert triggers below this.'  },
               { label: 'Grace Period (hours)',         val: gracePeriod, set: setGracePeriod, hint: 'First-time missed payment forgiveness window.' },
               { label: 'Max Pod Size (members)',       val: maxPodSize,  set: setMaxPodSize,  hint: 'Maximum members allowed in a single pod.'     },
@@ -78,7 +128,9 @@ export default function AdminSettings() {
             >
               {saved ? <span className="inline-flex items-center gap-1.5"><IconCheck className="w-4 h-4" /> Saved</span> : 'Save Changes'}
             </motion.button>
-            <p className="text-xs dark:text-brand-muted text-slate-400">Changes require super_admin confirmation.</p>
+            <p className="text-xs dark:text-brand-muted text-slate-400">
+              {saveError ? <span className="text-red-400">{saveError}</span> : 'Only Creation Fee is live-saved today — the other fields above are display-only for now.'}
+            </p>
           </div>
         </Card>
       </motion.div>
@@ -95,6 +147,7 @@ export default function AdminSettings() {
                 <p className="text-xs dark:text-brand-muted text-slate-400">
                   {kycRequired ? 'Users must be KYC-approved before creating or joining a tanda.' : 'KYC off — anyone with a wallet can create or join.'}
                 </p>
+                {kycError && <p className="text-xs text-red-400 mt-1">{kycError}</p>}
               </div>
               <ToggleSwitch on={kycRequired} onChange={handleKycToggle} />
             </div>
