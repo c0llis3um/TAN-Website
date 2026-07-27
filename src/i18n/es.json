@@ -157,6 +157,7 @@
     "googlePay": "Google Pay",
     "orWallet": "o paga con billetera",
     "payFromWallet": "Pagar desde Billetera",
+    "insufficientToPay": "Necesitas {{required}} {{token}} para pagar este ciclo — tienes {{current}}.",
     "secured": "Verificado en cadena · {{chain}}",
     "processing": "Procesando…",
     "confirming": "Confirmando en {{chain}}",
@@ -358,6 +359,7 @@
     "joining": "Uniéndose…",
     "joinedDone": "¡Unido!",
     "joinBtn": "Unirse →",
+    "insufficientToJoin": "Necesitas {{required}} {{token}} para unirte — tienes {{current}}.",
     "alreadyJoined": "Ya te uniste a esta tanda.",
     "noLongerOpen": "Esta tanda ya no acepta nuevos miembros.",
     "podExpired": "Esta tanda expiró.",
@@ -618,6 +620,19 @@
     "incoming": "Recibido",
     "outgoing": "Enviado",
     "failed": "fallido"
+  },
+  "bitsoGuide": {
+    "howItWorks": "Cómo funciona",
+    "title": "Compra XRP con pesos vía Bitso",
+    "subtitle": "Bitso no envía XRP directo a esta app — lo compras ahí y luego lo retiras a tu propia billetera aquí. Solo toma unos minutos.",
+    "yourAddress": "Tu dirección de billetera de DeFi Tanda",
+    "step1": "Crea o verifica tu cuenta de Bitso — la verificación de identidad ocurre del lado de Bitso, no del nuestro.",
+    "step2": "Compra XRP con pesos en Bitso — transferencia SPEI o tarjeta.",
+    "step3": "En Bitso, ve a Retirar → XRP, y pega tu dirección de arriba como destino.",
+    "step4": "No se necesita destination tag — los tags son solo para depósitos hacia un exchange, no para retiros a una billetera como esta.",
+    "step5": "Vuelve aquí cuando llegue — normalmente solo unos minutos.",
+    "openBitso": "Abrir Bitso",
+    "disclaimer": "Esto abre el sitio de Bitso. DeFi Tanda no tiene visibilidad de lo que pasa ahí — vuelve cuando tu XRP llegue."
   },
   "timeline": {
     "label": "Nuestro Camino",

@@ -43,6 +43,14 @@ const RLUSD_ISSUER = {
 // "RLUSD" = 52 4C 55 53 44, padded to 20 bytes
 const RLUSD_HEX = '524C555344000000000000000000000000000000'
 
+// Safety margin subtracted from a required XRP amount before comparing against
+// a wallet's balance in a pre-flight check — getXrplBalances already nets out
+// the live owner reserve, but not the transaction fee itself (a real cost,
+// not a reserve). Without this, a wallet with exactly enough for the payment
+// could still fail on the fee. Real XRP fees are ~0.00001-0.0001 XRP; this is
+// a generous buffer, not a fee estimate.
+export const XRP_FEE_BUFFER = 0.01
+
 // ── Wallet detection ──────────────────────────────────────────
 
 /** Always true — SDK works on mobile and desktop without browser extension */

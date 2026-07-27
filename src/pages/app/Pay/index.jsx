@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import ContactSupportModal from '@/components/ContactSupportModal'
+import BitsoGuideModal from '@/components/BitsoGuideModal'
 import useAppStore from '@/store/useAppStore'
 import { getPod, getPodPayments, recordPayment, maybeAdvanceCycle, getUser } from '@/lib/db'
 import { sendContribution, tandaPodContribute } from '@/lib/contracts'
@@ -28,6 +29,10 @@ export default function Pay() {
   const [txHash,    setTxHash]    = useState(null)
   const [recipient, setRecipient] = useState(null)
   const [showContact, setShowContact] = useState(false)
+  const [showBitsoGuide, setShowBitsoGuide] = useState(false)
+  const [xrplBalance,    setXrplBalance]    = useState(null) // { xrp, rlusd } | null
+  const [xrpFeeBuffer,   setXrpFeeBuffer]   = useState(0)
+  const [balanceChecked, setBalanceChecked] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -55,6 +60,25 @@ export default function Pay() {
       setLoading(false)
     })
   }, [id, wallet?.address])
+
+  // Insufficient-balance pre-check — avoids letting a payment attempt fail
+  // with an opaque on-chain engine code when we can already tell upfront the
+  // wallet doesn't have enough. Skipped for whoever's the cycle's payout
+  // recipient — they owe nothing this cycle (see iAmRecipient below).
+  useEffect(() => {
+    if (!pod || pod.chain !== 'XRPL' || !wallet?.address) return
+    let cancelled = false
+    setBalanceChecked(false)
+    import('@/lib/xrpl').then(({ getXrplBalances, XRP_FEE_BUFFER }) =>
+      getXrplBalances(wallet.address, env).then(bal => {
+        if (cancelled) return
+        setXrplBalance(bal)
+        setXrpFeeBuffer(XRP_FEE_BUFFER)
+        setBalanceChecked(true)
+      })
+    )
+    return () => { cancelled = true }
+  }, [pod?.id, pod?.chain, wallet?.address, env])
 
   const podUrl  = `${window.location.origin}/app/pod/${id}`
   const podName = pod?.name ?? '…'
@@ -237,6 +261,19 @@ export default function Pay() {
 
   const shortAddr = wallet?.address ? `${wallet.address.slice(0,6)}…${wallet.address.slice(-4)}` : '—'
 
+  // Whoever holds this cycle's payout slot owes nothing this cycle (they
+  // receive, they don't send) — matches the same check inside handlePay.
+  // Skip the balance gate entirely for them.
+  const payoutMemberPreview = pod.pod_members?.find(m => m.payout_slot === pod.current_cycle)
+  const recipientAddrPreview = payoutMemberPreview?.status === 'ACTIVE'
+    ? payoutMemberPreview?.user?.wallet_address
+    : pod.organizer?.wallet_address
+  const iAmRecipient = wallet?.address?.toLowerCase() === recipientAddrPreview?.toLowerCase()
+
+  const payRequired = pod.contribution_amount + (pod.token === 'XRP' ? xrpFeeBuffer : 0)
+  const payBalance  = pod.token === 'RLUSD' ? xrplBalance?.rlusd : xrplBalance?.xrp
+  const insufficientForPay = pod.chain === 'XRPL' && !iAmRecipient && balanceChecked && payBalance != null && payBalance < payRequired
+
   return (
     <div className="max-w-md mx-auto px-4 py-12">
       <motion.button onClick={() => navigate(`/app/pod/${id}`)}
@@ -313,9 +350,22 @@ export default function Pay() {
 
               <div className="p-6 space-y-3">
 
-                <motion.button whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}
-                  onClick={() => handlePay('wallet')}
-                  className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-brand-blue/50 text-brand-cyan font-bold text-base hover:bg-brand-blue/10 hover:border-brand-blue transition-all">
+                {insufficientForPay && (
+                  <div className="text-center mb-1">
+                    <p className="text-xs text-amber-500 font-semibold">
+                      {t('pay.insufficientToPay', { required: payRequired.toFixed(6), current: (payBalance ?? 0).toFixed(6), token: pod.token })}
+                    </p>
+                    {pod.token === 'XRP' && (
+                      <button onClick={() => setShowBitsoGuide(true)} className="text-xs text-brand-cyan hover:underline mt-1">
+                        {t('walletPage.getXrpTitle')} →
+                      </button>
+                    )}
+                  </div>
+                )}
+                <motion.button whileHover={insufficientForPay ? {} : { scale: 1.02, y: -1 }} whileTap={insufficientForPay ? {} : { scale: 0.98 }}
+                  onClick={() => !insufficientForPay && handlePay('wallet')}
+                  disabled={insufficientForPay}
+                  className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl border-2 border-brand-blue/50 text-brand-cyan font-bold text-base hover:bg-brand-blue/10 hover:border-brand-blue transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent">
                   <IconChainLink className="w-4 h-4" /> {t('pay.payFromWallet')}
                   <span className="text-xs font-normal dark:text-brand-muted text-slate-400">{shortAddr}</span>
                 </motion.button>
@@ -433,6 +483,8 @@ export default function Pay() {
           onClose={() => setShowContact(false)}
         />
       )}
+
+      {showBitsoGuide && <BitsoGuideModal onClose={() => setShowBitsoGuide(false)} />}
     </div>
   )
 }

@@ -157,6 +157,7 @@
     "googlePay": "Google Pay",
     "orWallet": "或使用钱包付款",
     "payFromWallet": "从钱包付款",
+    "insufficientToPay": "本期需要 {{required}} {{token}} 才能缴费——你目前有 {{current}}。",
     "secured": "链上已验证 · {{chain}}",
     "processing": "处理中……",
     "confirming": "在 {{chain}} 上确认中",
@@ -358,6 +359,7 @@
     "joining": "加入中……",
     "joinedDone": "已加入！",
     "joinBtn": "加入圈子 →",
+    "insufficientToJoin": "加入需要 {{required}} {{token}}——你目前有 {{current}}。",
     "alreadyJoined": "你已经加入了这个标会。",
     "noLongerOpen": "这个标会已不再接受新成员。",
     "podExpired": "这个标会已过期。",
@@ -618,6 +620,19 @@
     "incoming": "收款",
     "outgoing": "付款",
     "failed": "失败"
+  },
+  "bitsoGuide": {
+    "howItWorks": "运作方式",
+    "title": "通过 Bitso 用比索购买 XRP",
+    "subtitle": "Bitso 不会直接把 XRP 发送到这个应用——你需要先在那边购买，然后提现到你自己的钱包。整个过程只需几分钟。",
+    "yourAddress": "你的 DeFi Tanda 钱包地址",
+    "step1": "创建或验证你的 Bitso 账户——身份验证在 Bitso 那边完成，与我们无关。",
+    "step2": "在 Bitso 用比索购买 XRP——SPEI 银行转账或银行卡。",
+    "step3": "在 Bitso 上前往「提现」→ XRP，粘贴上方的地址作为目标地址。",
+    "step4": "不需要目标标签（destination tag）——标签只用于向交易所充值，提现到像这样的普通钱包不需要。",
+    "step5": "到账后回到这里——通常只需几分钟。",
+    "openBitso": "打开 Bitso",
+    "disclaimer": "这会打开 Bitso 自己的网站。DeFi Tanda 无法看到那边发生的事情——XRP 到账后请回到这里。"
   },
   "timeline": {
     "label": "我们的历程",

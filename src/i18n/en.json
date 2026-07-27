@@ -157,6 +157,7 @@
     "googlePay": "Google Pay",
     "orWallet": "or pay with wallet",
     "payFromWallet": "Pay from Wallet",
+    "insufficientToPay": "You need {{required}} {{token}} to pay this cycle — you have {{current}}.",
     "secured": "Verified on-chain · {{chain}}",
     "processing": "Processing…",
     "confirming": "Confirming on {{chain}}",
@@ -358,6 +359,7 @@
     "joining": "Joining…",
     "joinedDone": "Joined!",
     "joinBtn": "Join Pod →",
+    "insufficientToJoin": "You need {{required}} {{token}} to join — you have {{current}}.",
     "alreadyJoined": "You already joined this pod.",
     "noLongerOpen": "This pod is no longer open to new members.",
     "podExpired": "This pod has expired.",
@@ -618,6 +620,19 @@
     "incoming": "Received",
     "outgoing": "Sent",
     "failed": "failed"
+  },
+  "bitsoGuide": {
+    "howItWorks": "How it works",
+    "title": "Buy XRP with pesos via Bitso",
+    "subtitle": "Bitso doesn't send XRP straight into this app — you buy it there, then withdraw it to your own wallet here. It only takes a few minutes.",
+    "yourAddress": "Your DeFi Tanda wallet address",
+    "step1": "Create or verify your Bitso account — identity verification happens on Bitso's side, not ours.",
+    "step2": "Buy XRP with pesos on Bitso — SPEI bank transfer or card.",
+    "step3": "On Bitso, go to Withdraw → XRP, and paste your address above as the destination.",
+    "step4": "No destination tag is needed — tags are only for deposits into an exchange, not withdrawals to a wallet like this one.",
+    "step5": "Come back here once it arrives — usually just a few minutes.",
+    "openBitso": "Open Bitso",
+    "disclaimer": "This opens Bitso's own site. DeFi Tanda has no visibility into what happens there — come back once your XRP arrives."
   },
   "timeline": {
     "label": "Our Journey",

@@ -14,6 +14,7 @@ import { Client, xrpToDrops } from 'xrpl'
 import Card from '@/components/ui/Card'
 import KpiCard from '@/components/ui/KpiCard'
 import MoonPayButton from '@/components/MoonPayButton'
+import BitsoGuideModal from '@/components/BitsoGuideModal'
 import { IconArrowDownLeft, IconArrowUpRight, IconRefresh } from '@/components/ui/Icons'
 
 const BITSO_XRP_URL = 'https://bitso.com/mx/prices/xrp'
@@ -184,6 +185,7 @@ export default function XrplDashboard({ wallet, env }) {
   const [chartLoading, setChartLoading] = useState(true)
   const [period,       setPeriod]       = useState('24H')
   const [txPage,       setTxPage]       = useState(0)
+  const [showBitsoGuide, setShowBitsoGuide] = useState(false)
 
   const TX_PAGE_SIZE = 8
 
@@ -404,7 +406,7 @@ export default function XrplDashboard({ wallet, env }) {
 
       {/* Get XRP — live only */}
       {env === 'live' && (
-        <Card hover={false} className="p-5">
+        <Card hover={false} className="p-5" id="get-xrp">
           <h3 className="font-bold dark:text-white text-slate-900 text-sm mb-1">{t('walletPage.getXrpTitle')}</h3>
           <p className="text-xs dark:text-brand-muted text-slate-400 mb-3">{t('walletPage.getXrpDesc')}</p>
           <div className="space-y-2">
@@ -417,9 +419,15 @@ export default function XrplDashboard({ wallet, env }) {
               </div>
               <span className="text-brand-blue text-sm">→</span>
             </a>
+            <button onClick={() => setShowBitsoGuide(true)}
+              className="w-full text-xs text-brand-cyan hover:underline text-center pt-1">
+              {t('bitsoGuide.howItWorks')}
+            </button>
           </div>
         </Card>
       )}
+
+      {showBitsoGuide && <BitsoGuideModal onClose={() => setShowBitsoGuide(false)} />}
     </div>
   )
 }

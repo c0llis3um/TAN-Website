@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import ContactSupportModal from '@/components/ContactSupportModal'
+import BitsoGuideModal from '@/components/BitsoGuideModal'
 import useAppStore from '@/store/useAppStore'
 import { getPod, joinPod, getUser, upsertUser, maybeActivatePod, cycleMs, updatePodStatus, getPodPayments, getVaultInfo, getPodMembership } from '@/lib/db'
 import { tandaPodJoin, cancelTandaPod, claimCollateral } from '@/lib/contracts'
@@ -55,7 +56,11 @@ export default function PodView() {
   const [joinEmail,   setJoinEmail]   = useState('')
   const [copied,      setCopied]      = useState(false)
   const [showContact, setShowContact] = useState(false)
+  const [showBitsoGuide, setShowBitsoGuide] = useState(false)
   const [now,         setNow]         = useState(Date.now())
+  const [xrplBalance,   setXrplBalance]   = useState(null) // { xrp, rlusd } | null
+  const [xrpFeeBuffer,  setXrpFeeBuffer]  = useState(0)
+  const [balanceChecked, setBalanceChecked] = useState(false)
 
   // Live countdown next to the due-date banner — ticks every 30s, precise
   // enough for a multi-day deadline without re-rendering every second.
@@ -147,6 +152,24 @@ export default function PodView() {
       .catch(() => {})
     return () => { cancelled = true }
   }, [id, wallet?.address, pod?.status, pod?.current_cycle, payments])
+
+  // Insufficient-balance pre-check — avoids letting a join attempt fail with an
+  // opaque on-chain engine code (e.g. tecUNFUNDED_PAYMENT) when we can already
+  // tell upfront the wallet doesn't have enough.
+  useEffect(() => {
+    if (!pod || pod.chain !== 'XRPL' || !wallet?.address) return
+    let cancelled = false
+    setBalanceChecked(false)
+    import('@/lib/xrpl').then(({ getXrplBalances, XRP_FEE_BUFFER }) =>
+      getXrplBalances(wallet.address, env).then(bal => {
+        if (cancelled) return
+        setXrplBalance(bal)
+        setXrpFeeBuffer(XRP_FEE_BUFFER)
+        setBalanceChecked(true)
+      })
+    )
+    return () => { cancelled = true }
+  }, [pod?.id, pod?.chain, wallet?.address, env])
 
   async function handleJoin() {
     if (!wallet?.address) return
@@ -420,6 +443,13 @@ export default function PodView() {
     )
   }
 
+  // Insufficient-balance gating for the Join button — required is the full
+  // collateral (contribution * pod.collateral_multiplier), not just one
+  // cycle's contribution.
+  const joinRequired = pod.contribution_amount * pod.collateral_multiplier + (pod.token === 'XRP' ? xrpFeeBuffer : 0)
+  const joinBalance  = pod.token === 'RLUSD' ? xrplBalance?.rlusd : xrplBalance?.xrp
+  const insufficientForJoin = pod.chain === 'XRPL' && balanceChecked && joinBalance != null && joinBalance < joinRequired
+
   const members      = pod.pod_members ?? []
   const totalCycles  = pod.total_cycles ?? pod.size
   const currentCycle = pod.current_cycle ?? 0
@@ -520,7 +550,19 @@ export default function PodView() {
                   placeholder={t('pod.emailPlaceholder')}
                   className="w-[200px] px-3 py-2 rounded-xl text-xs text-right dark:bg-brand-dark bg-slate-50 dark:border-brand-border border border-slate-200 dark:text-white text-slate-900 dark:placeholder-brand-muted placeholder-slate-400 outline-none focus:border-brand-blue/60" />
               )}
-              <Button onClick={handleJoin} disabled={joining || joinDone}>
+              {!joining && !joinDone && insufficientForJoin && (
+                <div className="max-w-[220px] text-right mb-1">
+                  <p className="text-xs text-amber-500 font-semibold">
+                    {t('pod.insufficientToJoin', { required: joinRequired.toFixed(6), current: (joinBalance ?? 0).toFixed(6), token: pod.token })}
+                  </p>
+                  {pod.token === 'XRP' && (
+                    <button onClick={() => setShowBitsoGuide(true)} className="text-xs text-brand-cyan hover:underline mt-1">
+                      {t('walletPage.getXrpTitle')} →
+                    </button>
+                  )}
+                </div>
+              )}
+              <Button onClick={handleJoin} disabled={joining || joinDone || insufficientForJoin}>
                 {joinDone && <IconCheck className="w-4 h-4" />} {joining ? t('pod.joining') : joinDone ? t('pod.joinedDone') : t('pod.joinBtn')}
               </Button>
               {joining && pod.chain === 'XRPL' && (
@@ -1001,6 +1043,8 @@ export default function PodView() {
           onClose={() => setShowContact(false)}
         />
       )}
+
+      {showBitsoGuide && <BitsoGuideModal onClose={() => setShowBitsoGuide(false)} />}
     </div>
   )
 }
