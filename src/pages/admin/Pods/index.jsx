@@ -201,7 +201,7 @@ function PodDetail({ pod, onClose }) {
   const canRelease       = canReleaseEVM || canReleaseXRPL
 
   const xrplBase = (pod.env ?? 'dev') === 'live'
-    ? 'https://xrpl.org/transactions/'
+    ? 'https://livenet.xrpl.org/transactions/'
     : 'https://testnet.xrpl.org/transactions/'
 
   async function handleForceComplete() {

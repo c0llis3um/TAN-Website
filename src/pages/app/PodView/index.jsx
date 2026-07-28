@@ -981,7 +981,7 @@ export default function PodView() {
                     return (
                       <a href={pod.chain === 'Ethereum'
                           ? `https://${pod.env === 'dev' ? 'sepolia.' : ''}etherscan.io/tx/${hash}`
-                          : `https://${pod.env === 'dev' ? 'testnet.' : ''}xrpl.org/transactions/${hash}`}
+                          : `https://${pod.env === 'dev' ? 'testnet' : 'livenet'}.xrpl.org/transactions/${hash}`}
                         target="_blank" rel="noopener noreferrer"
                         className="font-mono text-xs dark:text-brand-cyan text-brand-blue underline break-all">
                         {hash.slice(0, 20)}…
