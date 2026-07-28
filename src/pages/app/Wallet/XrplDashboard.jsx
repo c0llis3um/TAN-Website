@@ -12,10 +12,14 @@ import { useTranslation } from 'react-i18next'
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts'
 import { Client, xrpToDrops } from 'xrpl'
 import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
 import KpiCard from '@/components/ui/KpiCard'
 import MoonPayButton from '@/components/MoonPayButton'
 import BitsoGuideModal from '@/components/BitsoGuideModal'
-import { IconArrowDownLeft, IconArrowUpRight, IconRefresh } from '@/components/ui/Icons'
+import { getUser } from '@/lib/db'
+import { isPushSupported, enablePushNotifications } from '@/lib/push'
+import { getTelegramBotUsername, connectTelegram } from '@/lib/telegram'
+import { IconArrowDownLeft, IconArrowUpRight, IconRefresh, IconBell, IconBadge } from '@/components/ui/Icons'
 
 const BITSO_XRP_URL = 'https://bitso.com/mx/prices/xrp'
 
@@ -123,7 +127,7 @@ async function fetchAccountData(address, env) {
 
 // ── Sub-components ────────────────────────────────────────────
 
-function TxRow({ tx }) {
+function TxRow({ tx, env }) {
   const { t }    = useTranslation()
   const isIn     = tx.incoming
   const isOut    = tx.outgoing
@@ -141,10 +145,12 @@ function TxRow({ tx }) {
 
   const color = !success ? 'text-red-400' : isIn ? 'text-emerald-400' : isOut ? 'text-brand-cyan' : 'dark:text-brand-muted text-slate-400'
   const ArrowIcon = isIn ? IconArrowDownLeft : isOut ? IconArrowUpRight : IconRefresh
+  const explorerUrl = tx.hash ? `https://${env === 'dev' ? 'testnet' : 'livenet'}.xrpl.org/transactions/${tx.hash}` : null
 
   return (
-    <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-      className="flex items-center gap-3 px-4 py-3 border-b dark:border-brand-border/30 border-slate-100 last:border-0 hover:dark:bg-brand-mid/30 hover:bg-slate-50 transition-colors">
+    <motion.a href={explorerUrl ?? undefined} target="_blank" rel="noopener noreferrer"
+      initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
+      className={`group flex items-center gap-3 px-4 py-3 border-b dark:border-brand-border/30 border-slate-100 last:border-0 hover:dark:bg-brand-mid/30 hover:bg-slate-50 transition-colors ${explorerUrl ? 'cursor-pointer' : 'cursor-default'}`}>
       <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0
         ${isIn ? 'dark:bg-emerald-500/15 bg-emerald-50 text-emerald-400'
                : isOut ? 'dark:bg-brand-blue/15 bg-blue-50 text-brand-cyan'
@@ -156,7 +162,7 @@ function TxRow({ tx }) {
           <span className={`text-xs font-bold ${color}`}>{typeLabel}</span>
           {!success && <span className="text-[10px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded-full">{t('walletPage.failed')}</span>}
         </div>
-        <p className="text-[11px] font-mono dark:text-brand-muted text-slate-400 truncate">
+        <p className="text-[11px] font-mono dark:text-brand-muted text-slate-400 truncate group-hover:text-brand-cyan">
           {tx.hash ? `${tx.hash.slice(0, 10)}…${tx.hash.slice(-6)}` : '—'}
         </p>
       </div>
@@ -170,7 +176,7 @@ function TxRow({ tx }) {
           {tx.date ? tx.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
         </p>
       </div>
-    </motion.div>
+    </motion.a>
   )
 }
 
@@ -186,6 +192,30 @@ export default function XrplDashboard({ wallet, env }) {
   const [period,       setPeriod]       = useState('24H')
   const [txPage,       setTxPage]       = useState(0)
   const [showBitsoGuide, setShowBitsoGuide] = useState(false)
+
+  const [user,        setUser]        = useState(null)
+  const [notifPrompt,    setNotifPrompt]    = useState(false)
+  const [notifDismissed, setNotifDismissed] = useState(false)
+  const [notifBusy,      setNotifBusy]      = useState(false)
+  const [notifErr,       setNotifErr]       = useState(null)
+
+  useEffect(() => {
+    if (wallet?.address) getUser(wallet.address).then(({ data }) => setUser(data ?? null))
+  }, [wallet?.address])
+
+  useEffect(() => {
+    if (isPushSupported() && Notification.permission === 'default') setNotifPrompt(true)
+  }, [])
+
+  async function handleEnableNotifications() {
+    if (!user?.id) return
+    setNotifBusy(true)
+    setNotifErr(null)
+    const { ok, reason } = await enablePushNotifications(user.id)
+    setNotifBusy(false)
+    if (ok) setNotifPrompt(false)
+    else setNotifErr(reason === 'denied' ? t('dashboard.notifDenied') : t('dashboard.notifError'))
+  }
 
   const TX_PAGE_SIZE = 8
 
@@ -365,7 +395,7 @@ export default function XrplDashboard({ wallet, env }) {
             <AnimatePresence mode="wait">
               <motion.div key={txPage} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 {txSlice.map(tx => (
-                  <TxRow key={tx.hash ?? Math.random()} tx={tx} address={wallet.address} />
+                  <TxRow key={tx.hash ?? Math.random()} tx={tx} env={env} />
                 ))}
               </motion.div>
             </AnimatePresence>
@@ -387,6 +417,40 @@ export default function XrplDashboard({ wallet, env }) {
           </>
         )}
       </Card>
+
+      {/* Enable push notifications / connect Telegram — shown if either is
+          offerable, decoupled from each other: a user on a push-unsupported
+          browser (or who already answered the push prompt) should still see
+          the Telegram option, and vice versa. */}
+      {(notifPrompt || getTelegramBotUsername()) && !notifDismissed && user && (
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+          className="p-4 rounded-2xl flex items-center justify-between gap-4 flex-wrap dark:bg-brand-blue/5 bg-blue-50 border dark:border-brand-blue/20 border-blue-200">
+          <div className="flex items-center gap-3">
+            <IconBadge size="sm"><IconBell /></IconBadge>
+            <div>
+              <p className="font-bold dark:text-white text-slate-900 text-sm">{t('dashboard.notifTitle')}</p>
+              <p className="text-xs dark:text-brand-muted text-slate-500">{t('dashboard.notifBody')}</p>
+              {notifErr && <p className="text-xs text-red-400 mt-1">{notifErr}</p>}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button onClick={() => setNotifDismissed(true)}
+              className="text-xs px-3 py-2 rounded-xl dark:text-brand-muted text-slate-500 hover:opacity-70 transition-opacity">
+              {t('dashboard.notifNotNow')}
+            </button>
+            {notifPrompt && (
+              <Button size="sm" onClick={handleEnableNotifications} disabled={notifBusy}>
+                {notifBusy ? '…' : t('dashboard.notifEnable')}
+              </Button>
+            )}
+            {getTelegramBotUsername() && (
+              <Button size="sm" variant="outline" onClick={() => connectTelegram(user.id)}>
+                {t('dashboard.notifConnectTelegram')}
+              </Button>
+            )}
+          </div>
+        </motion.div>
+      )}
 
       {/* Devnet faucet */}
       {env === 'dev' && (
