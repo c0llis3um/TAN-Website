@@ -117,6 +117,7 @@ export default function CreatePod() {
     contribution:      defaultChain === 'Ethereum' ? 0.01 : 10,
     size:              6,
     payoutOrder:       'random',
+    organizerFirstSlot: false,
     name:              '',
     email:             '',
     frequencyDays:     7,
@@ -128,11 +129,17 @@ export default function CreatePod() {
     rulesAck4:         false,
   })
 
+  const isLiveXrpl = form.chain === 'XRPL' && env === 'live'
+
   const DEPLOY_STEPS = [
     { key: 'save',    label: t('create.deploy.saving')     },
     { key: 'approve', label: t('create.deploy.escrow')     },
-    ...(form.chain === 'XRPL' && env === 'live' ? [{ key: 'fee', label: t('create.deploy.fee') }] : []),
+    ...(isLiveXrpl ? [{ key: 'fee', label: t('create.deploy.fee') }] : []),
     { key: 'confirm', label: t('create.deploy.confirming') },
+    ...(isLiveXrpl && form.organizerFirstSlot ? [
+      { key: 'firstSlotFee',  label: t('create.deploy.firstSlotFee')  },
+      { key: 'firstSlotJoin', label: t('create.deploy.firstSlotJoin') },
+    ] : []),
     { key: 'done',    label: t('create.deploy.done')       },
   ]
 
@@ -279,6 +286,7 @@ export default function CreatePod() {
         contribution_amount:  form.contribution,
         size:                 form.size,
         collateral_multiplier: form.size,
+        organizer_first_slot: form.organizerFirstSlot,
         payout_method:        form.payoutOrder,
         cycle_frequency_days: form.frequencyDays,
         env,
@@ -399,8 +407,54 @@ export default function CreatePod() {
         console.error('[deploy] DB update failed', { podId, txHash: contractResult.txHash, dbErr })
       }
 
+      // ── Organizer reserves the first payout slot — live XRPL only,
+      // non-refundable flat 3 XRP fee to the treasury (separate from
+      // collateral, which is paid to escrow via the same join flow every
+      // member goes through). Must happen after the block above, since
+      // pod-join.js requires deployed_at to already be set. Best-effort: the
+      // pod itself already deployed successfully by this point, so a partial
+      // failure here surfaces as a warning rather than a failed creation.
+      let firstSlotWarning = null
+      if (isLiveXrpl && form.organizerFirstSlot) {
+        try {
+          setDeployStep('firstSlotFee')
+          const treasuryAddress = await getTreasuryWallet('XRPL')
+          if (!treasuryAddress) throw new Error('Treasury wallet not configured — contact support.')
+          await sendContribution(treasuryAddress, 3, 'XRP', 'XRPL', env, null, { skipVerify: true })
+
+          let feeConfirmed = false
+          for (let i = 1; i <= 3; i++) {
+            const res = await fetch('/.netlify/functions/confirm-first-slot-fee', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ podId }),
+            })
+            if (res.ok) { feeConfirmed = true; break }
+            await new Promise(r => setTimeout(r, i * 800))
+          }
+          if (!feeConfirmed) throw new Error('Could not confirm the first-slot fee payment.')
+
+          setDeployStep('firstSlotJoin')
+          const collateralAmount = form.contribution * form.size
+          await sendContribution(contractResult.contractAddress, collateralAmount, form.token, 'XRPL', env, null, { skipVerify: true })
+
+          let joined = false
+          for (let i = 1; i <= 3; i++) {
+            const res = await fetch('/.netlify/functions/pod-join', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ podId, walletAddress: wallet.address }),
+            })
+            if (res.ok) { joined = true; break }
+            await new Promise(r => setTimeout(r, i * 800))
+          }
+          if (!joined) throw new Error('Paid the first-slot fee and collateral, but joining as the first-slot member failed.')
+        } catch (firstSlotErr) {
+          console.error('[deploy] organizer first-slot reservation failed', firstSlotErr)
+          firstSlotWarning = firstSlotErr?.message ?? 'Reserving the first payout slot failed — contact support, do not pay again.'
+        }
+      }
+
       setDeployStep('done')
-      setResult({ podId, txHash: feeResult.txHash ?? contractResult.txHash, simulated: contractResult.simulated })
+      setResult({ podId, txHash: feeResult.txHash ?? contractResult.txHash, simulated: contractResult.simulated, firstSlotWarning })
 
       fetch('/.netlify/functions/notify', {
         method:  'POST',
@@ -433,6 +487,7 @@ export default function CreatePod() {
               </motion.div>
               <h2 className="text-2xl font-extrabold dark:text-white text-slate-900 mb-2">{t('create.created')}</h2>
               {result.simulated && <p className="text-xs text-amber-400 mb-2">{t('create.simulated')}</p>}
+              {result.firstSlotWarning && <p className="text-xs text-red-400 mb-2">{result.firstSlotWarning}</p>}
               {result.txHash && <p className="font-mono text-xs dark:text-brand-muted text-slate-400 break-all">{result.txHash.slice(0, 20)}…</p>}
               <p className="text-sm dark:text-brand-muted text-slate-500 mt-3">{t('create.redirecting')}</p>
             </motion.div>
@@ -897,6 +952,17 @@ export default function CreatePod() {
                   </motion.button>
                 ))}
               </div>
+              {isLiveXrpl && (
+                <label className="flex items-start gap-3 cursor-pointer mt-4 p-3 rounded-xl dark:bg-brand-dark bg-slate-50 border dark:border-brand-border border-slate-200">
+                  <input type="checkbox" checked={form.organizerFirstSlot}
+                    onChange={e => upd('organizerFirstSlot', e.target.checked)}
+                    className="mt-0.5 accent-brand-blue flex-shrink-0" />
+                  <span className="text-xs dark:text-brand-text text-slate-700">
+                    <span className="font-semibold dark:text-white text-slate-900">{t('create.organizerFirstSlot')}</span>
+                    {' — '}{t('create.organizerFirstSlotDesc')}
+                  </span>
+                </label>
+              )}
               <p className="text-xs dark:text-brand-muted text-slate-400 mt-4 italic">{t('create.pilotNote')}</p>
             </Card>
             <div className="flex gap-3">
@@ -922,6 +988,7 @@ export default function CreatePod() {
                   [t('create.totalAfterCycles'), `${+(form.contribution * (form.size - 1)).toFixed(6)} ${form.token}`],
                   [t('create.totalTandaVolume'), `${+(totalPot * form.size).toFixed(6)} ${form.token}`],
                   [t('create.payoutOrder'),  form.payoutOrder],
+                  ...(isLiveXrpl && form.organizerFirstSlot ? [[t('create.firstSlot'), t('create.firstSlotYou')]] : []),
                   ...(isYield ? [
                     [t('create.tandaType'),    t('create.typeYield')],
                     [t('create.yieldStrategy'), strategy?.label ?? '—'],
@@ -956,6 +1023,12 @@ export default function CreatePod() {
                     <div className="flex justify-between text-sm">
                       <span className="dark:text-brand-muted text-slate-500">{t('create.creationFee')}</span>
                       <span className="font-bold dark:text-white text-slate-900">${creationFeeUsd} ({t('create.inXrp')}) · {t('create.nonRefundable')}</span>
+                    </div>
+                  )}
+                  {isLiveXrpl && form.organizerFirstSlot && (
+                    <div className="flex justify-between text-sm">
+                      <span className="dark:text-brand-muted text-slate-500">{t('create.firstSlotFee')}</span>
+                      <span className="font-bold dark:text-white text-slate-900">3 XRP · {t('create.nonRefundable')}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm border-t dark:border-brand-border border-slate-200 pt-2 mt-2">

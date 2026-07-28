@@ -521,6 +521,9 @@ export default function PodView() {
             <span className="text-sm dark:text-brand-muted text-slate-500">{pod.chain} · {pod.token}</span>
             <span className="text-sm dark:text-brand-muted text-slate-500">{pod.contribution_amount} {pod.token}/cycle</span>
             {env === 'dev' && <Badge variant="yellow">{t('common.testnet')}</Badge>}
+            {pod.organizer_first_slot && pod.first_slot_fee_paid && (
+              <Badge variant="muted">{t('pod.organizerTookFirstSlot')}</Badge>
+            )}
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">

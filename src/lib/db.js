@@ -168,7 +168,7 @@ export async function createPod({
   contribution_amount, size, payout_method,
   cycle_frequency_days = 7, env,
   tanda_type = 'standard', yield_strategy = null,
-  collateral_multiplier,
+  collateral_multiplier, organizer_first_slot = false,
 }) {
   return supabase
     .from('pods')
@@ -179,6 +179,7 @@ export async function createPod({
       payout_method, cycle_frequency_days, env,
       status: 'OPEN',
       tanda_type,
+      organizer_first_slot,
       ...(yield_strategy ? { yield_strategy } : {}),
       ...(collateral_multiplier ? { collateral_multiplier } : {}),
     })

@@ -144,7 +144,7 @@ export const handler = async (event) => {
     // ── 1. Fetch pod ───────────────────────────────────────────
     const { data: pod } = await supabase
       .from('pods')
-      .select('id, chain, token, env, contribution_amount, collateral_multiplier, size, payout_method, status, expires_at, contract_address, deployed_at')
+      .select('id, chain, token, env, contribution_amount, collateral_multiplier, size, payout_method, status, expires_at, contract_address, deployed_at, organizer_id, organizer_first_slot, first_slot_fee_paid')
       .eq('id', podId)
       .single()
 
@@ -210,31 +210,48 @@ export const handler = async (event) => {
     }
 
     // ── 6. Record membership ───────────────────────────────────────
+    // Organizer who opted into (and paid for, via confirm-first-slot-fee.js)
+    // the first payout slot gets it reserved immediately at their own join —
+    // gated on first_slot_fee_paid, not just the organizer_first_slot flag,
+    // so a checked box with no confirmed fee payment grants nothing.
+    const isOrganizerFirstSlot = pod.organizer_first_slot && pod.first_slot_fee_paid && pod.organizer_id === user.id
     const { error: joinErr } = await supabase
       .from('pod_members')
-      .insert({ pod_id: podId, user_id: user.id, status: 'ACTIVE', collateral_tx: foundTxHash })
+      .insert({
+        pod_id: podId, user_id: user.id, status: 'ACTIVE', collateral_tx: foundTxHash,
+        ...(isOrganizerFirstSlot ? { payout_slot: 1 } : {}),
+      })
 
     if (joinErr && joinErr.code !== PG_UNIQUE_VIOLATION) {
       return { statusCode: 500, body: JSON.stringify({ error: `Payment verified but membership save failed: ${joinErr.message}. Contact support — do not pay again.` }) }
     }
 
     // ── 7. Activate the pod if it's now full ───────────────────────
+    // Only distributes slot numbers to members who don't already have one
+    // (i.e. everyone, on every pod today, except a first-slot organizer who
+    // already got payout_slot 1 at insert time above) — with zero
+    // pre-assigned members this is exactly equivalent to the old
+    // assign-everyone behavior.
     const { data: memberRows } = await supabase
       .from('pod_members')
-      .select('id')
+      .select('id, payout_slot')
       .eq('pod_id', podId)
       .order('joined_at', { ascending: true })
 
     if ((memberRows?.length ?? 0) >= pod.size) {
-      const slots = memberRows.map((_, i) => i + 1)
+      const unassigned     = memberRows.filter(m => m.payout_slot == null)
+      const usedSlots       = new Set(memberRows.filter(m => m.payout_slot != null).map(m => m.payout_slot))
+      const availableSlots = []
+      for (let i = 1; i <= pod.size; i++) if (!usedSlots.has(i)) availableSlots.push(i)
+
       if (pod.payout_method === 'random') {
-        for (let i = slots.length - 1; i > 0; i--) {
+        for (let i = availableSlots.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
-          [slots[i], slots[j]] = [slots[j], slots[i]]
+          [availableSlots[i], availableSlots[j]] = [availableSlots[j], availableSlots[i]]
         }
       }
-      await Promise.all(memberRows.map((m, i) =>
-        supabase.from('pod_members').update({ payout_slot: slots[i] }).eq('id', m.id),
+      await Promise.all(unassigned.map((m, i) =>
+        supabase.from('pod_members').update({ payout_slot: availableSlots[i] }).eq('id', m.id),
       ))
       await supabase
         .from('pods')
