@@ -282,6 +282,7 @@
     "notifTitle": "Recibe avisos cuando un pago venza",
     "notifBody": "Activa las notificaciones para no perderte ningún vencimiento — instala la app en tu pantalla de inicio para la mejor experiencia.",
     "notifEnable": "Activar",
+    "notifConnectTelegram": "Conectar Telegram",
     "notifNotNow": "Ahora no",
     "notifDenied": "Las notificaciones están bloqueadas — actívalas en la configuración de tu navegador para usar esto.",
     "notifError": "No se pudieron activar las notificaciones. Intenta de nuevo en un momento.",

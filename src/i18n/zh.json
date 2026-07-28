@@ -282,6 +282,7 @@
     "notifTitle": "在还款到期时收到提醒",
     "notifBody": "开启通知，绝不错过每期截止日期——将本应用安装到主屏幕以获得最佳体验。",
     "notifEnable": "开启",
+    "notifConnectTelegram": "连接 Telegram",
     "notifNotNow": "暂不开启",
     "notifDenied": "通知已被屏蔽——请在浏览器设置中开启后再试。",
     "notifError": "通知开启失败，请稍后重试。",

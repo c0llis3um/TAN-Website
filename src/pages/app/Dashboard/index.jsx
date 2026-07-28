@@ -11,6 +11,7 @@ import useAppStore from '@/store/useAppStore'
 import { getUser, getOrganizerPods, getMemberPods, getOpenPods, getUserContributionTotals } from '@/lib/db'
 import { getXrplBalances } from '@/lib/xrpl'
 import { isPushSupported, enablePushNotifications } from '@/lib/push'
+import { getTelegramBotUsername, connectTelegram } from '@/lib/telegram'
 import { IconBadge, IconPlus, IconSearch, IconWallet, IconCard, IconBell, IconBolt } from '@/components/ui/Icons'
 
 const stagger = { visible: { transition: { staggerChildren: 0.08 } } }
@@ -170,8 +171,11 @@ export default function Dashboard() {
         )}
       </motion.div>
 
-      {/* Enable push notifications */}
-      {notifPrompt && !notifDismissed && user && (
+      {/* Enable push notifications / connect Telegram — shown if either is
+          offerable, decoupled from each other: a user on a push-unsupported
+          browser (or who already answered the push prompt) should still see
+          the Telegram option, and vice versa. */}
+      {(notifPrompt || getTelegramBotUsername()) && !notifDismissed && user && (
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
           className="mb-6 p-4 rounded-2xl flex items-center justify-between gap-4 flex-wrap dark:bg-brand-blue/5 bg-blue-50 border dark:border-brand-blue/20 border-blue-200">
           <div className="flex items-center gap-3">
@@ -187,9 +191,16 @@ export default function Dashboard() {
               className="text-xs px-3 py-2 rounded-xl dark:text-brand-muted text-slate-500 hover:opacity-70 transition-opacity">
               {t('dashboard.notifNotNow')}
             </button>
-            <Button size="sm" onClick={handleEnableNotifications} disabled={notifBusy}>
-              {notifBusy ? '…' : t('dashboard.notifEnable')}
-            </Button>
+            {notifPrompt && (
+              <Button size="sm" onClick={handleEnableNotifications} disabled={notifBusy}>
+                {notifBusy ? '…' : t('dashboard.notifEnable')}
+              </Button>
+            )}
+            {getTelegramBotUsername() && (
+              <Button size="sm" variant="outline" onClick={() => connectTelegram(user.id)}>
+                {t('dashboard.notifConnectTelegram')}
+              </Button>
+            )}
           </div>
         </motion.div>
       )}

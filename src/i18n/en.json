@@ -282,6 +282,7 @@
     "notifTitle": "Get notified when a payment is due",
     "notifBody": "Turn on notifications so you never miss a cycle deadline — install this app to your home screen for the best experience.",
     "notifEnable": "Enable",
+    "notifConnectTelegram": "Connect Telegram",
     "notifNotNow": "Not now",
     "notifDenied": "Notifications are blocked — enable them in your browser settings to turn this on.",
     "notifError": "Couldn't enable notifications. Try again in a moment.",

@@ -15,6 +15,8 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { podCreatedEmail, podJoinedEmail, paymentReceivedEmail, sendEmail } from './lib/email.js'
+import { podCreatedTelegramText, podJoinedTelegramText, paymentReceivedTelegramText } from './lib/telegramMessages.js'
+import { sendTelegramToUser } from './lib/telegram.js'
 
 const EVENTS = ['pod_created', 'pod_joined', 'payment_received']
 
@@ -60,14 +62,31 @@ export const handler = async (event) => {
       .eq('id', userId)
       .maybeSingle()
 
-    let template
-    if (notifyEvent === 'pod_created')      template = podCreatedEmail(pod)
-    if (notifyEvent === 'pod_joined')       template = podJoinedEmail(pod)
-    if (notifyEvent === 'payment_received') template = paymentReceivedEmail(pod, { amount, token: token ?? pod.token, cycle })
+    let template, telegramText
+    if (notifyEvent === 'pod_created') {
+      template = podCreatedEmail(pod)
+      telegramText = podCreatedTelegramText(pod)
+    }
+    if (notifyEvent === 'pod_joined') {
+      template = podJoinedEmail(pod)
+      telegramText = podJoinedTelegramText(pod)
+    }
+    if (notifyEvent === 'payment_received') {
+      template = paymentReceivedEmail(pod, { amount, token: token ?? pod.token, cycle })
+      telegramText = paymentReceivedTelegramText(pod, { amount, token: token ?? pod.token, cycle })
+    }
 
-    const result = await sendEmail({ to: user?.email, ...template })
+    // Independent channels — each degrades gracefully on its own (no email on
+    // file, or no Telegram linked), so a member with only one still gets
+    // notified on whichever they have.
+    const emailResult    = await sendEmail({ to: user?.email, ...template })
+    const telegramResult = await sendTelegramToUser(supabase, userId, telegramText)
 
-    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(result) }
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: emailResult, telegram: telegramResult }),
+    }
 
   } catch (e) {
     console.error('[notify]', e)

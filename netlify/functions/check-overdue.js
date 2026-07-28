@@ -19,7 +19,9 @@
 import { createClient } from '@supabase/supabase-js'
 import { Client, Wallet, xrpToDrops } from 'xrpl'
 import { paymentReminderEmail, overdueSlashEmail, sendEmail } from './lib/email.js'
+import { paymentReminderTelegramText, overdueSlashTelegramText } from './lib/telegramMessages.js'
 import { sendPushToUser } from './lib/push.js'
+import { sendTelegramToUser } from './lib/telegram.js'
 import { decryptSeed } from './lib/crypto.js'
 import { rateLimit } from './lib/rateLimit.js'
 import { autoWithdrawVaultIfNeeded } from './lib/vaultWithdraw.js'
@@ -144,6 +146,7 @@ async function sendDueSoonReminders({ supabase, pod, cycleDue }) {
         body:  `Cycle ${cycle} is due ${new Date(cycleDue).toLocaleDateString()}. Don't miss it — a late payment slashes your collateral.`,
         podId: pod.id,
       })
+      await sendTelegramToUser(supabase, member.user_id, paymentReminderTelegramText(pod, { cycle, dueDate: cycleDue }))
     }
   }
 }
@@ -279,6 +282,7 @@ async function slashMember({ supabase, pod, member, escrowWallet, env }) {
       body:  `You missed cycle ${cycle}. ${amount} ${pod.token} was taken from your collateral and sent to this cycle's recipient.`,
       podId: pod.id,
     })
+    await sendTelegramToUser(supabase, memberUserId, overdueSlashTelegramText(pod, { cycle, amount, token: pod.token }))
   }
 
   return { slashed: true, txHash, sentTo: recipient.user.wallet_address, amount }
