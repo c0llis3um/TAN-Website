@@ -27,8 +27,9 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { Client, Wallet, xrpToDrops } from 'xrpl'
+import { Client, Wallet } from 'xrpl'
 import { decryptSeed } from './lib/crypto.js'
+import { sendEscrowPayout } from './lib/escrowPayout.js'
 
 const NODES = {
   dev:  'wss://testnet.xrpl-labs.com',
@@ -136,6 +137,28 @@ export const handler = async (event) => {
     const fullCollateral      = pod.contribution_amount * pod.collateral_multiplier
     const results             = []
 
+    // Precompute who's still owed collateral, so we know — as we pay each
+    // member in the loop below — which one is the last payout in this run.
+    // That one needs AccountDelete instead of a plain Payment to reclaim the
+    // escrow's own account reserve; see lib/escrowPayout.js for why.
+    const { data: allCollateralPayments } = await supabase
+      .from('payments')
+      .select('user_id, method, amount')
+      .eq('pod_id', podId)
+      .in('method', ['collateral_return', 'collateral_slash'])
+
+    const stillOwedUserIds = new Set()
+    for (const m of pod.pod_members) {
+      const uid = m.user?.id
+      if (!uid) continue
+      const theirPayments = (allCollateralPayments ?? []).filter(p => p.user_id === uid)
+      if (theirPayments.some(p => p.method === 'collateral_return')) continue
+      const theirSlashed = theirPayments
+        .filter(p => p.method === 'collateral_slash')
+        .reduce((sum, p) => sum + Number(p.amount), 0)
+      if (fullCollateral - theirSlashed > 0) stillOwedUserIds.add(uid)
+    }
+
     try {
       for (const member of pod.pod_members) {
         const recipientAddress = member.user?.wallet_address
@@ -172,7 +195,7 @@ export const handler = async (event) => {
           .eq('method', 'collateral_slash')
 
         const alreadySlashed     = (slashes ?? []).reduce((sum, p) => sum + Number(p.amount), 0)
-        const collateralPerMember = Math.max(0, fullCollateral - alreadySlashed)
+        let collateralPerMember  = Math.max(0, fullCollateral - alreadySlashed)
 
         if (collateralPerMember <= 0) {
           results.push({ member: recipientAddress, status: 'skipped', reason: 'no collateral remaining — fully used to cover a missed payment' })
@@ -180,25 +203,15 @@ export const handler = async (event) => {
         }
 
         try {
-          const payment = {
-            TransactionType: 'Payment',
-            Account:         escrowWallet.address,
-            Destination:     recipientAddress,
-            Amount: isRlusd
-              ? { currency: RLUSD_HEX, issuer, value: String(collateralPerMember) }
-              : xrpToDrops(String(collateralPerMember)),
-          }
+          stillOwedUserIds.delete(recipientUserId)
+          const isFinalClaim = stillOwedUserIds.size === 0
 
-          const prepared = await client.autofill(payment)
-          const signed   = escrowWallet.sign(prepared)
-          const result   = await client.submitAndWait(signed.tx_blob)
-          const txResult = result.result.meta?.TransactionResult ?? ''
-
-          if (txResult !== 'tesSUCCESS') {
-            throw new Error(`Payment failed: ${txResult}`)
-          }
-
-          const txHash = result.result.hash
+          const sent = await sendEscrowPayout({
+            client, escrowWallet, destination: recipientAddress, amount: collateralPerMember, isRlusd, issuer,
+            isFinalClaim: isFinalClaim && !isRlusd,
+          })
+          const txHash = sent.txHash
+          collateralPerMember = sent.deliveredAmount
 
           // Record the release — the (pod_id, user_id, cycle) unique constraint is the
           // real idempotency guard; the pre-check above just avoids a redundant chain

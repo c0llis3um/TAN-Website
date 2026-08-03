@@ -12,6 +12,11 @@
  * than one deduction) back from the pod escrow wallet. Idempotent — won't
  * send twice to the same member.
  *
+ * If this is the last member still owed collateral (every other member has
+ * already claimed or was fully slashed), sends via AccountDelete instead of
+ * a plain Payment so the escrow's own account reserve is reclaimed for them
+ * too — see lib/escrowPayout.js.
+ *
  * Required env vars (no VITE_ prefix):
  *   SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
@@ -19,8 +24,9 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import { Client, Wallet, xrpToDrops } from 'xrpl'
+import { Client, Wallet } from 'xrpl'
 import { decryptSeed } from './lib/crypto.js'
+import { sendEscrowPayout } from './lib/escrowPayout.js'
 
 const NODES = {
   dev:  'wss://testnet.xrpl-labs.com',
@@ -125,11 +131,34 @@ export const handler = async (event) => {
       .eq('method', 'collateral_slash')
 
     const alreadySlashed = (slashes ?? []).reduce((sum, p) => sum + Number(p.amount), 0)
-    const amount = Math.max(0, pod.contribution_amount * pod.collateral_multiplier - alreadySlashed)
+    let amount = Math.max(0, pod.contribution_amount * pod.collateral_multiplier - alreadySlashed)
 
     if (amount <= 0) {
       return { statusCode: 400, body: JSON.stringify({ error: 'No collateral remaining to claim — it was fully used to cover a missed payment.' }) }
     }
+
+    // ── 4c. Is this the last outstanding claim? ─────────────────
+    // If every other member has either already claimed or has nothing left
+    // to claim (fully slashed), this claim will drain the escrow down to
+    // its own reserve — see lib/escrowPayout.js for why that needs
+    // AccountDelete instead of a plain Payment.
+    const { data: allCollateralPayments } = await supabase
+      .from('payments')
+      .select('user_id, method, amount')
+      .eq('pod_id', podId)
+      .in('method', ['collateral_return', 'collateral_slash'])
+
+    const fullCollateral = pod.contribution_amount * pod.collateral_multiplier
+    const otherMembersStillOwed = pod.pod_members.some(m => {
+      if (m.user?.id === member.user.id) return false
+      const theirPayments = (allCollateralPayments ?? []).filter(p => p.user_id === m.user?.id)
+      if (theirPayments.some(p => p.method === 'collateral_return')) return false
+      const theirSlashed = theirPayments
+        .filter(p => p.method === 'collateral_slash')
+        .reduce((sum, p) => sum + Number(p.amount), 0)
+      return (fullCollateral - theirSlashed) > 0
+    })
+    const isFinalClaim = !otherMembersStillOwed
 
     // ── 5. Send collateral ─────────────────────────────────────
     const isRlusd = pod.token === 'RLUSD'
@@ -147,25 +176,12 @@ export const handler = async (event) => {
     let txHash
 
     try {
-      const payment = {
-        TransactionType: 'Payment',
-        Account:         escrowWallet.address,
-        Destination:     walletAddress,
-        Amount: isRlusd
-          ? { currency: RLUSD_HEX, issuer, value: String(amount) }
-          : xrpToDrops(String(amount)),
-      }
-
-      const prepared = await client.autofill(payment)
-      const signed   = escrowWallet.sign(prepared)
-      const result    = await client.submitAndWait(signed.tx_blob)
-      const txResult  = result.result.meta?.TransactionResult ?? ''
-
-      if (txResult !== 'tesSUCCESS') {
-        throw new Error(`Payment failed: ${txResult}`)
-      }
-
-      txHash = result.result.hash
+      const sent = await sendEscrowPayout({
+        client, escrowWallet, destination: walletAddress, amount, isRlusd, issuer,
+        isFinalClaim: isFinalClaim && !isRlusd,
+      })
+      txHash = sent.txHash
+      amount = sent.deliveredAmount
     } finally {
       if (client.isConnected()) {
         await client.disconnect()
