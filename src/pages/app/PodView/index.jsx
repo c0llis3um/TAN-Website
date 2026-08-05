@@ -8,7 +8,7 @@ import Badge from '@/components/ui/Badge'
 import ContactSupportModal from '@/components/ContactSupportModal'
 import BitsoGuideModal from '@/components/BitsoGuideModal'
 import useAppStore from '@/store/useAppStore'
-import { getPod, joinPod, getUser, upsertUser, maybeActivatePod, cycleMs, updatePodStatus, getPodPayments, getVaultInfo, getPodMembership } from '@/lib/db'
+import { getPod, joinPod, getUser, upsertUser, maybeActivatePod, cycleMs, updatePodStatus, getPodPayments, getVaultInfo, getPodMembership, getPlatformSetting } from '@/lib/db'
 import { tandaPodJoin, cancelTandaPod, claimCollateral } from '@/lib/contracts'
 import { safeJson } from '@/lib/http'
 import {
@@ -33,6 +33,11 @@ function formatCountdown(ms) {
 }
 
 const STATUS_VARIANT = { OPEN: 'blue', LOCKED: 'yellow', ACTIVE: 'green', COMPLETED: 'muted', DEFAULTED: 'red', CANCELLED: 'red', EXPIRED: 'red' }
+
+// Must match MIN_REPUTATION_TO_JOIN in netlify/functions/pod-join.js — this is
+// only a pre-check so real collateral never gets sent on-chain for a join
+// pod-join.js is going to reject anyway; pod-join.js is the actual gate.
+const MIN_REPUTATION_TO_JOIN = 30
 
 export default function PodView() {
   const { id }       = useParams()
@@ -220,6 +225,26 @@ export default function PodView() {
       setJoining(false)
       const { data: fresh } = await getPod(id)
       if (fresh) setPod(fresh)
+      return
+    }
+
+    // ── KYC / reputation pre-checks — before any real XRP moves ──────
+    // pod-join.js enforces both server-side (the real gate), but that call
+    // only happens *after* collateral is already sent on-chain below — so
+    // without this pre-check, a blocked wallet would pay real collateral
+    // into escrow and only then get rejected, leaving it stranded and
+    // needing a manual admin refund.
+    const kycRequired = await getPlatformSetting('kyc_required')
+    if (kycRequired === 'true' && user.kyc_status !== 'approved') {
+      xummPopup?.close()
+      setJoinError(t('pod.kycRequiredJoin'))
+      setJoining(false)
+      return
+    }
+    if ((user.reputation_score ?? 50) < MIN_REPUTATION_TO_JOIN) {
+      xummPopup?.close()
+      setJoinError(t('pod.reputationTooLow'))
+      setJoining(false)
       return
     }
 

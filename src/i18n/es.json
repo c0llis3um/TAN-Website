@@ -365,6 +365,8 @@
     "alreadyJoined": "Ya te uniste a esta tanda.",
     "noLongerOpen": "Esta tanda ya no acepta nuevos miembros.",
     "podExpired": "Esta tanda expiró.",
+    "kycRequiredJoin": "Esta plataforma requiere verificación de identidad antes de unirte a una tanda. Completa la verificación de identidad primero y vuelve a intentarlo.",
+    "reputationTooLow": "La puntuación de reputación de esta wallet es demasiado baja para unirse a nuevas tandas por ahora. Se recupera con el tiempo con pagos puntuales.",
     "waitingBadge": "Esperando a los demás…",
     "waitingTitle": "¡Ya estás dentro!",
     "waitingBody": "Faltan {{n}} lugar(es) por llenar antes de que la tanda se bloquee y comience el primer ciclo. Comparte el enlace para acelerarlo.",

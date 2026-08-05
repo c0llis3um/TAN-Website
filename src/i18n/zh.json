@@ -365,6 +365,8 @@
     "alreadyJoined": "你已经加入了这个标会。",
     "noLongerOpen": "这个标会已不再接受新成员。",
     "podExpired": "这个标会已过期。",
+    "kycRequiredJoin": "本平台要求在加入标会前完成身份验证。请先完成身份验证，然后重试。",
+    "reputationTooLow": "此钱包的信誉分数过低，暂时无法加入新的标会。信誉分数会随着按时付款逐渐恢复。",
     "waitingBadge": "等待其他成员……",
     "waitingTitle": "你已加入！",
     "waitingBody": "还差 {{n}} 个名额，标会就会锁定并开始第一期。分享链接加快进度。",

@@ -365,6 +365,8 @@
     "alreadyJoined": "You already joined this pod.",
     "noLongerOpen": "This pod is no longer open to new members.",
     "podExpired": "This pod has expired.",
+    "kycRequiredJoin": "This platform requires identity verification before joining a tanda. Complete identity verification first, then try again.",
+    "reputationTooLow": "This wallet's reputation score is too low to join new tandas right now. It recovers over time with on-time payments.",
     "waitingBadge": "Waiting for others…",
     "waitingTitle": "You're in!",
     "waitingBody": "{{n}} more spot(s) to fill before this tanda locks and the first cycle starts. Share the link to speed it up.",

@@ -18,6 +18,10 @@
  * Idempotent — if the wallet is already a member, returns success without
  * re-verifying (covers a retry after a prior call's DB write already landed).
  *
+ * Also the real (server-side) enforcement point for the platform's KYC
+ * setting and a minimum reputation score — see MIN_REPUTATION_TO_JOIN below.
+ *
+
  * Required env vars (no VITE_ prefix):
  *   SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
@@ -43,6 +47,14 @@ const RLUSD_HEX = '524C555344000000000000000000000000000000'
 // real idempotency guard against a concurrent double-join; the pre-check below just
 // avoids a redundant ledger lookup in the common case.
 const PG_UNIQUE_VIOLATION = '23505'
+
+// A wallet starts at 50 (see migration 001) and loses 20 per default, gains 5
+// per on-time payment (migration 003's DB triggers — already live, just never
+// read anywhere before now). One default alone still clears this (50-20=30);
+// a second one without any recovery in between does not (30-20=10) — blocks
+// a wallet from repeating the "join, take an early payout, default" pattern
+// on new pods, without punishing a single genuine miss.
+const MIN_REPUTATION_TO_JOIN = 30
 
 function deliveredAmountToNumber(delivered) {
   if (delivered == null) return 0
@@ -154,7 +166,7 @@ export const handler = async (event) => {
     // ── 2. Find or create the user row ──────────────────────────
     let { data: user } = await supabase
       .from('users')
-      .select('id')
+      .select('id, kyc_status, reputation_score')
       .eq('wallet_address', walletAddress)
       .maybeSingle()
 
@@ -162,7 +174,7 @@ export const handler = async (event) => {
       const { data: created, error: createErr } = await supabase
         .from('users')
         .insert({ wallet_address: walletAddress, chain: 'XRPL', lang: 'es' })
-        .select('id')
+        .select('id, kyc_status, reputation_score')
         .single()
       if (createErr) return { statusCode: 500, body: JSON.stringify({ error: `Could not create user: ${createErr.message}` }) }
       user = created
@@ -182,6 +194,28 @@ export const handler = async (event) => {
 
     if (existingMember) {
       return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ success: true, alreadyMember: true }) }
+    }
+
+    // ── 3b. KYC gate — server-side ───────────────────────────────
+    // CreatePod.jsx already checks this client-side, but that's trivially
+    // bypassed by calling this endpoint directly. This is the one place
+    // every join (member or organizer's own) actually goes through, so it's
+    // the real enforcement point regardless of what the client does.
+    const { data: kycSetting } = await supabase
+      .from('platform_settings')
+      .select('value')
+      .eq('key', 'kyc_required')
+      .maybeSingle()
+
+    if (kycSetting?.value === 'true' && user.kyc_status !== 'approved') {
+      return { statusCode: 403, body: JSON.stringify({ error: 'This platform requires identity verification before joining a tanda. Complete KYC first.' }) }
+    }
+
+    // ── 3c. Reputation gate — new wallets are unaffected (they start at the
+    // default 50), this only restricts a specific wallet that has already
+    // built up a real default history on this platform.
+    if ((user.reputation_score ?? 50) < MIN_REPUTATION_TO_JOIN) {
+      return { statusCode: 403, body: JSON.stringify({ error: 'This wallet\'s reputation score is too low to join new tandas right now. It recovers over time with on-time payments.' }) }
     }
 
     // ── 4. Pod must still be open to accept a NEW member ────────────
